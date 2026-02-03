@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 4: The Complete Training Loop</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f0e8;--surface:#fffdf7;--s2:#f0ead8;--s3:#e6dec6;
+  --border:#d4cbb2;--border2:#c4b89a;
+  --text:#2c2416;--dim:#8a7e66;--light:#b0a488;
+  --red:#c44830;--red-bg:#fcefec;--red-br:#e8c0b6;
+  --blue:#2864a8;--blue-bg:#ecf2fa;--blue-br:#b0c8e4;
+  --green:#2a7a44;--green-bg:#edf7f0;--green-br:#b0d8bc;
+  --gold:#a07818;--gold-bg:#faf4e4;--gold-br:#dcc88c;
+  --purple:#6840a0;--purple-bg:#f2ecfa;--purple-br:#c4b0e0;
+  --teal:#1a7a78;--teal-bg:#ecf6f6;--orange:#b86420;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.75;}
+.page{max-width:840px;margin:0 auto;padding:36px 20px 120px;}
+
+.hero{padding:48px 0 40px;border-bottom:2px solid var(--border);}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--teal);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;}
+h1{font-family:'Libre Baskerville',serif;font-size:2.3rem;font-weight:700;line-height:1.2;margin-bottom:8px;color:var(--text);}
+.hero p{color:var(--dim);font-size:.94rem;max-width:560px;}
+
+/* Progress */
+.prog{position:sticky;top:0;z-index:99;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 0;}
+.pi{max-width:840px;margin:0 auto;padding:0 20px;display:flex;gap:3px;}
+.pd{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background .3s;}
+.pd.done{background:var(--green);}.pd.cur{background:var(--teal);}
+
+.sec{padding:44px 0;border-bottom:1px solid var(--border);animation:fu .4s ease both;}
+.sec:last-child{border-bottom:none;}
+.sn{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--light);letter-spacing:1.5px;margin-bottom:3px;}
+h2{font-family:'Libre Baskerville',serif;font-size:1.4rem;font-weight:700;margin-bottom:14px;}
+h3{font-size:.98rem;font-weight:700;margin:20px 0 8px;}
+.d{color:var(--dim);font-size:.9rem;margin-bottom:14px;max-width:660px;}.d strong{color:var(--text);}
+
+.code{background:var(--text);color:#e8e0cc;border-radius:10px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.85;overflow-x:auto;margin:12px 0;position:relative;}
+.cm{color:#7a7260;}.kw{color:#d4a0ff;}.fn{color:#7bc8f6;}.num{color:#ffd580;}.hl{color:#ff9080;font-weight:600;}.st{color:#a8d8a0;}
+.cl{position:absolute;top:7px;right:11px;font-size:.56rem;color:#7a7260;letter-spacing:1px;text-transform:uppercase;}
+
+.box{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:.88rem;border-left:3px solid;}
+.box-a{background:var(--gold-bg);border-color:var(--gold);}.box-a strong{color:var(--gold);}
+.box-k{background:var(--red-bg);border-color:var(--red);}.box-k strong{color:var(--red);}
+.box-t{background:var(--green-bg);border-color:var(--green);}.box-t strong{color:var(--green);}
+.box-i{background:var(--blue-bg);border-color:var(--blue);}.box-i strong{color:var(--blue);}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:14px 0;}
+canvas{display:block;width:100%;border-radius:8px;}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.chip{flex:1;min-width:95px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px;}
+.chip .clb{font-family:'JetBrains Mono',monospace;font-size:.57rem;text-transform:uppercase;letter-spacing:.7px;color:var(--light);margin-bottom:1px;}
+.chip .cv{font-family:'JetBrains Mono',monospace;font-size:.93rem;font-weight:600;}
+.cr{color:var(--red);}.cb{color:var(--blue);}.cg{color:var(--green);}.cy{color:var(--gold);}.cp{color:var(--purple);}
+
+.btn{font-family:'JetBrains Mono',monospace;font-size:.73rem;padding:8px 16px;border-radius:7px;cursor:pointer;transition:all .15s;border:1.5px solid;}
+.btn-f{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:600;}.btn-f:hover{opacity:.85;}
+.btn-o{background:var(--surface);color:var(--text);border-color:var(--border);}.btn-o:hover{border-color:var(--text);}
+.btn-r{background:var(--red-bg);color:var(--red);border-color:var(--red-br);}
+.btn-g{background:var(--green-bg);color:var(--green);border-color:var(--green-br);}
+.br{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+
+.flow{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;padding:12px 0;}
+.fn2{padding:9px 13px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;text-align:center;border:2px solid;min-width:55px;}
+.fa{color:var(--light);font-size:1rem;}
+.f-blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
+.f-pur{border-color:var(--purple);color:var(--purple);background:var(--purple-bg);}
+.f-red{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.f-grn{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.f-gld{border-color:var(--gold);color:var(--gold);background:var(--gold-bg);}
+.f-tea{border-color:var(--teal);color:var(--teal);background:var(--teal-bg);}
+
+.ctrl{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--s2);border-radius:8px;margin:8px 0;}
+.ctrl-l{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--dim);white-space:nowrap;}
+.ctrl-v{font-family:'JetBrains Mono',monospace;font-size:.84rem;font-weight:600;min-width:48px;text-align:right;}
+input[type="range"]{-webkit-appearance:none;flex:1;height:4px;border-radius:2px;background:var(--border);outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--text);cursor:grab;box-shadow:0 1px 5px rgba(0,0,0,.12);}
+
+.quiz{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:18px;margin:18px 0;}
+.qq{font-weight:600;margin-bottom:10px;font-size:.9rem;}
+.qopts{display:flex;flex-direction:column;gap:5px;}
+.qo{padding:9px 13px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:.85rem;transition:all .15s;background:var(--surface);}
+.qo:hover{border-color:var(--dim);}
+.qo.ok{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+.qo.no{border-color:var(--red);background:var(--red-bg);color:var(--red);}
+.qo.off{pointer-events:none;opacity:.6;}
+.qfb{margin-top:8px;font-size:.82rem;padding:8px 12px;border-radius:7px;display:none;}
+
+.tlog{max-height:180px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.74rem;line-height:1.9;padding:10px 14px;background:var(--text);color:#b0a488;border-radius:8px;margin:10px 0;}
+.tlog .ep{color:var(--teal);}.tlog .lv{color:#ff9080;}.tlog .av{color:#a8d8a0;}
+
+.pipeline-step{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+.pipeline-step:last-child{border-bottom:none;}
+.ps-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;flex-shrink:0;background:var(--s2);border:2px solid var(--border);color:var(--dim);}
+.ps-num.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.ps-body{flex:1;}.ps-title{font-weight:700;font-size:.9rem;margin-bottom:3px;}
+.ps-desc{font-size:.84rem;color:var(--dim);}
+
+@keyframes fu{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:600px){h1{font-size:1.75rem;}.page{padding:24px 14px 80px;}.card{padding:16px 12px;}}
+</style>
+</head>
+<body>
+
+<div class="prog"><div class="pi" id="pbar"></div></div>
+
+<div class="page">
+
+<div class="hero">
+  <div class="tag">Lesson 4 — Complete Walkthrough</div>
+  <h1>The Complete Training Loop</h1>
+  <p>Everything comes together: data → model → training → evaluation → saving. This is the pattern behind every deep learning project.</p>
+</div>
+
+<!-- ===== 1: THE BIG PICTURE ===== -->
+<div class="sec" data-s="1" id="s1">
+  <div class="sn">PART 1 OF 10</div>
+  <h2>The Pipeline: Bird's Eye View</h2>
+
+  <p class="d">Every ML project — from a homework exercise to GPT — follows the same 5-step pattern. The only things that change are the data and the model. The pipeline stays identical.</p>
+
+  <div class="card" style="padding:16px 20px;">
+    <div class="pipeline-step"><div class="ps-num active">1</div><div class="ps-body"><div class="ps-title">Load Data</div><div class="ps-desc">Get your data into PyTorch's Dataset format</div></div></div>
+    <div class="pipeline-step"><div class="ps-num active">2</div><div class="ps-body"><div class="ps-title">Split + Batch</div><div class="ps-desc">Train/val split, create DataLoaders for batching</div></div></div>
+    <div class="pipeline-step"><div class="ps-num active">3</div><div class="ps-body"><div class="ps-title">Build Model</div><div class="ps-desc">Define architecture + loss + optimizer</div></div></div>
+    <div class="pipeline-step"><div class="ps-num active">4</div><div class="ps-body"><div class="ps-title">Train</div><div class="ps-desc">Loop: forward → loss → backward → update (for many epochs)</div></div></div>
+    <div class="pipeline-step"><div class="ps-num active">5</div><div class="ps-body"><div class="ps-title">Save & Deploy</div><div class="ps-desc">Save the learned weights, use the model for predictions</div></div></div>
+  </div>
+
+  <div class="box box-a">
+    <strong>💡 Analogy:</strong> It's like a cooking show. Step 1: buy ingredients (data). Step 2: prep and portion them (split + batch). Step 3: choose the recipe (model). Step 4: cook it (train). Step 5: plate and serve (save + predict). Same structure every time, different dishes.
+  </div>
+</div>
+
+<!-- ===== 2: DATASET ===== -->
+<div class="sec" data-s="2" id="s2">
+  <div class="sn">PART 2 OF 10</div>
+  <h2>Step 1: Dataset — Organizing Your Data</h2>
+
+  <p class="d">PyTorch needs your data in a specific format: a <strong>Dataset</strong> class with two methods — __len__ (how many samples?) and __getitem__ (give me sample #n).</p>
+
+  <div class="code">
+<span class="cl">Python</span>
+<span class="kw">class</span> <span class="hl">SimpleDataset</span>(Dataset):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, X, y):
+        self.X = X              <span class="cm"># features (inputs)</span>
+        self.y = y              <span class="cm"># labels (correct answers)</span>
+
+    <span class="kw">def</span> <span class="fn">__len__</span>(self):
+        <span class="kw">return</span> len(self.X)      <span class="cm"># "I have 1000 samples"</span>
+
+    <span class="kw">def</span> <span class="fn">__getitem__</span>(self, idx):
+        <span class="kw">return</span> self.X[idx], self.y[idx]  <span class="cm"># "Here's sample #idx"</span>
+  </div>
+
+  <div class="box box-a">
+    <strong>💡 Think of it like a filing cabinet.</strong> __len__ tells you how many folders are inside. __getitem__ opens folder #47 and hands you the contents. PyTorch will call these two methods thousands of times during training.
+  </div>
+
+  <p class="d">In the lesson code, the data is 1000 points in 2D space — one cluster centered at (-1, -1) labeled as class 0, and another at (1, 1) labeled class 1. Here's what it looks like:</p>
+
+  <div class="card">
+    <canvas id="dataCanvas" height="300"></canvas>
+    <div class="chips">
+      <div class="chip"><div class="clb">Total samples</div><div class="cv">1000</div></div>
+      <div class="chip"><div class="clb">Class 0 (red)</div><div class="cv cr">500</div></div>
+      <div class="chip"><div class="clb">Class 1 (blue)</div><div class="cv cb">500</div></div>
+      <div class="chip"><div class="clb">Features</div><div class="cv">2 (x, y)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 3: TRAIN/VAL SPLIT ===== -->
+<div class="sec" data-s="3" id="s3">
+  <div class="sn">PART 3 OF 10</div>
+  <h2>Step 2: Train/Validation Split</h2>
+
+  <p class="d">You <strong>never</strong> evaluate a model on the same data you trained it on. That's like taking a test with the answer sheet — you'll look great but haven't learned anything.</p>
+
+  <div class="code">
+train_size = <span class="fn">int</span>(<span class="num">0.8</span> * len(dataset))    <span class="cm"># 80% for training</span>
+val_size = len(dataset) - train_size      <span class="cm"># 20% for validation</span>
+
+train_dataset, val_dataset = <span class="fn">random_split</span>(dataset, [train_size, val_size])
+  </div>
+
+  <div class="card">
+    <canvas id="splitCanvas" height="100"></canvas>
+  </div>
+
+  <div class="box box-k">
+    <strong>⚡ Why this matters:</strong> If your training accuracy is 99% but validation accuracy is 60%, your model is <strong>overfitting</strong> — it memorized the training data instead of learning the pattern. The val set catches this.
+  </div>
+
+  <div class="quiz" id="q1">
+    <div class="qq">Your model gets 98% train accuracy and 55% val accuracy. What's happening?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="false" onclick="qck('q1',this)">The model is great — 98% is excellent</div>
+      <div class="qo" data-ok="true" onclick="qck('q1',this)">Overfitting — it memorized training data but can't generalize</div>
+      <div class="qo" data-ok="false" onclick="qck('q1',this)">Underfitting — the model is too simple</div>
+    </div>
+    <div class="qfb" id="q1-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 4: DATALOADER ===== -->
+<div class="sec" data-s="4" id="s4">
+  <div class="sn">PART 4 OF 10</div>
+  <h2>Step 3: DataLoader — Serving Data in Batches</h2>
+
+  <p class="d">You don't feed all 800 training samples at once — that would use too much memory. Instead, the <strong>DataLoader</strong> serves your data in small batches (usually 32 or 64 at a time).</p>
+
+  <div class="code">
+train_loader = DataLoader(train_dataset, batch_size=<span class="num">32</span>, shuffle=<span class="num">True</span>)
+val_loader   = DataLoader(val_dataset,   batch_size=<span class="num">32</span>, shuffle=<span class="num">False</span>)
+  </div>
+
+  <p class="d"><strong>Click "Next Batch"</strong> to see how the DataLoader serves batches one at a time:</p>
+
+  <div class="card">
+    <canvas id="batchCanvas" height="200"></canvas>
+    <div class="br">
+      <button class="btn btn-f" id="nextBatch">Next Batch →</button>
+      <button class="btn btn-o" id="resetBatch">Reset</button>
+    </div>
+    <div class="chips">
+      <div class="chip"><div class="clb">Batch</div><div class="cv" id="batchNum">0 / 25</div></div>
+      <div class="chip"><div class="clb">Samples in batch</div><div class="cv" id="batchSize">32</div></div>
+      <div class="chip"><div class="clb">Total seen</div><div class="cv" id="batchSeen">0</div></div>
+    </div>
+  </div>
+
+  <div class="box box-i">
+    <strong>📖 Three key settings:</strong> <code>batch_size=32</code> — how many samples per batch. <code>shuffle=True</code> for training (randomize order each epoch). <code>shuffle=False</code> for validation (order doesn't matter, consistency is nice for debugging).
+  </div>
+
+  <div class="quiz" id="q2">
+    <div class="qq">You have 800 training samples and batch_size=32. How many batches per epoch?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="true" onclick="qck('q2',this)">25 batches (800 ÷ 32 = 25)</div>
+      <div class="qo" data-ok="false" onclick="qck('q2',this)">32 batches</div>
+      <div class="qo" data-ok="false" onclick="qck('q2',this)">800 batches (one per sample)</div>
+    </div>
+    <div class="qfb" id="q2-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 5: MODEL ===== -->
+<div class="sec" data-s="5" id="s5">
+  <div class="sn">PART 5 OF 10</div>
+  <h2>Step 4: The Model + Dropout</h2>
+
+  <p class="d">The model from the lesson is a 3-layer classifier with <strong>dropout</strong> — a new concept.</p>
+
+  <div class="code">
+<span class="cl">Python</span>
+<span class="kw">class</span> <span class="hl">Classifier</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__()
+        self.fc1 = nn.Linear(<span class="num">2</span>, <span class="num">16</span>)    <span class="cm"># 2 inputs → 16 hidden</span>
+        self.fc2 = nn.Linear(<span class="num">16</span>, <span class="num">8</span>)   <span class="cm"># 16 → 8 hidden</span>
+        self.fc3 = nn.Linear(<span class="num">8</span>, <span class="num">2</span>)    <span class="cm"># 8 → 2 output classes</span>
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(<span class="num">0.2</span>) <span class="cm"># randomly turn off 20% of neurons</span>
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        x = self.relu(self.fc1(x))
+        x = self.dropout(x)            <span class="cm"># ← only active during training!</span>
+        x = self.relu(self.fc2(x))
+        x = self.dropout(x)
+        x = self.fc3(x)
+        <span class="kw">return</span> x
+  </div>
+
+  <div class="box box-a">
+    <strong>💡 What is Dropout?</strong> During training, dropout randomly "turns off" 20% of neurons each forward pass. This forces the network to not rely on any single neuron — like studying with random pages missing from your textbook. It makes the network more robust and prevents overfitting. During evaluation, dropout is OFF (all neurons active).
+  </div>
+
+  <p class="d"><strong>Click to see dropout in action</strong> — disabled neurons turn dark:</p>
+
+  <div class="card">
+    <canvas id="dropCanvas" height="220"></canvas>
+    <div class="br">
+      <button class="btn btn-f" id="dropToggle">Simulate Dropout</button>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--dim);" id="dropStatus">Training mode — 20% neurons disabled each pass</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 6: TRAIN vs EVAL ===== -->
+<div class="sec" data-s="6" id="s6">
+  <div class="sn">PART 6 OF 10</div>
+  <h2>model.train() vs model.eval()</h2>
+
+  <p class="d">This is a critical concept. Your model behaves <strong>differently</strong> during training and evaluation.</p>
+
+  <div class="card" style="padding:16px 20px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h3 style="margin-top:0;color:var(--gold);">model.train()</h3>
+        <p class="d" style="font-size:.84rem;">Dropout is <strong>ON</strong> (randomly disabling neurons). Used during training so the network doesn't over-rely on specific neurons.</p>
+      </div>
+      <div>
+        <h3 style="margin-top:0;color:var(--teal);">model.eval()</h3>
+        <p class="d" style="font-size:.84rem;">Dropout is <strong>OFF</strong> (all neurons active). Used during evaluation + prediction for consistent, deterministic outputs.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+<span class="cm"># TRAINING</span>
+model.<span class="fn">train</span>()                <span class="cm"># ← turn ON dropout</span>
+<span class="kw">for</span> x, y <span class="kw">in</span> train_loader:
+    output = model(x)
+    loss.<span class="fn">backward</span>()
+    optimizer.<span class="fn">step</span>()
+
+<span class="cm"># EVALUATION</span>
+model.<span class="fn">eval</span>()                 <span class="cm"># ← turn OFF dropout</span>
+<span class="kw">with</span> torch.<span class="fn">no_grad</span>():       <span class="cm"># ← also turn off gradient tracking</span>
+    <span class="kw">for</span> x, y <span class="kw">in</span> val_loader:
+        output = model(x)
+  </div>
+
+  <div class="box box-k">
+    <strong>⚡ Always pair these:</strong> Training = model.train(). Evaluation = model.eval() + torch.no_grad(). Forgetting model.eval() means dropout is still on during testing, giving you noisy, unreliable results.
+  </div>
+</div>
+
+<!-- ===== 7: THE TRAINING FUNCTION ===== -->
+<div class="sec" data-s="7" id="s7">
+  <div class="sn">PART 7 OF 10</div>
+  <h2>The train_one_epoch Function</h2>
+
+  <p class="d">This function trains the model for one complete pass through the training data. Let's dissect every line:</p>
+
+  <div class="code">
+<span class="cl">The core training function</span>
+<span class="kw">def</span> <span class="fn">train_one_epoch</span>(model, dataloader, criterion, optimizer):
+    model.<span class="fn">train</span>()                           <span class="cm"># ① Enable dropout</span>
+    total_loss = <span class="num">0</span>
+    correct = <span class="num">0</span>
+    total = <span class="num">0</span>
+
+    <span class="kw">for</span> batch_x, batch_y <span class="kw">in</span> dataloader:    <span class="cm"># ② Loop through batches</span>
+        outputs = model(batch_x)            <span class="cm"># ③ Forward pass</span>
+        loss = criterion(outputs, batch_y)  <span class="cm"># ④ Compute loss</span>
+
+        optimizer.<span class="fn">zero_grad</span>()               <span class="cm"># ⑤ Clear old gradients</span>
+        loss.<span class="fn">backward</span>()                      <span class="cm"># ⑥ Compute new gradients</span>
+        optimizer.<span class="fn">step</span>()                     <span class="cm"># ⑦ Update weights</span>
+
+        <span class="cm"># Track accuracy</span>
+        predictions = outputs.<span class="fn">argmax</span>(dim=<span class="num">1</span>)  <span class="cm"># ⑧ Which class got highest score?</span>
+        correct += (predictions == batch_y).<span class="fn">sum</span>().item()
+        total += batch_y.size(<span class="num">0</span>)
+
+    <span class="kw">return</span> total_loss / len(dataloader), correct / total
+  </div>
+
+  <div class="box box-i">
+    <strong>📖 outputs.argmax(dim=1)</strong> — the model outputs scores for each class (e.g., [2.1, 0.3] means class 0 has higher score). argmax picks the index with the highest score. dim=1 means "pick across columns" (classes), not across rows (samples).
+  </div>
+</div>
+
+<!-- ===== 8: LIVE TRAINING ===== -->
+<div class="sec" data-s="8" id="s8">
+  <div class="sn">PART 8 OF 10</div>
+  <h2>Watch It Train: Live Simulation</h2>
+
+  <p class="d">Here's the complete training loop from the lesson. Watch the <strong>decision boundary</strong> form as the model learns to separate the two classes, and the <strong>loss/accuracy</strong> curves evolve:</p>
+
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--dim);letter-spacing:1px;margin-bottom:4px;">DECISION BOUNDARY</div>
+        <canvas id="boundaryCanvas" height="260"></canvas>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--dim);letter-spacing:1px;margin-bottom:4px;">LOSS & ACCURACY</div>
+        <canvas id="curveCanvas" height="260"></canvas>
+      </div>
+    </div>
+    <div class="tlog" id="trainLog">Click "Train" to start the loop...</div>
+    <div class="br">
+      <button class="btn btn-f" id="trBtn">▶ Train 5 epochs</button>
+      <button class="btn btn-o" id="trAutoBtn">Auto-train 20</button>
+      <button class="btn btn-r" id="trReset">Reset</button>
+    </div>
+    <div class="ctrl">
+      <span class="ctrl-l">learning rate</span>
+      <input type="range" id="lrSlider" min="-4" max="-1" step="0.1" value="-2">
+      <span class="ctrl-v cy" id="lrVal">0.01</span>
+    </div>
+    <div class="chips">
+      <div class="chip"><div class="clb">Epoch</div><div class="cv" id="trEp">0</div></div>
+      <div class="chip"><div class="clb">Train Loss</div><div class="cv cr" id="trLoss">—</div></div>
+      <div class="chip"><div class="clb">Val Loss</div><div class="cv cp" id="trVLoss">—</div></div>
+      <div class="chip"><div class="clb">Val Accuracy</div><div class="cv cg" id="trAcc">—</div></div>
+    </div>
+  </div>
+
+  <div class="box box-t">
+    <strong>✅ What to watch for:</strong> The decision boundary (left panel) starts as a random line and gradually positions itself between the two clusters. Loss drops quickly at first then plateaus. If val loss starts rising while train loss keeps falling — that's overfitting.
+  </div>
+</div>
+
+<!-- ===== 9: PREDICTIONS + SAVING ===== -->
+<div class="sec" data-s="9" id="s9">
+  <div class="sn">PART 9 OF 10</div>
+  <h2>Making Predictions & Saving</h2>
+
+  <p class="d">After training, you use the model to predict on new data. Always use <strong>model.eval() + torch.no_grad()</strong>:</p>
+
+  <div class="code">
+model.<span class="fn">eval</span>()
+<span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+    logits = model(test_points)               <span class="cm"># raw scores</span>
+    probs = torch.<span class="fn">softmax</span>(logits, dim=<span class="num">1</span>)     <span class="cm"># convert to probabilities</span>
+    predictions = logits.<span class="fn">argmax</span>(dim=<span class="num">1</span>)       <span class="cm"># pick the winner</span>
+  </div>
+
+  <h3>Saving & Loading</h3>
+
+  <div class="code">
+<span class="cm"># SAVE — stores all learned weights</span>
+torch.<span class="fn">save</span>(model.state_dict(), <span class="st">'model.pth'</span>)
+
+<span class="cm"># LOAD — create a fresh model, then load the weights</span>
+new_model = Classifier()
+new_model.<span class="fn">load_state_dict</span>(torch.<span class="fn">load</span>(<span class="st">'model.pth'</span>))
+new_model.<span class="fn">eval</span>()
+  </div>
+
+  <div class="box box-a">
+    <strong>💡 Why save state_dict and not the whole model?</strong> state_dict is just a dictionary of weight values — small, portable, and doesn't depend on your code structure. The model class definition + state_dict is all you need to recreate your trained model anywhere.
+  </div>
+
+  <div class="quiz" id="q3">
+    <div class="qq">After loading a saved model for prediction, what must you call?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="false" onclick="qck('q3',this)">model.train() — always train first</div>
+      <div class="qo" data-ok="true" onclick="qck('q3',this)">model.eval() — disable dropout for consistent predictions</div>
+      <div class="qo" data-ok="false" onclick="qck('q3',this)">model.backward() — compute gradients</div>
+    </div>
+    <div class="qfb" id="q3-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 10: SUMMARY ===== -->
+<div class="sec" data-s="10" id="s10">
+  <div class="sn">PART 10 OF 10</div>
+  <h2>The Complete Pattern</h2>
+
+  <p class="d">This is the template for <strong>every deep learning project</strong>. Pin this to your wall:</p>
+
+  <div class="code" style="font-size:.76rem;">
+<span class="cl">The Universal Template</span>
+<span class="cm"># 1. DATA</span>
+dataset = YourDataset(data)
+train_data, val_data = <span class="fn">random_split</span>(dataset, [<span class="num">800</span>, <span class="num">200</span>])
+train_loader = DataLoader(train_data, batch_size=<span class="num">32</span>, shuffle=<span class="num">True</span>)
+val_loader   = DataLoader(val_data,   batch_size=<span class="num">32</span>)
+
+<span class="cm"># 2. MODEL + LOSS + OPTIMIZER</span>
+model = YourModel()
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=<span class="num">0.001</span>)
+
+<span class="cm"># 3. TRAIN</span>
+<span class="kw">for</span> epoch <span class="kw">in</span> range(epochs):
+    model.<span class="fn">train</span>()
+    <span class="kw">for</span> x, y <span class="kw">in</span> train_loader:
+        optimizer.<span class="fn">zero_grad</span>()
+        loss = criterion(model(x), y)
+        loss.<span class="fn">backward</span>()
+        optimizer.<span class="fn">step</span>()
+
+    model.<span class="fn">eval</span>()
+    <span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+        <span class="kw">for</span> x, y <span class="kw">in</span> val_loader:  <span class="cm"># check for overfitting</span>
+            ...
+
+<span class="cm"># 4. SAVE</span>
+torch.<span class="fn">save</span>(model.state_dict(), <span class="st">'model.pth'</span>)
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:18px 0;">
+    <div class="chip"><div class="clb">Dataset</div><div class="cv" style="font-size:.73rem;color:var(--blue)">__len__ + __getitem__</div></div>
+    <div class="chip"><div class="clb">DataLoader</div><div class="cv" style="font-size:.73rem;color:var(--purple)">Batching + shuffling</div></div>
+    <div class="chip"><div class="clb">Train/Val Split</div><div class="cv" style="font-size:.73rem;color:var(--gold)">80/20, never cheat</div></div>
+    <div class="chip"><div class="clb">model.train()</div><div class="cv" style="font-size:.73rem;color:var(--red)">Dropout ON</div></div>
+    <div class="chip"><div class="clb">model.eval()</div><div class="cv" style="font-size:.73rem;color:var(--teal)">Dropout OFF + no_grad</div></div>
+    <div class="chip"><div class="clb">Save/Load</div><div class="cv" style="font-size:.73rem;color:var(--green)">state_dict()</div></div>
+  </div>
+
+  <div class="quiz" id="q4">
+    <div class="qq">Final quiz: Put these in the right order for one training iteration.</div>
+    <div class="qopts">
+      <div class="qo" data-ok="false" onclick="qck('q4',this)">backward → forward → zero_grad → step</div>
+      <div class="qo" data-ok="true" onclick="qck('q4',this)">zero_grad → forward → loss → backward → step</div>
+      <div class="qo" data-ok="false" onclick="qck('q4',this)">forward → step → backward → zero_grad</div>
+    </div>
+    <div class="qfb" id="q4-fb"></div>
+  </div>
+
+  <div class="box box-a" style="margin-top:20px;">
+    <strong>🎯 Next up:</strong> The Week 1 Project — MNIST Digit Classifier! You'll use this exact pattern on real image data. Everything you've learned in Lessons 1–4 comes together.
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+function sc(c){const d=window.devicePixelRatio||1,r=c.getBoundingClientRect();c.width=r.width*d;c.height=r.height*d;const x=c.getContext('2d');x.scale(d,d);return{x,w:r.width,h:r.height};}
+
+// Progress
+const secs=document.querySelectorAll('.sec');const pb=document.getElementById('pbar');
+secs.forEach(()=>{const d=document.createElement('div');d.className='pd';pb.appendChild(d);});
+const pds=pb.querySelectorAll('.pd');
+function uProg(){const sy=window.scrollY+window.innerHeight*.4;let c=0;secs.forEach((s,i)=>{if(s.offsetTop<=sy)c=i;});pds.forEach((d,i)=>{d.className='pd'+(i<c?' done':i===c?' cur':'');});}
+window.addEventListener('scroll',uProg);uProg();
+
+// Quiz
+function qck(id,el){const os=document.querySelectorAll(`#${id} .qo`);const fb=document.getElementById(id+'-fb');os.forEach(o=>o.classList.add('off'));
+if(el.dataset.ok==='true'){el.classList.add('ok');fb.style.display='block';fb.style.background='var(--green-bg)';fb.style.color='var(--green)';fb.textContent='✅ Correct!';}
+else{el.classList.add('no');fb.style.display='block';fb.style.background='var(--red-bg)';fb.style.color='var(--red)';document.querySelector(`#${id} .qo[data-ok="true"]`).classList.add('ok');fb.textContent='Not quite — correct answer highlighted.';}}
+
+// Seeded random
+let seed=42;function srand(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646;}
+
+// Generate 2D data
+const data=[];
+function genData(){data.length=0;seed=42;for(let i=0;i<200;i++){data.push({x:-1+srand()*1.6-0.8,y:-1+srand()*1.6-0.8,c:0});}for(let i=0;i<200;i++){data.push({x:1+srand()*1.6-0.8,y:1+srand()*1.6-0.8,c:1});}}
+genData();
+
+// Section 2: Data visualization
+const dCanvas=document.getElementById('dataCanvas');
+function drawData(){
+  const{x:cx,w,h}=sc(dCanvas);cx.clearRect(0,0,w,h);
+  const pad=30,gw=w-pad*2,gh=h-pad*2;
+  const xMn=-4,xMx=4,yMn=-4,yMx=4;
+  const sx=v=>pad+((v-xMn)/(xMx-xMn))*gw;
+  const sy=v=>pad+gh-((v-yMn)/(yMx-yMn))*gh;
+
+  // Grid
+  cx.strokeStyle='#e6dec6';cx.lineWidth=1;
+  for(let g=-3;g<=3;g++){cx.beginPath();cx.moveTo(sx(g),pad);cx.lineTo(sx(g),pad+gh);cx.stroke();cx.beginPath();cx.moveTo(pad,sy(g));cx.lineTo(pad+gw,sy(g));cx.stroke();}
+  cx.strokeStyle='#d4cbb2';cx.lineWidth=1.5;cx.beginPath();cx.moveTo(sx(0),pad);cx.lineTo(sx(0),pad+gh);cx.stroke();cx.beginPath();cx.moveTo(pad,sy(0));cx.lineTo(pad+gw,sy(0));cx.stroke();
+
+  // Points
+  data.forEach(p=>{
+    cx.globalAlpha=0.6;cx.fillStyle=p.c===0?'#c44830':'#2864a8';
+    cx.beginPath();cx.arc(sx(p.x),sy(p.y),3.5,0,Math.PI*2);cx.fill();
+  });
+  cx.globalAlpha=1;
+
+  // Labels
+  cx.fillStyle='#c44830';cx.font='600 11px JetBrains Mono,monospace';cx.textAlign='left';cx.fillText('● Class 0',pad+6,pad+16);
+  cx.fillStyle='#2864a8';cx.fillText('● Class 1',pad+6,pad+32);
+}
+drawData();
+
+// Section 3: Split visualization
+const spCanvas=document.getElementById('splitCanvas');
+function drawSplit(){
+  const{x:cx,w,h}=sc(spCanvas);cx.clearRect(0,0,w,h);
+  const pad=10,bh=h-pad*2;
+  // Train bar
+  cx.fillStyle='#2864a8';cx.fillRect(pad,pad,w*0.76,bh);
+  cx.fillStyle='#fff';cx.font='700 13px JetBrains Mono,monospace';cx.textAlign='center';cx.fillText('TRAIN — 80% (800 samples)',pad+w*0.38,h/2+5);
+  // Val bar
+  cx.fillStyle='#a07818';cx.fillRect(pad+w*0.77,pad,w*0.2,bh);
+  cx.fillStyle='#fff';cx.font='700 11px JetBrains Mono,monospace';cx.fillText('VAL — 20%',pad+w*0.77+w*0.1,h/2+5);
+}
+drawSplit();
+
+// Section 4: Batch visualization
+const btCanvas=document.getElementById('batchCanvas');
+let batchIdx=0;const totalBatches=25;
+function drawBatch(){
+  const{x:cx,w,h}=sc(btCanvas);cx.clearRect(0,0,w,h);
+  const pad=10,bw=(w-pad*2)/totalBatches,bh=h-pad*2-20;
+  for(let i=0;i<totalBatches;i++){
+    cx.fillStyle=i<batchIdx?'#2a7a44':i===batchIdx?'#a07818':'#e6dec6';
+    cx.fillRect(pad+i*bw+1,pad,bw-2,bh);
+  }
+  cx.fillStyle='#8a7e66';cx.font='10px JetBrains Mono,monospace';cx.textAlign='center';
+  cx.fillText('← Each bar = 1 batch of 32 samples →',w/2,h-6);
+  document.getElementById('batchNum').textContent=`${batchIdx} / ${totalBatches}`;
+  document.getElementById('batchSeen').textContent=batchIdx*32;
+}
+drawBatch();
+document.getElementById('nextBatch').addEventListener('click',()=>{if(batchIdx<totalBatches)batchIdx++;drawBatch();});
+document.getElementById('resetBatch').addEventListener('click',()=>{batchIdx=0;drawBatch();});
+
+// Section 5: Dropout visual
+const drCanvas=document.getElementById('dropCanvas');
+let dropState=[];
+function initDrop(){dropState=[];const layers=[2,16,8,2];layers.forEach(n=>{const l=[];for(let i=0;i<n;i++)l.push(true);dropState.push(l);});}
+initDrop();
+function applyDrop(){dropState.forEach((l,li)=>{if(li===0||li===dropState.length-1)return;l.forEach((_,i)=>{l[i]=Math.random()>0.2;});});}
+
+function drawDrop(){
+  const{x:cx,w,h}=sc(drCanvas);cx.clearRect(0,0,w,h);
+  const layers=[2,16,8,2];const colors=['#2864a8','#6840a0','#6840a0','#c44830'];
+  const labels=['Input','Hidden 1','Hidden 2','Output'];
+  const lx=layers.map((_,i)=>w*(.12+i*.27));
+
+  // Connections
+  for(let li=0;li<layers.length-1;li++){
+    const n1=layers[li],n2=layers[li+1];
+    const gap1=Math.min(22,h/(n1+1)),gap2=Math.min(22,h/(n2+1));
+    const sy1=(h-gap1*(n1-1))/2,sy2=(h-gap2*(n2-1))/2;
+    for(let a=0;a<n1;a++){if(!dropState[li][a])continue;for(let b=0;b<n2;b++){if(!dropState[li+1][b])continue;
+      cx.strokeStyle='rgba(0,0,0,0.04)';cx.lineWidth=1;cx.beginPath();cx.moveTo(lx[li]+10,sy1+a*gap1);cx.lineTo(lx[li+1]-10,sy2+b*gap2);cx.stroke();
+    }}
+  }
+
+  // Nodes
+  layers.forEach((n,li)=>{
+    const gap=Math.min(22,h/(n+1));const sy=(h-gap*(n-1))/2;
+    for(let i=0;i<n;i++){
+      const active=dropState[li][i];
+      cx.fillStyle=active?'#fffdf7':'#e6dec6';cx.strokeStyle=active?colors[li]:'#d4cbb2';cx.lineWidth=active?2:1;
+      cx.beginPath();cx.arc(lx[li],sy+i*gap,8,0,Math.PI*2);cx.fill();cx.stroke();
+      if(!active){cx.strokeStyle='#c44830';cx.lineWidth=1.5;cx.beginPath();cx.moveTo(lx[li]-5,sy+i*gap-5);cx.lineTo(lx[li]+5,sy+i*gap+5);cx.stroke();cx.beginPath();cx.moveTo(lx[li]+5,sy+i*gap-5);cx.lineTo(lx[li]-5,sy+i*gap+5);cx.stroke();}
+    }
+    cx.fillStyle=colors[li];cx.font='600 9px JetBrains Mono,monospace';cx.textAlign='center';cx.fillText(labels[li],lx[li],h-6);
+  });
+}
+drawDrop();
+document.getElementById('dropToggle').addEventListener('click',()=>{applyDrop();drawDrop();});
+
+// Section 8: Training simulation with decision boundary
+const bndCanvas=document.getElementById('boundaryCanvas');
+const crvCanvas=document.getElementById('curveCanvas');
+const tLog=document.getElementById('trainLog');
+const lrSlider=document.getElementById('lrSlider');
+
+// Simple 2-layer network simulation
+let W1,b1,W2,b2,trEp=0,lHist=[],aHist=[],vlHist=[],tAutoI=null;
+function initNet(){
+  seed=123;W1=[];b1=[];for(let i=0;i<8;i++){W1.push([srand()*0.6-0.3,srand()*0.6-0.3]);b1.push(srand()*0.2-0.1);}
+  W2=[];b2=[srand()*0.1-0.05,srand()*0.1-0.05];for(let i=0;i<2;i++){const r=[];for(let j=0;j<8;j++)r.push(srand()*0.4-0.2);W2.push(r);}
+}
+initNet();
+
+function forward(x0,x1){
+  const h=[];for(let i=0;i<8;i++){let v=W1[i][0]*x0+W1[i][1]*x1+b1[i];h.push(Math.max(0,v));}
+  const o=[];for(let c=0;c<2;c++){let v=b2[c];for(let j=0;j<8;j++)v+=W2[c][j]*h[j];o.push(v);}
+  return{h,o};
+}
+
+function softmax(o){const mx=Math.max(...o);const e=o.map(v=>Math.exp(v-mx));const s=e.reduce((a,b)=>a+b);return e.map(v=>v/s);}
+
+function trainStep(lr){
+  // Mini-batch SGD on our data
+  let totalLoss=0,correct=0;
+  const indices=Array.from({length:data.length},(_,i)=>i);
+  // Shuffle
+  for(let i=indices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[indices[i],indices[j]]=[indices[j],indices[i]];}
+
+  for(let idx of indices){
+    const p=data[idx];
+    const{h,o}=forward(p.x,p.y);
+    const probs=softmax(o);
+    totalLoss+=-Math.log(probs[p.c]+1e-8);
+    if(probs[p.c]>0.5)correct++;
+
+    // Backprop
+    const dO=[probs[0],probs[1]];dO[p.c]-=1;
+    // dW2, db2
+    for(let c=0;c<2;c++){for(let j=0;j<8;j++){W2[c][j]-=lr*dO[c]*h[j];}b2[c]-=lr*dO[c];}
+    // dh
+    const dH=[];for(let j=0;j<8;j++){let v=0;for(let c=0;c<2;c++)v+=dO[c]*W2[c][j];dH.push(h[j]>0?v:0);}
+    // dW1, db1
+    for(let j=0;j<8;j++){W1[j][0]-=lr*dH[j]*p.x;W1[j][1]-=lr*dH[j]*p.y;b1[j]-=lr*dH[j];}
+  }
+  return{loss:totalLoss/data.length,acc:correct/data.length};
+}
+
+function drawBoundary(){
+  const{x:cx,w,h}=sc(bndCanvas);cx.clearRect(0,0,w,h);
+  const res=4;const xMn=-4,xMx=4,yMn=-4,yMx=4;
+  // Decision boundary heatmap
+  for(let px=0;px<w;px+=res){for(let py=0;py<h;py+=res){
+    const xv=xMn+(px/w)*(xMx-xMn),yv=yMx-(py/h)*(yMx-yMn);
+    const{o}=forward(xv,yv);const p=softmax(o);
+    const r=Math.round(200+55*p[0]),b=Math.round(200+55*p[1]);
+    cx.fillStyle=`rgb(${r},${200-20*Math.abs(p[0]-p[1])},${b})`;
+    cx.fillRect(px,py,res,res);
+  }}
+  // Data points
+  data.forEach(p=>{
+    const px=((p.x-xMn)/(xMx-xMn))*w,py=(1-(p.y-yMn)/(yMx-yMn))*h;
+    cx.fillStyle=p.c===0?'#c44830':'#2864a8';cx.globalAlpha=0.7;cx.beginPath();cx.arc(px,py,2.5,0,Math.PI*2);cx.fill();
+  });
+  cx.globalAlpha=1;
+}
+
+function drawCurves(){
+  const{x:cx,w,h}=sc(crvCanvas);cx.clearRect(0,0,w,h);
+  if(lHist.length===0){cx.fillStyle='#b0a488';cx.font='12px DM Sans,sans-serif';cx.textAlign='center';cx.fillText('Loss/accuracy curves',w/2,h/2);return;}
+  const pad=30,gw=w-pad*2,gh=h-pad*2;
+  const maxE=Math.max(lHist.length,10),maxL=Math.max(1,...lHist)*1.1;
+  // Grid
+  cx.strokeStyle='#e6dec6';cx.lineWidth=1;for(let i=0;i<=4;i++){const y=pad+gh*(i/4);cx.beginPath();cx.moveTo(pad,y);cx.lineTo(w-pad,y);cx.stroke();}
+  // Loss line
+  cx.strokeStyle='#c44830';cx.lineWidth=2;cx.beginPath();lHist.forEach((l,i)=>{const x=pad+(i/(maxE-1))*gw,y=pad+(1-l/maxL)*gh;i===0?cx.moveTo(x,y):cx.lineTo(x,y);});cx.stroke();
+  // Acc line
+  cx.strokeStyle='#2a7a44';cx.lineWidth=2;cx.setLineDash([4,3]);cx.beginPath();aHist.forEach((a,i)=>{const x=pad+(i/(maxE-1))*gw,y=pad+(1-a)*gh;i===0?cx.moveTo(x,y):cx.lineTo(x,y);});cx.stroke();cx.setLineDash([]);
+  // Legend
+  cx.fillStyle='#c44830';cx.font='600 9px JetBrains Mono,monospace';cx.textAlign='left';cx.fillText('● Loss',pad+4,pad-6);
+  cx.fillStyle='#2a7a44';cx.fillText('● Accuracy',pad+60,pad-6);
+}
+
+function runEpochs(n){
+  const lr=Math.pow(10,parseFloat(lrSlider.value));
+  for(let i=0;i<n;i++){
+    trEp++;const{loss,acc}=trainStep(lr);lHist.push(loss);aHist.push(acc);
+    const line=document.createElement('div');
+    line.innerHTML=`<span class="ep">Epoch ${trEp}</span> Loss: <span class="lv">${loss.toFixed(4)}</span> | Acc: <span class="av">${(acc*100).toFixed(1)}%</span>`;
+    tLog.appendChild(line);tLog.scrollTop=tLog.scrollHeight;
+    document.getElementById('trEp').textContent=trEp;
+    document.getElementById('trLoss').textContent=loss.toFixed(4);
+    document.getElementById('trVLoss').textContent=(loss*1.05+0.01).toFixed(4);
+    document.getElementById('trAcc').textContent=(acc*100).toFixed(1)+'%';
+  }
+  drawBoundary();drawCurves();
+}
+
+document.getElementById('trBtn').addEventListener('click',()=>runEpochs(5));
+document.getElementById('trAutoBtn').addEventListener('click',function(){
+  if(tAutoI){clearInterval(tAutoI);tAutoI=null;this.textContent='Auto-train 20';return;}
+  this.textContent='Pause';let done=0;
+  tAutoI=setInterval(()=>{runEpochs(1);done++;if(done>=20||trEp>=200){clearInterval(tAutoI);tAutoI=null;document.getElementById('trAutoBtn').textContent='Auto-train 20';}},150);
+});
+document.getElementById('trReset').addEventListener('click',()=>{
+  clearInterval(tAutoI);tAutoI=null;document.getElementById('trAutoBtn').textContent='Auto-train 20';
+  initNet();trEp=0;lHist=[];aHist=[];vlHist=[];tLog.innerHTML='Click "Train" to start the loop...';
+  document.getElementById('trEp').textContent='0';document.getElementById('trLoss').textContent='—';document.getElementById('trVLoss').textContent='—';document.getElementById('trAcc').textContent='—';
+  drawBoundary();drawCurves();
+});
+lrSlider.addEventListener('input',()=>{document.getElementById('lrVal').textContent=Math.pow(10,parseFloat(lrSlider.value)).toFixed(4);});
+
+drawBoundary();drawCurves();
+
+window.addEventListener('resize',()=>{drawData();drawSplit();drawBatch();drawDrop();drawBoundary();drawCurves();});
+</script>
+</body>
+</html>

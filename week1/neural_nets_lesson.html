@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 3: Building Neural Networks — Interactive Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#111318;--surface:#181b22;--surface2:#1f222c;--surface3:#272b38;
+  --border:#2c3040;--border2:#383e52;
+  --text:#dddbe8;--dim:#7e7c94;--light:#555370;
+  --red:#f06449;--red-bg:rgba(240,100,73,.1);--red-br:rgba(240,100,73,.25);
+  --blue:#49a0f0;--blue-bg:rgba(73,160,240,.1);--blue-br:rgba(73,160,240,.25);
+  --green:#49d692;--green-bg:rgba(73,214,146,.1);--green-br:rgba(73,214,146,.25);
+  --gold:#f0c849;--gold-bg:rgba(240,200,73,.1);--gold-br:rgba(240,200,73,.25);
+  --purple:#a06af0;--purple-bg:rgba(160,106,240,.1);--purple-br:rgba(160,106,240,.25);
+  --orange:#f09a49;--teal:#49d6d6;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.75;}
+.page{max-width:850px;margin:0 auto;padding:36px 20px 120px;}
+
+/* Hero */
+.hero{padding:44px 0 40px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.67rem;color:var(--teal);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px;}
+h1{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;line-height:1.15;margin-bottom:8px;
+  background:linear-gradient(135deg,var(--text),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{color:var(--dim);font-size:.95rem;max-width:580px;}
+
+/* Progress */
+.prog{position:sticky;top:0;z-index:99;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 0;}
+.prog-inner{max-width:850px;margin:0 auto;padding:0 20px;display:flex;gap:3px;}
+.pdot{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background .3s;}
+.pdot.done{background:var(--green);} .pdot.cur{background:var(--teal);}
+
+/* Section */
+.sec{padding:44px 0;border-bottom:1px solid var(--border);animation:fu .4s ease both;}
+.sec:last-child{border-bottom:none;}
+.sn{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--light);letter-spacing:1.5px;margin-bottom:4px;}
+h2{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:600;margin-bottom:14px;}
+h3{font-size:1rem;font-weight:600;margin:22px 0 8px;color:var(--text);}
+.d{color:var(--dim);font-size:.91rem;margin-bottom:16px;max-width:680px;} .d strong{color:var(--text);}
+
+/* Code */
+.code{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:.79rem;line-height:1.85;overflow-x:auto;margin:12px 0;position:relative;}
+.cm{color:var(--light);} .kw{color:#c9a0ff;} .fn{color:#7bc8f6;} .st{color:#a8d8a0;} .num{color:#ffd580;} .hl{color:#ff8080;font-weight:600;}
+.code-lbl{position:absolute;top:7px;right:11px;font-size:.58rem;color:var(--light);letter-spacing:1px;text-transform:uppercase;}
+
+/* Boxes */
+.box{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:.88rem;border-left:3px solid;}
+.box-a{background:var(--gold-bg);border-color:var(--gold);} .box-a strong{color:var(--gold);}
+.box-k{background:var(--red-bg);border-color:var(--red);} .box-k strong{color:var(--red);}
+.box-t{background:var(--green-bg);border-color:var(--green);} .box-t strong{color:var(--green);}
+.box-i{background:var(--blue-bg);border-color:var(--blue);} .box-i strong{color:var(--blue);}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:14px 0;overflow:hidden;}
+
+/* Canvas */
+canvas{display:block;width:100%;border-radius:8px;}
+
+/* Interactive NN */
+.nn-container{position:relative;}
+
+/* Chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.chip{flex:1;min-width:100px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;}
+.chip .cl{font-family:'JetBrains Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.7px;color:var(--light);margin-bottom:1px;}
+.chip .cv{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:600;}
+.cr{color:var(--red);}.cb{color:var(--blue);}.cg{color:var(--green);}.cy{color:var(--gold);}.cp{color:var(--purple);}
+
+/* Buttons */
+.btn{font-family:'JetBrains Mono',monospace;font-size:.74rem;padding:8px 16px;border-radius:7px;cursor:pointer;transition:all .15s;border:1.5px solid;}
+.btn-f{background:var(--teal);color:var(--bg);border-color:var(--teal);font-weight:600;} .btn-f:hover{opacity:.85;}
+.btn-o{background:var(--surface);color:var(--text);border-color:var(--border);} .btn-o:hover{border-color:var(--text);}
+.btn-r{background:var(--red-bg);color:var(--red);border-color:var(--red-br);} .btn-r:hover{background:rgba(240,100,73,.18);}
+.br{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+
+/* Flow */
+.flow{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:14px 0;}
+.fnode{padding:10px 14px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:600;text-align:center;border:2px solid;min-width:60px;}
+.farr{color:var(--light);font-size:1.1rem;}
+.fb{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);}
+.fp{border-color:var(--purple);color:var(--purple);background:var(--purple-bg);}
+.fr{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+.fg{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.fy{border-color:var(--gold);color:var(--gold);background:var(--gold-bg);}
+.ft{border-color:var(--teal);color:var(--teal);background:rgba(73,214,214,.1);}
+
+/* Ctrl */
+.ctrl{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border-radius:8px;margin:10px 0;}
+.ctrl-l{font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--dim);white-space:nowrap;}
+.ctrl-v{font-family:'JetBrains Mono',monospace;font-size:.86rem;font-weight:600;min-width:50px;text-align:right;}
+input[type="range"]{-webkit-appearance:none;flex:1;height:4px;border-radius:2px;background:var(--border);outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:grab;box-shadow:0 0 8px rgba(73,214,214,.3);}
+
+/* Quiz */
+.quiz{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px;margin:18px 0;}
+.qq{font-weight:600;margin-bottom:10px;font-size:.9rem;}
+.qopts{display:flex;flex-direction:column;gap:5px;}
+.qo{padding:9px 13px;border:1.5px solid var(--border);border-radius:7px;cursor:pointer;font-size:.86rem;transition:all .15s;background:var(--surface);}
+.qo:hover{border-color:var(--dim);}
+.qo.ok{border-color:var(--green);background:var(--green-bg);color:var(--green);}
+.qo.no{border-color:var(--red);background:var(--red-bg);color:var(--red);}
+.qo.off{pointer-events:none;opacity:.6;}
+.qfb{margin-top:8px;font-size:.83rem;padding:8px 12px;border-radius:7px;display:none;}
+
+/* Activation chart */
+.act-tabs{display:flex;gap:4px;margin-bottom:12px;}
+.act-tab{font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--dim);cursor:pointer;transition:all .15s;}
+.act-tab:hover,.act-tab.active{border-color:var(--teal);color:var(--teal);background:rgba(73,214,214,.08);}
+
+/* Training animation */
+.train-log{max-height:200px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:.76rem;line-height:1.8;padding:10px 14px;background:var(--surface2);border-radius:8px;margin:10px 0;color:var(--dim);}
+.train-log .epoch{color:var(--teal);} .train-log .loss-val{color:var(--red);} .train-log .acc-val{color:var(--green);}
+
+@keyframes fu{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:600px){h1{font-size:1.8rem;}.page{padding:24px 14px 80px;}.card{padding:16px 12px;}}
+</style>
+</head>
+<body>
+
+<div class="prog"><div class="prog-inner" id="pbar"></div></div>
+
+<div class="page">
+
+<div class="hero">
+  <div class="tag">Lesson 3 — Complete Walkthrough</div>
+  <h1>Building Neural Networks</h1>
+  <p>From individual layers to complete models — every concept explained with visuals, interactive demos, and quizzes.</p>
+</div>
+
+<!-- ===== 1: WHAT IS A NEURAL NETWORK ===== -->
+<div class="sec" data-s="1" id="s1">
+  <div class="sn">PART 1 OF 9</div>
+  <h2>What Is a Neural Network, Really?</h2>
+
+  <p class="d">Strip away the hype and a neural network is just a <strong>function</strong>. It takes numbers in and spits numbers out. The magic is that it has thousands of adjustable knobs (weights) that let it learn <em>which</em> function to be.</p>
+
+  <div class="box box-a">
+    <strong>💡 Analogy:</strong> Think of it like a factory assembly line. Raw materials (input) go in one end, pass through several processing stations (layers), and a finished product (output) comes out the other end. Each station transforms the product in some way.
+  </div>
+
+  <p class="d">Every layer does the same basic thing:</p>
+
+  <div class="flow">
+    <div class="fnode fb">Input</div>
+    <div class="farr">→</div>
+    <div class="fnode fp">× Weights + Bias</div>
+    <div class="farr">→</div>
+    <div class="fnode fy">Activation</div>
+    <div class="farr">→</div>
+    <div class="fnode fr">Output</div>
+  </div>
+
+  <p class="d">That's it. Stack several of these and you have a neural network. Let's look at each piece.</p>
+</div>
+
+<!-- ===== 2: LINEAR LAYERS ===== -->
+<div class="sec" data-s="2" id="s2">
+  <div class="sn">PART 2 OF 9</div>
+  <h2>Linear Layers: The Core Building Block</h2>
+
+  <p class="d">A linear layer computes <strong>y = Wx + b</strong>. That's a matrix multiplication (W × x) plus a bias (b). Every neuron in the layer takes all inputs, multiplies each by a weight, adds them up, and adds a bias.</p>
+
+  <div class="code">
+<span class="code-lbl">Python</span>
+<span class="cm"># Create a layer: 4 inputs → 3 outputs</span>
+layer = nn.<span class="fn">Linear</span>(<span class="num">4</span>, <span class="num">3</span>)
+
+<span class="cm"># It automatically creates:</span>
+<span class="cm">#   layer.weight → shape (3, 4) — 12 learnable weights</span>
+<span class="cm">#   layer.bias   → shape (3,)  — 3 learnable biases</span>
+
+x = torch.randn(<span class="num">2</span>, <span class="num">4</span>)   <span class="cm"># 2 samples, 4 features each</span>
+y = layer(x)              <span class="cm"># output shape: (2, 3)</span>
+  </div>
+
+  <p class="d"><strong>Drag the sliders</strong> below to change input values and watch how the layer transforms them:</p>
+
+  <div class="card">
+    <canvas id="linearCanvas" height="280"></canvas>
+    <div class="ctrl">
+      <span class="ctrl-l">input x₁</span>
+      <input type="range" id="x1Slider" min="-3" max="3" step="0.1" value="1">
+      <span class="ctrl-v cb" id="x1V">1.0</span>
+    </div>
+    <div class="ctrl">
+      <span class="ctrl-l">input x₂</span>
+      <input type="range" id="x2Slider" min="-3" max="3" step="0.1" value="-0.5">
+      <span class="ctrl-v cb" id="x2V">-0.5</span>
+    </div>
+  </div>
+
+  <div class="box box-i">
+    <strong>📖 Key insight:</strong> nn.Linear(4, 3) means "4 numbers go in, 3 numbers come out." The layer has 4×3 = 12 weights + 3 biases = <strong>15 learnable parameters</strong>. PyTorch initializes them randomly, then training adjusts them.
+  </div>
+
+  <div class="quiz" id="q1">
+    <div class="qq">nn.Linear(10, 5) has how many total parameters?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="false" onclick="qck('q1',this)">50 (10 × 5 weights only)</div>
+      <div class="qo" data-ok="true" onclick="qck('q1',this)">55 (10 × 5 weights + 5 biases)</div>
+      <div class="qo" data-ok="false" onclick="qck('q1',this)">15 (10 + 5)</div>
+    </div>
+    <div class="qfb" id="q1-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 3: ACTIVATIONS ===== -->
+<div class="sec" data-s="3" id="s3">
+  <div class="sn">PART 3 OF 9</div>
+  <h2>Activation Functions: Adding the "Brain"</h2>
+
+  <p class="d">Without activations, stacking linear layers is pointless — two linear operations in a row just collapse into one linear operation. <strong>Activations add curves and bends</strong> so the network can learn complex patterns.</p>
+
+  <div class="box box-a">
+    <strong>💡 Analogy:</strong> Linear layers are like drawing with a ruler — you can only make straight lines. Activations bend the ruler, letting you trace curves. Stack enough bent lines and you can approximate any shape.
+  </div>
+
+  <p class="d"><strong>Click each tab</strong> to see the 4 most important activation functions:</p>
+
+  <div class="card">
+    <div class="act-tabs" id="actTabs">
+      <div class="act-tab active" data-act="relu" onclick="setAct('relu',this)">ReLU</div>
+      <div class="act-tab" data-act="sigmoid" onclick="setAct('sigmoid',this)">Sigmoid</div>
+      <div class="act-tab" data-act="tanh" onclick="setAct('tanh',this)">Tanh</div>
+      <div class="act-tab" data-act="softmax" onclick="setAct('softmax',this)">Softmax</div>
+    </div>
+    <canvas id="actCanvas" height="240"></canvas>
+    <div id="actDesc" class="d" style="margin-top:10px;font-size:.85rem;"></div>
+  </div>
+
+  <div class="code">
+<span class="code-lbl">Python</span>
+<span class="cm"># Most common activations</span>
+F.<span class="fn">relu</span>(x)       <span class="cm"># max(0, x) — default choice for hidden layers</span>
+torch.<span class="fn">sigmoid</span>(x) <span class="cm"># 1/(1+e⁻ˣ) — squashes to 0-1, good for probabilities</span>
+torch.<span class="fn">tanh</span>(x)    <span class="cm"># squashes to -1 to 1</span>
+F.<span class="fn">softmax</span>(x)    <span class="cm"># converts scores to probabilities that sum to 1</span>
+  </div>
+
+  <div class="quiz" id="q2">
+    <div class="qq">You're building a hidden layer. Which activation do you use?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="true" onclick="qck('q2',this)">ReLU — the default choice for hidden layers</div>
+      <div class="qo" data-ok="false" onclick="qck('q2',this)">Sigmoid — best for hidden layers</div>
+      <div class="qo" data-ok="false" onclick="qck('q2',this)">Softmax — always use softmax</div>
+    </div>
+    <div class="qfb" id="q2-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 4: nn.Module ===== -->
+<div class="sec" data-s="4" id="s4">
+  <div class="sn">PART 4 OF 9</div>
+  <h2>nn.Module: The Blueprint for Every Model</h2>
+
+  <p class="d">Every neural network in PyTorch is a class that inherits from <strong>nn.Module</strong>. The pattern is always the same — define layers in __init__, define data flow in forward().</p>
+
+  <div class="code">
+<span class="code-lbl">The Pattern</span>
+<span class="kw">class</span> <span class="hl">MyNetwork</span>(nn.Module):
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        <span class="fn">super</span>().__init__()            <span class="cm"># ← Always call this first!</span>
+        self.layer1 = nn.Linear(<span class="num">10</span>, <span class="num">5</span>)  <span class="cm"># Define layers here</span>
+        self.layer2 = nn.Linear(<span class="num">5</span>, <span class="num">2</span>)
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):           <span class="cm"># Define data flow here</span>
+        x = F.relu(self.layer1(x))   <span class="cm"># Layer 1 + activation</span>
+        x = self.layer2(x)           <span class="cm"># Layer 2 (output)</span>
+        <span class="kw">return</span> x
+  </div>
+
+  <div class="box box-t">
+    <strong>✅ Two rules to remember:</strong> (1) Put your layers in __init__ so PyTorch knows about them. (2) Put the data flow in forward() — this gets called automatically when you do model(x).
+  </div>
+
+  <p class="d">Here's what the network from the code looks like visually. <strong>Hover over each layer</strong> to see details:</p>
+
+  <div class="card">
+    <canvas id="nnCanvas" height="300"></canvas>
+    <div id="nnInfo" style="font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--dim);min-height:20px;margin-top:8px;"></div>
+  </div>
+
+  <div class="box box-a">
+    <strong>💡 Think of it this way:</strong> __init__ is your shopping list (which layers do I need?). forward() is your recipe (in what order do I use them?). PyTorch handles everything else — tracking parameters, computing gradients, etc.
+  </div>
+</div>
+
+<!-- ===== 5: nn.Sequential ===== -->
+<div class="sec" data-s="5" id="s5">
+  <div class="sn">PART 5 OF 9</div>
+  <h2>nn.Sequential: The Quick Way</h2>
+
+  <p class="d">For simple networks where data flows straight through (no branching), <strong>nn.Sequential</strong> lets you skip writing a class entirely:</p>
+
+  <div class="code">
+<span class="code-lbl">Sequential</span>
+model = nn.<span class="fn">Sequential</span>(
+    nn.Linear(<span class="num">10</span>, <span class="num">32</span>),    <span class="cm"># Layer 1: 10 → 32</span>
+    nn.ReLU(),              <span class="cm"># Activation</span>
+    nn.Linear(<span class="num">32</span>, <span class="num">16</span>),    <span class="cm"># Layer 2: 32 → 16</span>
+    nn.ReLU(),              <span class="cm"># Activation</span>
+    nn.Linear(<span class="num">16</span>, <span class="num">2</span>),     <span class="cm"># Output: 16 → 2</span>
+)
+  </div>
+
+  <p class="d">It's equivalent to writing a full nn.Module class — just shorter. Data passes through each layer in order, top to bottom.</p>
+
+  <div class="flow">
+    <div class="fnode fb">Input (10)</div>
+    <div class="farr">→</div>
+    <div class="fnode fp">Linear+ReLU (32)</div>
+    <div class="farr">→</div>
+    <div class="fnode fp">Linear+ReLU (16)</div>
+    <div class="farr">→</div>
+    <div class="fnode fr">Output (2)</div>
+  </div>
+
+  <div class="box box-i">
+    <strong>📖 When to use which?</strong> Use Sequential for simple stacks. Use nn.Module when you need skip connections, multiple inputs/outputs, conditional logic, or anything non-linear in the architecture (not the activation — the data flow itself).
+  </div>
+</div>
+
+<!-- ===== 6: LOSS FUNCTIONS ===== -->
+<div class="sec" data-s="6" id="s6">
+  <div class="sn">PART 6 OF 9</div>
+  <h2>Loss Functions: Measuring "How Wrong"</h2>
+
+  <p class="d">The loss function takes the model's prediction and the correct answer, and returns <strong>a single number</strong> measuring how wrong the model is. Lower = better.</p>
+
+  <h3>MSE Loss — for regression (predicting numbers)</h3>
+  <div class="code">
+<span class="cm"># "How far off are my predictions?"</span>
+predictions = torch.tensor([<span class="num">2.5</span>, <span class="num">0.0</span>, <span class="num">2.0</span>])
+targets     = torch.tensor([<span class="num">3.0</span>, <span class="num">0.0</span>, <span class="num">2.0</span>])
+loss = nn.<span class="fn">MSELoss</span>()(predictions, targets)
+<span class="cm"># loss = mean of (2.5-3)² + (0-0)² + (2-2)² = 0.0833</span>
+  </div>
+
+  <h3>CrossEntropy Loss — for classification (choosing categories)</h3>
+  <div class="code">
+<span class="cm"># Model outputs raw scores (logits) for each class</span>
+logits = torch.tensor([[<span class="num">2.0</span>, <span class="num">0.5</span>, <span class="num">0.3</span>]])  <span class="cm"># model thinks class 0 is most likely</span>
+label  = torch.tensor([<span class="num">0</span>])                    <span class="cm"># correct answer IS class 0</span>
+loss = nn.<span class="fn">CrossEntropyLoss</span>()(logits, label)
+<span class="cm"># low loss because model got it right!</span>
+  </div>
+
+  <p class="d"><strong>Try it:</strong> adjust the model's score for each class and see how the loss changes:</p>
+
+  <div class="card">
+    <canvas id="lossCanvas" height="200"></canvas>
+    <div class="ctrl">
+      <span class="ctrl-l">Score for class 0 (correct)</span>
+      <input type="range" id="ls0" min="-3" max="5" step="0.1" value="2">
+      <span class="ctrl-v cg" id="ls0v">2.0</span>
+    </div>
+    <div class="ctrl">
+      <span class="ctrl-l">Score for class 1 (wrong)</span>
+      <input type="range" id="ls1" min="-3" max="5" step="0.1" value="0.5">
+      <span class="ctrl-v cr" id="ls1v">0.5</span>
+    </div>
+    <div class="chips">
+      <div class="chip"><div class="cl">Loss</div><div class="cv cr" id="lossVal">0.513</div></div>
+      <div class="chip"><div class="cl">Confidence (class 0)</div><div class="cv cg" id="confVal">82%</div></div>
+    </div>
+  </div>
+
+  <div class="box box-k">
+    <strong>⚡ Key rule:</strong> Don't put softmax before CrossEntropyLoss! It includes softmax internally. If you add sigmoid/softmax yourself, you'll compute it twice and get wrong gradients.
+  </div>
+
+  <div class="quiz" id="q3">
+    <div class="qq">You're predicting house prices (a continuous number). Which loss?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="true" onclick="qck('q3',this)">MSELoss — for regression (predicting numbers)</div>
+      <div class="qo" data-ok="false" onclick="qck('q3',this)">CrossEntropyLoss — for classification</div>
+    </div>
+    <div class="qfb" id="q3-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 7: OPTIMIZERS ===== -->
+<div class="sec" data-s="7" id="s7">
+  <div class="sn">PART 7 OF 9</div>
+  <h2>Optimizers: Turning Gradients into Learning</h2>
+
+  <p class="d">Once you have gradients (from .backward()), the <strong>optimizer</strong> uses them to update the weights. It's the "adjust knobs" step.</p>
+
+  <div class="code">
+<span class="cm"># Adam is the default choice — it "just works" in most cases</span>
+optimizer = torch.optim.<span class="fn">Adam</span>(model.parameters(), lr=<span class="num">0.001</span>)
+  </div>
+
+  <p class="d">The simplest optimizer is plain gradient descent: <strong>weight = weight − lr × gradient</strong>. Adam is smarter — it adapts the learning rate per-parameter and uses momentum (like a ball rolling downhill that builds up speed).</p>
+
+  <div class="box box-a">
+    <strong>💡 Analogy:</strong> Plain gradient descent is like walking downhill. Adam is like riding a bike downhill — it gains momentum on consistent slopes and automatically brakes on rough terrain. That's why it converges faster in practice.
+  </div>
+
+  <div class="flow">
+    <div class="fnode fg">Gradients</div>
+    <div class="farr">→</div>
+    <div class="fnode fy">Optimizer (Adam)</div>
+    <div class="farr">→</div>
+    <div class="fnode ft">Updated Weights</div>
+  </div>
+
+  <div class="box box-t">
+    <strong>✅ Practical tip:</strong> Start with Adam and lr=0.001. It works for ~90% of cases. Only switch to something fancier (SGD with scheduler, AdamW, etc.) if you need to squeeze out more performance.
+  </div>
+</div>
+
+<!-- ===== 8: THE TRAINING LOOP ===== -->
+<div class="sec" data-s="8" id="s8">
+  <div class="sn">PART 8 OF 9</div>
+  <h2>The Training Loop: Everything Together</h2>
+
+  <p class="d">This is the most important pattern in all of deep learning. <strong>Every training loop ever written</strong> follows these 5 steps:</p>
+
+  <div class="card" style="padding:20px;">
+    <div class="flow">
+      <div class="fnode fy" style="font-size:.72rem">① zero_grad</div>
+      <div class="farr">→</div>
+      <div class="fnode fb" style="font-size:.72rem">② forward</div>
+      <div class="farr">→</div>
+      <div class="fnode fr" style="font-size:.72rem">③ loss</div>
+      <div class="farr">→</div>
+      <div class="fnode fg" style="font-size:.72rem">④ backward</div>
+      <div class="farr">→</div>
+      <div class="fnode ft" style="font-size:.72rem">⑤ step</div>
+    </div>
+  </div>
+
+  <div class="code">
+<span class="code-lbl">The 5 Sacred Lines</span>
+<span class="kw">for</span> epoch <span class="kw">in</span> range(epochs):
+    optimizer.<span class="fn">zero_grad</span>()           <span class="cm"># ① Clear old gradients</span>
+    output = model(x)               <span class="cm"># ② Forward pass — make prediction</span>
+    loss = criterion(output, y)     <span class="cm"># ③ Compute loss — how wrong?</span>
+    loss.<span class="fn">backward</span>()                  <span class="cm"># ④ Backward pass — get gradients</span>
+    optimizer.<span class="fn">step</span>()                 <span class="cm"># ⑤ Update weights — learn!</span>
+  </div>
+
+  <p class="d"><strong>Watch a network learn in real time.</strong> It's trying to fit a simple pattern — click "Train" and watch the loss drop:</p>
+
+  <div class="card">
+    <canvas id="trainCanvas" height="220"></canvas>
+    <div class="train-log" id="trainLog">Click "Train" to start...</div>
+    <div class="br">
+      <button class="btn btn-f" id="trainBtn">▶ Train (10 epochs)</button>
+      <button class="btn btn-o" id="trainAutoBtn">Auto-train 100</button>
+      <button class="btn btn-r" id="trainResetBtn">Reset</button>
+    </div>
+    <div class="chips">
+      <div class="chip"><div class="cl">Epoch</div><div class="cv" id="trEpoch">0</div></div>
+      <div class="chip"><div class="cl">Loss</div><div class="cv cr" id="trLoss">—</div></div>
+      <div class="chip"><div class="cl">Accuracy</div><div class="cv cg" id="trAcc">—</div></div>
+    </div>
+  </div>
+
+  <div class="box box-k">
+    <strong>⚡ Memorize this order:</strong> zero → forward → loss → backward → step. Swap any two and your training breaks. This is the heartbeat of every neural network.
+  </div>
+
+  <div class="quiz" id="q4">
+    <div class="qq">What happens if you forget optimizer.zero_grad()?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="false" onclick="qck('q4',this)">Nothing — it's optional</div>
+      <div class="qo" data-ok="true" onclick="qck('q4',this)">Gradients accumulate, weights update incorrectly, training goes haywire</div>
+      <div class="qo" data-ok="false" onclick="qck('q4',this)">The model resets to random weights</div>
+    </div>
+    <div class="qfb" id="q4-fb"></div>
+  </div>
+</div>
+
+<!-- ===== 9: SUMMARY ===== -->
+<div class="sec" data-s="9" id="s9">
+  <div class="sn">PART 9 OF 9</div>
+  <h2>The Complete Picture</h2>
+
+  <p class="d">Here's everything from this lesson in one view. This is the <strong>entire recipe</strong> for building and training any neural network:</p>
+
+  <div class="card" style="padding:20px;">
+    <h3 style="margin-top:0;">1. Build the model</h3>
+    <div class="flow" style="padding:8px 0;">
+      <div class="fnode fp" style="font-size:.7rem">nn.Linear</div>
+      <div class="farr">+</div>
+      <div class="fnode fy" style="font-size:.7rem">Activations</div>
+      <div class="farr">=</div>
+      <div class="fnode ft" style="font-size:.7rem">nn.Module</div>
+    </div>
+
+    <h3>2. Choose loss + optimizer</h3>
+    <div class="flow" style="padding:8px 0;">
+      <div class="fnode fr" style="font-size:.7rem">MSE / CrossEntropy</div>
+      <div class="farr">+</div>
+      <div class="fnode fg" style="font-size:.7rem">Adam(lr=0.001)</div>
+    </div>
+
+    <h3>3. Train (repeat 1000× times)</h3>
+    <div class="flow" style="padding:8px 0;">
+      <div class="fnode fy" style="font-size:.68rem">zero_grad</div>
+      <div class="farr">→</div>
+      <div class="fnode fb" style="font-size:.68rem">forward</div>
+      <div class="farr">→</div>
+      <div class="fnode fr" style="font-size:.68rem">loss</div>
+      <div class="farr">→</div>
+      <div class="fnode fg" style="font-size:.68rem">backward</div>
+      <div class="farr">→</div>
+      <div class="fnode ft" style="font-size:.68rem">step</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:16px 0;">
+    <div class="chip"><div class="cl">nn.Linear(in, out)</div><div class="cv" style="font-size:.75rem;color:var(--blue)">y = Wx + b</div></div>
+    <div class="chip"><div class="cl">Activations</div><div class="cv" style="font-size:.75rem;color:var(--gold)">ReLU for hidden layers</div></div>
+    <div class="chip"><div class="cl">nn.Module</div><div class="cv" style="font-size:.75rem;color:var(--purple)">__init__ + forward()</div></div>
+    <div class="chip"><div class="cl">Loss</div><div class="cv" style="font-size:.75rem;color:var(--red)">MSE or CrossEntropy</div></div>
+    <div class="chip"><div class="cl">Optimizer</div><div class="cv" style="font-size:.75rem;color:var(--green)">Adam, lr=0.001</div></div>
+    <div class="chip"><div class="cl">Loop</div><div class="cv" style="font-size:.75rem;color:var(--teal)">zero→fwd→loss→bwd→step</div></div>
+  </div>
+
+  <div class="box box-a" style="margin-top:20px;">
+    <strong>🎯 What's next?</strong> In Lesson 4, you'll put this into a complete training loop with real data, batching, epochs, and evaluation. But the core is exactly what you learned here — everything else is just plumbing around these 5 lines.
+  </div>
+
+  <div class="quiz" id="q5">
+    <div class="qq">Final quiz: You're building a classifier with 8 inputs and 3 output classes. Which setup is correct?</div>
+    <div class="qopts">
+      <div class="qo" data-ok="false" onclick="qck('q5',this)">nn.Linear(3, 8) + MSELoss</div>
+      <div class="qo" data-ok="true" onclick="qck('q5',this)">nn.Linear(8, 3) + CrossEntropyLoss</div>
+      <div class="qo" data-ok="false" onclick="qck('q5',this)">nn.Linear(8, 3) + Softmax + CrossEntropyLoss</div>
+    </div>
+    <div class="qfb" id="q5-fb"></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ====== UTILS ======
+function sc(c){const d=window.devicePixelRatio||1,r=c.getBoundingClientRect();c.width=r.width*d;c.height=r.height*d;const x=c.getContext('2d');x.scale(d,d);return{x,w:r.width,h:r.height};}
+
+// ====== PROGRESS ======
+const secs=document.querySelectorAll('.sec');
+const pb=document.getElementById('pbar');
+secs.forEach(()=>{const d=document.createElement('div');d.className='pdot';pb.appendChild(d);});
+const pds=pb.querySelectorAll('.pdot');
+function updProg(){const sy=window.scrollY+window.innerHeight*.4;let c=0;secs.forEach((s,i)=>{if(s.offsetTop<=sy)c=i;});pds.forEach((d,i)=>{d.className='pdot'+(i<c?' done':i===c?' cur':'');});}
+window.addEventListener('scroll',updProg);updProg();
+
+// ====== QUIZ ======
+function qck(id,el){const os=document.querySelectorAll(`#${id} .qo`);const fb=document.getElementById(id+'-fb');const ok=el.dataset.ok==='true';
+os.forEach(o=>o.classList.add('off'));
+if(ok){el.classList.add('ok');fb.style.display='block';fb.style.background='var(--green-bg)';fb.style.color='var(--green)';fb.textContent='✅ Correct!';}
+else{el.classList.add('no');fb.style.display='block';fb.style.background='var(--red-bg)';fb.style.color='var(--red)';
+document.querySelector(`#${id} .qo[data-ok="true"]`).classList.add('ok');fb.textContent='Not quite — correct answer highlighted.';}}
+
+// ====== SECTION 2: Linear layer visual ======
+const lc=document.getElementById('linearCanvas');
+// Fixed random weights for demo
+const W=[[0.6,-0.4],[0.3,0.8],[-0.5,0.2]];
+const B=[0.1,-0.2,0.3];
+function drawLinear(){
+  const{x:cx,w,h}=sc(lc);cx.clearRect(0,0,w,h);
+  const x1=parseFloat(document.getElementById('x1Slider').value);
+  const x2=parseFloat(document.getElementById('x2Slider').value);
+  const outs=W.map((row,i)=>row[0]*x1+row[1]*x2+B[i]);
+
+  // Positions
+  const inX=w*.15, outX=w*.85, midY=h/2;
+  const inYs=[midY-50,midY+50];
+  const outYs=[midY-70,midY,midY+70];
+
+  // Connections with weight-based opacity
+  for(let i=0;i<2;i++){for(let o=0;o<3;o++){
+    const wt=W[o][i];const alpha=Math.min(Math.abs(wt),1);
+    cx.strokeStyle=wt>0?`rgba(73,214,146,${alpha*.5})`:`rgba(240,100,73,${alpha*.5})`;
+    cx.lineWidth=Math.abs(wt)*3+0.5;cx.beginPath();cx.moveTo(inX+30,inYs[i]);cx.lineTo(outX-30,outYs[o]);cx.stroke();
+    // Weight label
+    cx.fillStyle=wt>0?'rgba(73,214,146,0.7)':'rgba(240,100,73,0.7)';cx.font='10px JetBrains Mono,monospace';cx.textAlign='center';
+    const mx=(inX+30+outX-30)/2+(o-1)*20,my=(inYs[i]+outYs[o])/2;cx.fillText(wt.toFixed(1),mx,my-3);
+  }}
+
+  // Input nodes
+  const inputs=[x1,x2];const ilabels=['x₁','x₂'];
+  inYs.forEach((y,i)=>{
+    cx.fillStyle='#181b22';cx.strokeStyle='#49a0f0';cx.lineWidth=2.5;cx.beginPath();cx.arc(inX,y,24,0,Math.PI*2);cx.fill();cx.stroke();
+    cx.fillStyle='#49a0f0';cx.font='700 12px JetBrains Mono,monospace';cx.textAlign='center';cx.fillText(inputs[i].toFixed(1),inX,y+1);
+    cx.fillStyle='#7e7c94';cx.font='10px JetBrains Mono,monospace';cx.fillText(ilabels[i],inX,y-32);
+  });
+
+  // Output nodes
+  const olabels=['y₁','y₂','y₃'];
+  outYs.forEach((y,i)=>{
+    cx.fillStyle='#181b22';cx.strokeStyle='#f06449';cx.lineWidth=2.5;cx.beginPath();cx.arc(outX,y,24,0,Math.PI*2);cx.fill();cx.stroke();
+    cx.fillStyle='#f06449';cx.font='700 11px JetBrains Mono,monospace';cx.textAlign='center';cx.fillText(outs[i].toFixed(2),outX,y+1);
+    cx.fillStyle='#7e7c94';cx.font='10px JetBrains Mono,monospace';cx.fillText(olabels[i],outX,y-32);
+  });
+
+  // Labels
+  cx.fillStyle='#49a0f0';cx.font='600 11px JetBrains Mono,monospace';cx.textAlign='center';cx.fillText('INPUT',inX,h-12);
+  cx.fillStyle='#f06449';cx.fillText('OUTPUT (Wx + b)',outX,h-12);
+
+  document.getElementById('x1V').textContent=x1.toFixed(1);
+  document.getElementById('x2V').textContent=x2.toFixed(1);
+}
+document.getElementById('x1Slider').addEventListener('input',drawLinear);
+document.getElementById('x2Slider').addEventListener('input',drawLinear);
+drawLinear();
+
+// ====== SECTION 3: Activations ======
+const ac=document.getElementById('actCanvas');
+let curAct='relu';
+const actInfo={
+  relu:{fn:x=>Math.max(0,x),color:'#49d692',desc:'<strong style="color:#49d692">ReLU: max(0, x)</strong> — Negative values become 0, positive pass through unchanged. The default for hidden layers because it\'s simple, fast, and works. Used in ~90% of neural networks.'},
+  sigmoid:{fn:x=>1/(1+Math.exp(-x)),color:'#f0c849',desc:'<strong style="color:#f0c849">Sigmoid: 1/(1+e⁻ˣ)</strong> — Squashes everything to 0–1. Perfect for binary classification output (probability of "yes"). Slow gradient for very large/small inputs (vanishing gradient problem).'},
+  tanh:{fn:x=>Math.tanh(x),color:'#a06af0',desc:'<strong style="color:#a06af0">Tanh: (eˣ−e⁻ˣ)/(eˣ+e⁻ˣ)</strong> — Squashes to −1 to 1. Centered around 0, which can help training. Used in RNNs and some specialized architectures.'},
+  softmax:{fn:null,color:'#49a0f0',desc:'<strong style="color:#49a0f0">Softmax</strong> — Converts a vector of scores into probabilities that sum to 1. Used as the final layer for multi-class classification. Not shown as a curve because it operates on vectors, not single values.'}
+};
+
+function drawAct(){
+  const{x:cx,w,h}=sc(ac);cx.clearRect(0,0,w,h);
+  const a=actInfo[curAct];
+  if(!a.fn){cx.fillStyle='#7e7c94';cx.font='13px DM Sans,sans-serif';cx.textAlign='center';
+    cx.fillText('Softmax works on vectors, not single values.',w/2,h/2-20);
+    cx.fillText('Example: [2.0, 1.0, 0.1] → [0.659, 0.242, 0.099]',w/2,h/2+10);
+    cx.fillText('Probabilities sum to 1.0',w/2,h/2+36);
+    document.getElementById('actDesc').innerHTML=a.desc;return;}
+
+  const xMn=-5,xMx=5,yMn=curAct==='sigmoid'?-0.3:curAct==='tanh'?-1.5:-2,yMx=curAct==='sigmoid'?1.5:curAct==='tanh'?1.5:5;
+  const sx=x=>((x-xMn)/(xMx-xMn))*w, sy=y=>h-((y-yMn)/(yMx-yMn))*h;
+
+  // Grid
+  cx.strokeStyle='#1f222c';cx.lineWidth=1;
+  for(let g=-4;g<=4;g++){cx.beginPath();cx.moveTo(sx(g),0);cx.lineTo(sx(g),h);cx.stroke();}
+  // Axes
+  cx.strokeStyle='#2c3040';cx.lineWidth=1.5;
+  cx.beginPath();cx.moveTo(sx(0),0);cx.lineTo(sx(0),h);cx.stroke();
+  cx.beginPath();cx.moveTo(0,sy(0));cx.lineTo(w,sy(0));cx.stroke();
+  // Reference line y=x
+  cx.strokeStyle='rgba(255,255,255,0.06)';cx.lineWidth=1;cx.setLineDash([4,4]);
+  cx.beginPath();cx.moveTo(sx(-5),sy(-5));cx.lineTo(sx(5),sy(5));cx.stroke();cx.setLineDash([]);
+  cx.fillStyle='rgba(255,255,255,0.1)';cx.font='9px JetBrains Mono,monospace';cx.textAlign='left';cx.fillText('y=x',sx(3)+4,sy(3)-4);
+  // Curve
+  cx.strokeStyle=a.color;cx.lineWidth=3;cx.beginPath();
+  for(let p=0;p<=w;p++){const x=xMn+(p/w)*(xMx-xMn);const y=a.fn(x);const py=sy(y);if(py>-10&&py<h+10){if(p===0)cx.moveTo(p,py);else cx.lineTo(p,py);}}cx.stroke();
+  // Label
+  cx.fillStyle=a.color;cx.font='600 12px JetBrains Mono,monospace';cx.textAlign='left';
+  cx.fillText(curAct.toUpperCase(),12,22);
+
+  document.getElementById('actDesc').innerHTML=a.desc;
+}
+function setAct(act,el){curAct=act;document.querySelectorAll('.act-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');drawAct();}
+drawAct();
+
+// ====== SECTION 4: NN visual ======
+const nnc=document.getElementById('nnCanvas');
+function drawNN(){
+  const{x:cx,w,h}=sc(nnc);cx.clearRect(0,0,w,h);
+  const layers=[{n:10,label:'Input\n(10)',color:'#49a0f0'},{n:5,label:'Hidden\n(5)',color:'#a06af0'},{n:2,label:'Output\n(2)',color:'#f06449'}];
+  const layerX=[w*.12,w*.5,w*.88];
+  const maxN=10;
+
+  // For each layer, get y positions
+  const positions=layers.map((l,li)=>{
+    const n=Math.min(l.n,7);// cap visual
+    const gap=Math.min(34,h/(n+1));
+    const startY=(h-gap*(n-1))/2;
+    return Array.from({length:n},(_,i)=>startY+i*gap);
+  });
+
+  // Connections
+  for(let li=0;li<layers.length-1;li++){
+    positions[li].forEach(y1=>{positions[li+1].forEach(y2=>{
+      cx.strokeStyle='rgba(255,255,255,0.04)';cx.lineWidth=1;
+      cx.beginPath();cx.moveTo(layerX[li]+14,y1);cx.lineTo(layerX[li+1]-14,y2);cx.stroke();
+    });});
+  }
+
+  // Nodes
+  layers.forEach((l,li)=>{
+    const extra=l.n>7;
+    positions[li].forEach((y,ni)=>{
+      if(extra&&ni===positions[li].length-1){
+        cx.fillStyle='var(--dim)';cx.font='12px JetBrains Mono,monospace';cx.textAlign='center';
+        cx.fillText('...',layerX[li],y+4);return;
+      }
+      cx.fillStyle='#181b22';cx.strokeStyle=l.color;cx.lineWidth=2;
+      cx.beginPath();cx.arc(layerX[li],y,12,0,Math.PI*2);cx.fill();cx.stroke();
+    });
+    // Label
+    cx.fillStyle=l.color;cx.font='600 10px JetBrains Mono,monospace';cx.textAlign='center';
+    const parts=l.label.split('\n');
+    cx.fillText(parts[0],layerX[li],h-18);
+    if(parts[1])cx.fillText(parts[1],layerX[li],h-6);
+  });
+
+  // Activation labels
+  cx.fillStyle='#f0c849';cx.font='600 10px JetBrains Mono,monospace';cx.textAlign='center';
+  cx.fillText('ReLU',w*.31,24);
+  cx.fillStyle='#7e7c94';cx.fillText('(none)',w*.69,24);
+
+  // Param counts
+  cx.fillStyle='#555370';cx.font='9px JetBrains Mono,monospace';
+  cx.fillText('10×5+5 = 55 params',w*.31,h-30);
+  cx.fillText('5×2+2 = 12 params',w*.69,h-30);
+}
+drawNN();
+
+// ====== SECTION 6: Loss interactive ======
+const lossc=document.getElementById('lossCanvas');
+function drawLoss(){
+  const{x:cx,w,h}=sc(lossc);cx.clearRect(0,0,w,h);
+  const s0=parseFloat(document.getElementById('ls0').value);
+  const s1=parseFloat(document.getElementById('ls1').value);
+
+  // Softmax
+  const maxS=Math.max(s0,s1);const e0=Math.exp(s0-maxS),e1=Math.exp(s1-maxS);const sum=e0+e1;
+  const p0=e0/sum,p1=e1/sum;
+  const loss=-Math.log(p0);
+
+  // Bar chart
+  const barW=Math.min(100,w/4);
+  const barMaxH=h-60;
+  const bx0=w*.25-barW/2, bx1=w*.65-barW/2;
+
+  // Class 0 bar
+  const h0=p0*barMaxH;
+  cx.fillStyle='rgba(73,214,146,0.25)';cx.fillRect(bx0,h-30-h0,barW,h0);
+  cx.strokeStyle='#49d692';cx.lineWidth=2;cx.strokeRect(bx0,h-30-h0,barW,h0);
+  cx.fillStyle='#49d692';cx.font='700 14px JetBrains Mono,monospace';cx.textAlign='center';
+  cx.fillText((p0*100).toFixed(0)+'%',bx0+barW/2,h-34-h0);
+  cx.fillStyle='#7e7c94';cx.font='10px JetBrains Mono,monospace';
+  cx.fillText('Class 0 ✓',bx0+barW/2,h-12);
+
+  // Class 1 bar
+  const h1=p1*barMaxH;
+  cx.fillStyle='rgba(240,100,73,0.15)';cx.fillRect(bx1,h-30-h1,barW,h1);
+  cx.strokeStyle='#f06449';cx.lineWidth=2;cx.strokeRect(bx1,h-30-h1,barW,h1);
+  cx.fillStyle='#f06449';cx.font='700 14px JetBrains Mono,monospace';cx.textAlign='center';
+  cx.fillText((p1*100).toFixed(0)+'%',bx1+barW/2,h-34-h1);
+  cx.fillStyle='#7e7c94';cx.font='10px JetBrains Mono,monospace';
+  cx.fillText('Class 1 ✗',bx1+barW/2,h-12);
+
+  // Loss text
+  cx.fillStyle=loss<0.5?'#49d692':loss<2?'#f0c849':'#f06449';
+  cx.font='700 16px JetBrains Mono,monospace';cx.textAlign='right';
+  cx.fillText('Loss: '+loss.toFixed(3),w-20,28);
+  cx.fillStyle='#555370';cx.font='10px JetBrains Mono,monospace';
+  cx.fillText(loss<0.3?'Great!':loss<1?'OK':loss<3?'Bad':'Terrible!',w-20,46);
+
+  document.getElementById('ls0v').textContent=s0.toFixed(1);
+  document.getElementById('ls1v').textContent=s1.toFixed(1);
+  document.getElementById('lossVal').textContent=loss.toFixed(3);
+  document.getElementById('confVal').textContent=(p0*100).toFixed(0)+'%';
+}
+document.getElementById('ls0').addEventListener('input',drawLoss);
+document.getElementById('ls1').addEventListener('input',drawLoss);
+drawLoss();
+
+// ====== SECTION 7: Accumulation ======
+let ag=0,ac2=0,ah=[0];
+const aa=document.getElementById('accumArea');
+function rAc(){aa.innerHTML='';const s=ah.slice(-10);const mx=Math.max(...ah,4);
+s.forEach((v,i)=>{const d=document.createElement('div');d.className='a-bar';d.style.height=Math.max((v/mx)*90,3)+'%';d.style.background=v===0?'var(--red)':'var(--teal)';d.style.opacity=i===s.length-1?'1':'0.3';d.innerHTML=`<span class="a-val" style="color:${v===0?'var(--red)':'var(--teal)'};">${v}</span>`;aa.appendChild(d);});
+document.getElementById('accumVal').textContent=ag;document.getElementById('accumCnt').textContent=ac2;}
+document.getElementById('accumBack').addEventListener('click',()=>{ag+=4;ac2++;ah.push(ag);rAc();});
+document.getElementById('accumZero').addEventListener('click',()=>{ag=0;ah.push(0);rAc();});
+rAc();
+
+// ====== SECTION 8: Training simulation ======
+const tc=document.getElementById('trainCanvas');
+const tLog=document.getElementById('trainLog');
+// Simple simulated training
+let tEpoch=0, tLossHist=[], tAccHist=[], tAutoInt=null;
+const initLoss=2.3;
+
+function simEpoch(){
+  tEpoch++;
+  // Simulated loss curve: exponential decay with noise
+  const baseLoss=initLoss*Math.exp(-0.04*tEpoch)+0.05;
+  const noise=(Math.random()-0.5)*0.08;
+  const loss=Math.max(baseLoss+noise,0.02);
+  const acc=Math.min(0.98,1-loss/3+Math.random()*0.02);
+  tLossHist.push(loss);tAccHist.push(acc);
+  return{loss,acc};
+}
+
+function drawTrain(){
+  const{x:cx,w,h}=sc(tc);cx.clearRect(0,0,w,h);
+  if(tLossHist.length===0){cx.fillStyle='#555370';cx.font='13px DM Sans,sans-serif';cx.textAlign='center';cx.fillText('Training loss will appear here',w/2,h/2);return;}
+
+  const pad=40,gw=w-pad*2,gh=h-pad*2;
+  const maxE=Math.max(tLossHist.length,10);
+  const maxL=Math.max(initLoss,...tLossHist)*1.1;
+
+  // Grid
+  cx.strokeStyle='#1f222c';cx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad+gh*(i/4);cx.beginPath();cx.moveTo(pad,y);cx.lineTo(w-pad,y);cx.stroke();
+    cx.fillStyle='#555370';cx.font='9px JetBrains Mono,monospace';cx.textAlign='right';cx.fillText((maxL*(1-i/4)).toFixed(1),pad-6,y+3);}
+
+  // Loss line
+  cx.strokeStyle='#f06449';cx.lineWidth=2;cx.beginPath();
+  tLossHist.forEach((l,i)=>{const x=pad+(i/(maxE-1))*gw,y=pad+(1-l/maxL)*gh;if(i===0)cx.moveTo(x,y);else cx.lineTo(x,y);});cx.stroke();
+
+  // Acc line
+  cx.strokeStyle='#49d692';cx.lineWidth=2;cx.setLineDash([4,3]);cx.beginPath();
+  tAccHist.forEach((a,i)=>{const x=pad+(i/(maxE-1))*gw,y=pad+(1-a)*gh;if(i===0)cx.moveTo(x,y);else cx.lineTo(x,y);});cx.stroke();cx.setLineDash([]);
+
+  // Legend
+  cx.fillStyle='#f06449';cx.font='600 10px JetBrains Mono,monospace';cx.textAlign='left';cx.fillText('● Loss',pad+10,16);
+  cx.fillStyle='#49d692';cx.fillText('● Accuracy',pad+80,16);
+  cx.fillStyle='#555370';cx.textAlign='center';cx.fillText('Epochs',w/2,h-4);
+}
+
+function trainN(n){
+  for(let i=0;i<n;i++){
+    const{loss,acc}=simEpoch();
+    const line=document.createElement('div');
+    line.innerHTML=`<span class="epoch">Epoch ${tEpoch}</span> — Loss: <span class="loss-val">${loss.toFixed(4)}</span> | Acc: <span class="acc-val">${(acc*100).toFixed(1)}%</span>`;
+    tLog.appendChild(line);tLog.scrollTop=tLog.scrollHeight;
+    document.getElementById('trEpoch').textContent=tEpoch;
+    document.getElementById('trLoss').textContent=loss.toFixed(4);
+    document.getElementById('trAcc').textContent=(acc*100).toFixed(1)+'%';
+  }
+  drawTrain();
+}
+
+document.getElementById('trainBtn').addEventListener('click',()=>trainN(10));
+document.getElementById('trainAutoBtn').addEventListener('click',function(){
+  if(tAutoInt){clearInterval(tAutoInt);tAutoInt=null;this.textContent='Auto-train 100';return;}
+  this.textContent='Pause';let done=0;
+  tAutoInt=setInterval(()=>{trainN(1);done++;if(done>=100||tEpoch>=200){clearInterval(tAutoInt);tAutoInt=null;document.getElementById('trainAutoBtn').textContent='Auto-train 100';}},80);
+});
+document.getElementById('trainResetBtn').addEventListener('click',()=>{
+  clearInterval(tAutoInt);tAutoInt=null;document.getElementById('trainAutoBtn').textContent='Auto-train 100';
+  tEpoch=0;tLossHist=[];tAccHist=[];tLog.innerHTML='Click "Train" to start...';
+  document.getElementById('trEpoch').textContent='0';document.getElementById('trLoss').textContent='—';document.getElementById('trAcc').textContent='—';
+  drawTrain();
+});
+drawTrain();
+
+// Resize
+window.addEventListener('resize',()=>{drawLinear();drawAct();drawNN();drawLoss();drawTrain();});
+</script>
+</body>
+</html>

@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understanding Gradients Visually</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Instrument+Serif&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9f6;
+    --surface: #ffffff;
+    --surface2: #f3f1ec;
+    --border: #e2dfd8;
+    --text: #1a1a1a;
+    --text-dim: #7a756a;
+    --curve: #e85d45;
+    --tangent: #2d8cf0;
+    --gradient-dot: #e85d45;
+    --point: #1a1a1a;
+    --grid: #ece9e2;
+    --accent-green: #3aab6b;
+    --accent-gold: #d4930d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+    animation: fadeIn 0.6s ease;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+    margin-bottom: 48px;
+    animation: fadeIn 0.6s ease 0.1s both;
+  }
+
+  .section {
+    margin-bottom: 56px;
+    animation: slideUp 0.5s ease both;
+  }
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section:nth-child(5) { animation-delay: 0.2s; }
+
+  .section-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin-bottom: 14px;
+  }
+
+  .section-desc {
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    margin-bottom: 20px;
+    max-width: 620px;
+  }
+
+  /* Canvas cards */
+  .graph-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+  }
+
+  /* Slider */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: var(--surface2);
+    border-radius: 10px;
+  }
+
+  .slider-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    min-width: 40px;
+  }
+
+  .slider-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 70px;
+    text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--text);
+    cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  input[type="range"]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.1);
+  }
+
+  /* Info boxes */
+  .info-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .info-box {
+    flex: 1;
+    min-width: 140px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .info-box .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .info-box .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .val-curve { color: var(--curve); }
+  .val-tangent { color: var(--tangent); }
+  .val-green { color: var(--accent-green); }
+  .val-gold { color: var(--accent-gold); }
+
+  /* Step walkthrough */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 18px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .step:last-child { border-bottom: none; }
+
+  .step-marker {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    color: var(--text-dim);
+    background: var(--surface);
+    transition: all 0.4s ease;
+  }
+
+  .step.active .step-marker {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+
+  .step-content {
+    flex: 1;
+  }
+
+  .step-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    transition: color 0.3s ease;
+  }
+
+  .step.active .step-title { color: var(--text); }
+  .step:not(.active) .step-title { color: var(--text-dim); }
+
+  .step-explain {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    transition: color 0.3s ease;
+  }
+
+  .step.active .step-explain { color: var(--text); }
+
+  .code-inline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--surface2);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* Learning illustration */
+  .learning-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+
+  .epoch-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .epoch-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .epoch-text strong {
+    color: var(--text);
+  }
+
+  .learn-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: 1px solid var(--text);
+    background: var(--text);
+    color: var(--bg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .learn-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+
+  .learn-btn.reset {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Meaning callout */
+  .callout {
+    background: var(--surface2);
+    border-left: 3px solid var(--curve);
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .callout strong {
+    color: var(--curve);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 1.8rem; }
+    .container { padding: 32px 16px 60px; }
+    .graph-card { padding: 16px; }
+    .info-box { min-width: 100px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Understanding Gradients</h1>
+  <p class="subtitle">What .backward() actually computes, and why it matters</p>
+
+  <!-- SECTION 1: The curve y = x² -->
+  <div class="section">
+    <div class="section-num">01</div>
+    <div class="section-title">The function: y = x²</div>
+    <p class="section-desc">
+      Drag the slider to move along the curve. The <strong style="color:var(--curve)">red curve</strong> is y = x².
+      The <strong style="color:var(--tangent)">blue line</strong> is the tangent — its slope is the gradient.
+    </p>
+    <div class="graph-card">
+      <canvas id="curveCanvas" height="340"></canvas>
+      <div class="slider-row">
+        <span class="slider-label">x =</span>
+        <input type="range" id="xSlider" min="-3.5" max="3.5" step="0.1" value="3">
+        <span class="slider-value" id="xDisplay">3.0</span>
+      </div>
+      <div class="info-row">
+        <div class="info-box">
+          <div class="label">x value</div>
+          <div class="value" id="infoX">3.0</div>
+        </div>
+        <div class="info-box">
+          <div class="label">y = x²</div>
+          <div class="value val-curve" id="infoY">9.0</div>
+        </div>
+        <div class="info-box">
+          <div class="label">gradient (2x)</div>
+          <div class="value val-tangent" id="infoGrad">6.0</div>
+        </div>
+        <div class="info-box">
+          <div class="label">meaning</div>
+          <div class="value" id="infoMeaning" style="font-size:0.78rem;font-weight:500;color:var(--text-dim)">steep uphill →</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>The gradient tells you the slope at that point.</strong> Positive gradient = curve going up. Negative = going down. Zero = flat (the bottom of the curve). The bigger the number, the steeper it is.
+    </div>
+  </div>
+
+  <!-- SECTION 2: What backward() does -->
+  <div class="section">
+    <div class="section-num">02</div>
+    <div class="section-title">What .backward() does step by step</div>
+    <p class="section-desc">
+      This walks through exactly what PyTorch does when you run that code.
+    </p>
+    <div class="graph-card">
+      <div class="steps" id="stepsContainer">
+        <div class="step active" data-step="0">
+          <div class="step-marker">1</div>
+          <div class="step-content">
+            <div class="step-title">x = torch.tensor(3.0, requires_grad=True)</div>
+            <div class="step-explain">Creates x = 3 and tells PyTorch: <em>"record everything that happens to this variable."</em> Think of it as turning on a tape recorder.</div>
+          </div>
+        </div>
+        <div class="step" data-step="1">
+          <div class="step-marker">2</div>
+          <div class="step-content">
+            <div class="step-title">y = x ** 2</div>
+            <div class="step-explain">Computes y = 9. But behind the scenes, PyTorch also records: <em>"y was made by squaring x."</em> It builds a hidden graph: x → square → y</div>
+          </div>
+        </div>
+        <div class="step" data-step="2">
+          <div class="step-marker">3</div>
+          <div class="step-content">
+            <div class="step-title">y.backward()</div>
+            <div class="step-explain">PyTorch walks backward through the graph. It knows the derivative of x² is 2x. It plugs in x = 3 and computes: gradient = 2 × 3 = 6. This is stored in x.grad.</div>
+          </div>
+        </div>
+        <div class="step" data-step="3">
+          <div class="step-marker">4</div>
+          <div class="step-content">
+            <div class="step-title">x.grad → tensor(6.0)</div>
+            <div class="step-explain">The gradient is 6. This means: <em>"if you increase x by a tiny amount, y will increase by about 6× that amount."</em> It's the sensitivity of y to changes in x.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: Interactive comp graph -->
+  <div class="section">
+    <div class="section-num">03</div>
+    <div class="section-title">The computational graph</div>
+    <p class="section-desc">
+      PyTorch builds this graph silently. The forward pass flows right, the backward pass flows left computing gradients.
+    </p>
+    <div class="graph-card">
+      <canvas id="graphCanvas" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Why it matters — gradient descent -->
+  <div class="section">
+    <div class="section-num">04</div>
+    <div class="section-title">Why it matters: finding the minimum</div>
+    <p class="section-desc">
+      Neural networks learn by minimizing a loss function. The gradient tells them which direction to move.
+      Watch the ball roll downhill using gradients. Each step, it moves opposite to the gradient.
+    </p>
+    <div class="learning-card">
+      <canvas id="learnCanvas" height="300"></canvas>
+      <div class="epoch-info">
+        <div>
+          <span class="epoch-text">Step: <strong id="epochNum">0</strong></span>
+          &nbsp;&nbsp;
+          <span class="epoch-text">x = <strong id="learnX">4.0</strong></span>
+          &nbsp;&nbsp;
+          <span class="epoch-text">gradient = <strong id="learnGrad">8.0</strong></span>
+        </div>
+        <div class="btn-row">
+          <button class="learn-btn" id="stepBtn">Take a step</button>
+          <button class="learn-btn" id="autoBtn">Auto-run</button>
+          <button class="learn-btn reset" id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      <strong>This is gradient descent.</strong> At each step: compute the gradient → move x a little in the opposite direction → repeat. The gradient always points uphill, so going opposite moves you downhill toward the minimum. This is exactly how neural networks learn — they adjust weights to minimize error.
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ SECTION 1: Curve + Tangent ============
+const curveCanvas = document.getElementById('curveCanvas');
+const ctx = curveCanvas.getContext('2d');
+const slider = document.getElementById('xSlider');
+const xDisplay = document.getElementById('xDisplay');
+const infoX = document.getElementById('infoX');
+const infoY = document.getElementById('infoY');
+const infoGrad = document.getElementById('infoGrad');
+const infoMeaning = document.getElementById('infoMeaning');
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const context = canvas.getContext('2d');
+  context.scale(dpr, dpr);
+  return { w: rect.width, h: rect.height };
+}
+
+function drawCurve(xVal) {
+  const { w, h } = setupCanvas(curveCanvas);
+  const cx = ctx;
+
+  // Coordinate system: x from -4 to 4, y from -1 to 13
+  const xMin = -4, xMax = 4, yMin = -1, yMax = 13;
+  const toScreenX = x => ((x - xMin) / (xMax - xMin)) * w;
+  const toScreenY = y => h - ((y - yMin) / (yMax - yMin)) * h;
+
+  // Clear
+  cx.clearRect(0, 0, w, h);
+
+  // Grid
+  cx.strokeStyle = '#ece9e2';
+  cx.lineWidth = 1;
+  for (let gx = -4; gx <= 4; gx++) {
+    cx.beginPath();
+    cx.moveTo(toScreenX(gx), 0);
+    cx.lineTo(toScreenX(gx), h);
+    cx.stroke();
+  }
+  for (let gy = 0; gy <= 12; gy += 2) {
+    cx.beginPath();
+    cx.moveTo(0, toScreenY(gy));
+    cx.lineTo(w, toScreenY(gy));
+    cx.stroke();
+  }
+
+  // Axes
+  cx.strokeStyle = '#ccc8be';
+  cx.lineWidth = 1.5;
+  cx.beginPath();
+  cx.moveTo(toScreenX(0), 0);
+  cx.lineTo(toScreenX(0), h);
+  cx.stroke();
+  cx.beginPath();
+  cx.moveTo(0, toScreenY(0));
+  cx.lineTo(w, toScreenY(0));
+  cx.stroke();
+
+  // Axis labels
+  cx.fillStyle = '#7a756a';
+  cx.font = '11px JetBrains Mono, monospace';
+  cx.textAlign = 'center';
+  for (let gx = -3; gx <= 3; gx++) {
+    if (gx === 0) continue;
+    cx.fillText(gx, toScreenX(gx), toScreenY(0) + 16);
+  }
+  cx.textAlign = 'right';
+  for (let gy = 2; gy <= 12; gy += 2) {
+    cx.fillText(gy, toScreenX(0) - 8, toScreenY(gy) + 4);
+  }
+
+  // Draw y = x² curve
+  cx.strokeStyle = '#e85d45';
+  cx.lineWidth = 2.5;
+  cx.beginPath();
+  for (let px = 0; px <= w; px++) {
+    const x = xMin + (px / w) * (xMax - xMin);
+    const y = x * x;
+    if (px === 0) cx.moveTo(px, toScreenY(y));
+    else cx.lineTo(px, toScreenY(y));
+  }
+  cx.stroke();
+
+  // Label
+  cx.fillStyle = '#e85d45';
+  cx.font = '600 13px JetBrains Mono, monospace';
+  cx.textAlign = 'left';
+  cx.fillText('y = x²', toScreenX(2.5) + 6, toScreenY(2.5*2.5) - 8);
+
+  // Point on curve
+  const yVal = xVal * xVal;
+  const grad = 2 * xVal;
+  const sx = toScreenX(xVal);
+  const sy = toScreenY(yVal);
+
+  // Tangent line
+  const tangentLen = 2;
+  const tx1 = xVal - tangentLen;
+  const ty1 = yVal - grad * tangentLen;
+  const tx2 = xVal + tangentLen;
+  const ty2 = yVal + grad * tangentLen;
+
+  cx.strokeStyle = '#2d8cf0';
+  cx.lineWidth = 2;
+  cx.setLineDash([6, 4]);
+  cx.beginPath();
+  cx.moveTo(toScreenX(tx1), toScreenY(ty1));
+  cx.lineTo(toScreenX(tx2), toScreenY(ty2));
+  cx.stroke();
+  cx.setLineDash([]);
+
+  // Tangent label
+  cx.fillStyle = '#2d8cf0';
+  cx.font = '600 11px JetBrains Mono, monospace';
+  cx.textAlign = 'left';
+  const labelOffsetX = xVal >= 0 ? -70 : 12;
+  cx.fillText(`slope = ${grad.toFixed(1)}`, sx + labelOffsetX, sy - 20);
+
+  // Dashed lines to axes
+  cx.strokeStyle = '#ccc8be';
+  cx.lineWidth = 1;
+  cx.setLineDash([3, 3]);
+  cx.beginPath();
+  cx.moveTo(sx, sy);
+  cx.lineTo(sx, toScreenY(0));
+  cx.stroke();
+  cx.beginPath();
+  cx.moveTo(sx, sy);
+  cx.lineTo(toScreenX(0), sy);
+  cx.stroke();
+  cx.setLineDash([]);
+
+  // Point dot
+  cx.fillStyle = '#1a1a1a';
+  cx.beginPath();
+  cx.arc(sx, sy, 6, 0, Math.PI * 2);
+  cx.fill();
+  cx.fillStyle = '#ffffff';
+  cx.beginPath();
+  cx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+  cx.fill();
+
+  // Update displays
+  xDisplay.textContent = xVal.toFixed(1);
+  infoX.textContent = xVal.toFixed(1);
+  infoY.textContent = yVal.toFixed(1);
+  infoGrad.textContent = grad.toFixed(1);
+
+  if (Math.abs(grad) < 0.5) infoMeaning.textContent = '≈ flat (minimum)';
+  else if (grad > 3) infoMeaning.textContent = 'steep uphill →';
+  else if (grad > 0) infoMeaning.textContent = 'gentle uphill →';
+  else if (grad < -3) infoMeaning.textContent = '← steep uphill';
+  else infoMeaning.textContent = '← gentle uphill';
+}
+
+slider.addEventListener('input', () => drawCurve(parseFloat(slider.value)));
+drawCurve(3);
+
+// ============ SECTION 2: Steps highlighting ============
+const steps = document.querySelectorAll('.step');
+let currentStep = 0;
+let stepInterval;
+
+function activateStep(idx) {
+  steps.forEach((s, i) => {
+    s.classList.toggle('active', i <= idx);
+  });
+  currentStep = idx;
+}
+
+function autoStep() {
+  clearInterval(stepInterval);
+  activateStep(0);
+  let idx = 0;
+  stepInterval = setInterval(() => {
+    idx++;
+    if (idx >= steps.length) {
+      clearInterval(stepInterval);
+      return;
+    }
+    activateStep(idx);
+  }, 1400);
+}
+
+steps.forEach((step, i) => {
+  step.addEventListener('click', () => activateStep(i));
+});
+
+// Auto-play steps on load after delay
+setTimeout(autoStep, 1500);
+
+// ============ SECTION 3: Computational Graph ============
+const graphCanvas = document.getElementById('graphCanvas');
+const gctx = graphCanvas.getContext('2d');
+
+function drawCompGraph() {
+  const { w, h } = setupCanvas(graphCanvas);
+  const cx = gctx;
+
+  cx.clearRect(0, 0, w, h);
+
+  const cy = h / 2;
+  const nodeR = 28;
+  const nodes = [
+    { x: w * 0.15, y: cy, label: 'x', sub: '3.0', color: '#1a1a1a', grad: '6.0' },
+    { x: w * 0.5, y: cy, label: 'x²', sub: 'square', color: '#e85d45', grad: '' },
+    { x: w * 0.85, y: cy, label: 'y', sub: '9.0', color: '#e85d45', grad: '1.0' },
+  ];
+
+  // Forward arrows
+  cx.strokeStyle = '#ccc8be';
+  cx.lineWidth = 2;
+  cx.setLineDash([]);
+
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const from = nodes[i];
+    const to = nodes[i + 1];
+    const startX = from.x + nodeR + 4;
+    const endX = to.x - nodeR - 12;
+
+    cx.beginPath();
+    cx.moveTo(startX, cy);
+    cx.lineTo(endX, cy);
+    cx.stroke();
+
+    // Arrowhead
+    cx.fillStyle = '#ccc8be';
+    cx.beginPath();
+    cx.moveTo(endX + 8, cy);
+    cx.lineTo(endX, cy - 5);
+    cx.lineTo(endX, cy + 5);
+    cx.closePath();
+    cx.fill();
+  }
+
+  // Forward label
+  cx.fillStyle = '#7a756a';
+  cx.font = '600 10px JetBrains Mono, monospace';
+  cx.textAlign = 'center';
+  cx.fillText('FORWARD →', w * 0.5, cy - 52);
+
+  // Backward arrows
+  cx.strokeStyle = '#2d8cf0';
+  cx.lineWidth = 1.5;
+  cx.setLineDash([5, 4]);
+
+  const backY = cy + 50;
+  for (let i = nodes.length - 1; i > 0; i--) {
+    const from = nodes[i];
+    const to = nodes[i - 1];
+    const startX = from.x - nodeR - 4;
+    const endX = to.x + nodeR + 12;
+
+    cx.beginPath();
+    cx.moveTo(startX, backY);
+    cx.lineTo(endX, backY);
+    cx.stroke();
+
+    cx.setLineDash([]);
+    cx.fillStyle = '#2d8cf0';
+    cx.beginPath();
+    cx.moveTo(endX - 8, backY);
+    cx.lineTo(endX, backY - 5);
+    cx.lineTo(endX, backY + 5);
+    cx.closePath();
+    cx.fill();
+    cx.setLineDash([5, 4]);
+  }
+  cx.setLineDash([]);
+
+  // Backward label
+  cx.fillStyle = '#2d8cf0';
+  cx.font = '600 10px JetBrains Mono, monospace';
+  cx.fillText('← BACKWARD (.backward())', w * 0.5, backY + 20);
+
+  // Derivative annotation
+  cx.fillStyle = '#2d8cf0';
+  cx.font = '11px JetBrains Mono, monospace';
+  cx.fillText('d/dx(x²) = 2x = 6', w * 0.325, backY - 10);
+
+  // Nodes
+  nodes.forEach(node => {
+    // Node circle
+    cx.fillStyle = '#ffffff';
+    cx.strokeStyle = node.color;
+    cx.lineWidth = 2.5;
+    cx.beginPath();
+    cx.arc(node.x, cy, nodeR, 0, Math.PI * 2);
+    cx.fill();
+    cx.stroke();
+
+    // Node label
+    cx.fillStyle = node.color;
+    cx.font = '700 14px JetBrains Mono, monospace';
+    cx.textAlign = 'center';
+    cx.fillText(node.label, node.x, cy + 1);
+
+    // Sub label
+    cx.fillStyle = '#7a756a';
+    cx.font = '11px DM Sans, sans-serif';
+    cx.fillText(node.sub, node.x, cy - nodeR - 10);
+
+    // Gradient label
+    if (node.grad) {
+      cx.fillStyle = '#2d8cf0';
+      cx.font = '600 11px JetBrains Mono, monospace';
+      cx.fillText('grad=' + node.grad, node.x, backY + (node.label === 'y' ? -10 : -10));
+    }
+  });
+}
+
+drawCompGraph();
+
+// ============ SECTION 4: Gradient Descent ============
+const learnCanvas = document.getElementById('learnCanvas');
+const lctx = learnCanvas.getContext('2d');
+const stepBtn = document.getElementById('stepBtn');
+const autoBtn = document.getElementById('autoBtn');
+const resetBtn = document.getElementById('resetBtn');
+const epochNum = document.getElementById('epochNum');
+const learnXEl = document.getElementById('learnX');
+const learnGradEl = document.getElementById('learnGrad');
+
+let learnX = 4.0;
+let learnStep = 0;
+const lr = 0.15;
+const history = [4.0];
+let autoInterval = null;
+
+function drawLearn() {
+  const { w, h } = setupCanvas(learnCanvas);
+  const cx = lctx;
+
+  const xMin = -5, xMax = 5, yMin = -1, yMax = 18;
+  const toSX = x => ((x - xMin) / (xMax - xMin)) * w;
+  const toSY = y => h - ((y - yMin) / (yMax - yMin)) * h;
+
+  cx.clearRect(0, 0, w, h);
+
+  // Grid
+  cx.strokeStyle = '#ece9e2';
+  cx.lineWidth = 1;
+  for (let gx = -4; gx <= 4; gx++) {
+    cx.beginPath();
+    cx.moveTo(toSX(gx), 0);
+    cx.lineTo(toSX(gx), h);
+    cx.stroke();
+  }
+
+  // Curve
+  cx.strokeStyle = '#e85d45';
+  cx.lineWidth = 2.5;
+  cx.beginPath();
+  for (let px = 0; px <= w; px++) {
+    const x = xMin + (px / w) * (xMax - xMin);
+    const y = x * x;
+    if (px === 0) cx.moveTo(px, toSY(y));
+    else cx.lineTo(px, toSY(y));
+  }
+  cx.stroke();
+
+  // History trail
+  if (history.length > 1) {
+    for (let i = 0; i < history.length - 1; i++) {
+      const x1 = history[i], y1 = x1 * x1;
+      const x2 = history[i + 1], y2 = x2 * x2;
+
+      cx.strokeStyle = 'rgba(45, 140, 240, 0.3)';
+      cx.lineWidth = 1.5;
+      cx.setLineDash([3, 3]);
+      cx.beginPath();
+      cx.moveTo(toSX(x1), toSY(y1));
+      cx.lineTo(toSX(x2), toSY(y2));
+      cx.stroke();
+      cx.setLineDash([]);
+
+      // Old dots
+      cx.fillStyle = 'rgba(45, 140, 240, 0.25)';
+      cx.beginPath();
+      cx.arc(toSX(x1), toSY(y1), 4, 0, Math.PI * 2);
+      cx.fill();
+    }
+  }
+
+  // Current point
+  const yVal = learnX * learnX;
+  const grad = 2 * learnX;
+  const sx = toSX(learnX);
+  const sy = toSY(yVal);
+
+  // Gradient arrow
+  if (Math.abs(grad) > 0.1) {
+    const arrowDir = -Math.sign(grad);
+    const arrowLen = Math.min(Math.abs(grad) * 12, 80);
+
+    cx.strokeStyle = '#2d8cf0';
+    cx.lineWidth = 2.5;
+    cx.beginPath();
+    cx.moveTo(sx, sy);
+    cx.lineTo(sx + arrowDir * arrowLen, sy);
+    cx.stroke();
+
+    // Arrowhead
+    cx.fillStyle = '#2d8cf0';
+    cx.beginPath();
+    const tipX = sx + arrowDir * arrowLen;
+    cx.moveTo(tipX + arrowDir * 8, sy);
+    cx.lineTo(tipX, sy - 6);
+    cx.lineTo(tipX, sy + 6);
+    cx.closePath();
+    cx.fill();
+
+    // Arrow label
+    cx.fillStyle = '#2d8cf0';
+    cx.font = '600 11px JetBrains Mono, monospace';
+    cx.textAlign = 'center';
+    cx.fillText('move this way', sx + arrowDir * arrowLen / 2, sy - 14);
+  }
+
+  // Ball
+  cx.fillStyle = '#1a1a1a';
+  cx.beginPath();
+  cx.arc(sx, sy, 8, 0, Math.PI * 2);
+  cx.fill();
+  cx.fillStyle = '#ffffff';
+  cx.beginPath();
+  cx.arc(sx, sy, 3, 0, Math.PI * 2);
+  cx.fill();
+
+  // Minimum marker
+  cx.fillStyle = '#3aab6b';
+  cx.font = '600 11px JetBrains Mono, monospace';
+  cx.textAlign = 'center';
+  cx.fillText('● minimum', toSX(0), toSY(0) + 20);
+
+  // Update text
+  epochNum.textContent = learnStep;
+  learnXEl.textContent = learnX.toFixed(3);
+  learnGradEl.textContent = grad.toFixed(3);
+}
+
+function takeStep() {
+  const grad = 2 * learnX;
+  learnX = learnX - lr * grad;
+  learnStep++;
+  history.push(learnX);
+  drawLearn();
+}
+
+stepBtn.addEventListener('click', takeStep);
+
+autoBtn.addEventListener('click', () => {
+  if (autoInterval) {
+    clearInterval(autoInterval);
+    autoInterval = null;
+    autoBtn.textContent = 'Auto-run';
+    return;
+  }
+  autoBtn.textContent = 'Pause';
+  autoInterval = setInterval(() => {
+    if (Math.abs(learnX) < 0.001 || learnStep > 50) {
+      clearInterval(autoInterval);
+      autoInterval = null;
+      autoBtn.textContent = 'Auto-run';
+      return;
+    }
+    takeStep();
+  }, 400);
+});
+
+resetBtn.addEventListener('click', () => {
+  clearInterval(autoInterval);
+  autoInterval = null;
+  autoBtn.textContent = 'Auto-run';
+  learnX = 4.0;
+  learnStep = 0;
+  history.length = 0;
+  history.push(4.0);
+  drawLearn();
+});
+
+drawLearn();
+
+// Resize handler
+window.addEventListener('resize', () => {
+  drawCurve(parseFloat(slider.value));
+  drawCompGraph();
+  drawLearn();
+});
+</script>
+</body>
+</html>
