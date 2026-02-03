@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lesson 1: Tensors — The Building Blocks of Deep Learning</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0c1220;
+  --surface: #141c2e;
+  --surface2: #1a2540;
+  --border: #2a3654;
+  --text: #d4dae8;
+  --text-muted: #7a8aa6;
+  --heading: #eef1f8;
+  --cyan: #34d8e8;
+  --cyan-dim: rgba(52,216,232,.12);
+  --cyan-glow: rgba(52,216,232,.25);
+  --amber: #f0b840;
+  --amber-dim: rgba(240,184,64,.12);
+  --green: #44d488;
+  --green-dim: rgba(68,212,136,.12);
+  --red: #e85454;
+  --red-dim: rgba(232,84,84,.12);
+  --pink: #d870e8;
+  --mono: 'IBM Plex Mono', monospace;
+  --serif: 'Source Serif 4', serif;
+  --sans: 'Outfit', sans-serif;
+  --radius: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* Grid overlay texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(52,216,232,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52,216,232,.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.container {
+  position: relative; z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 24px 100px;
+}
+
+/* ── Progress ── */
+.progress-track {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: 3px; background: var(--surface);
+}
+.progress-fill {
+  height: 100%; width: 0%; background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan-glow);
+  transition: width .3s;
+}
+
+/* ── Header ── */
+.hero {
+  text-align: center;
+  padding: 40px 0 56px;
+}
+.hero-tag {
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--cyan);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--heading);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.hero h1 span { color: var(--cyan); }
+.hero-sub {
+  font-size: 1.08rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Sections ── */
+.section {
+  margin-bottom: 56px;
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s, transform .6s;
+}
+.section.visible { opacity: 1; transform: translateY(0); }
+
+.section-num {
+  font-family: var(--mono);
+  font-size: .75rem;
+  color: var(--cyan);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.section h2 {
+  font-family: var(--serif);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 16px;
+}
+.section p { margin-bottom: 14px; }
+.section p strong { color: var(--heading); font-weight: 600; }
+
+/* ── Code blocks ── */
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: .88rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.kw { color: var(--pink); }
+.fn { color: var(--cyan); }
+.num { color: var(--amber); }
+.str { color: var(--green); }
+.cm { color: var(--text-muted); font-style: italic; }
+.op { color: #8a9cc8; }
+
+/* ── Callout ── */
+.callout {
+  background: var(--cyan-dim);
+  border: 1px solid rgba(52,216,232,.2);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin: 18px 0;
+  font-size: .95rem;
+}
+.callout-icon { margin-right: 8px; }
+.callout.warn {
+  background: var(--amber-dim);
+  border-color: rgba(240,184,64,.25);
+}
+
+/* ── Dimension cards ── */
+.dim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.dim-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  text-align: center;
+  transition: border-color .2s, transform .2s;
+}
+.dim-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+.dim-label {
+  font-family: var(--mono);
+  font-size: .75rem;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 6px;
+}
+.dim-val {
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 4px;
+}
+.dim-desc {
+  font-size: .85rem;
+  color: var(--text-muted);
+}
+
+/* ── Interactive Canvas Area ── */
+.canvas-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 20px 0;
+}
+.canvas-title {
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 12px;
+}
+canvas {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+}
+
+/* ── Interactive grid (tensor viz) ── */
+.tensor-grid {
+  display: inline-grid;
+  gap: 3px;
+  margin: 12px 0;
+}
+.tensor-cell {
+  width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: .85rem;
+  font-weight: 500;
+  border-radius: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  transition: all .25s;
+}
+.tensor-cell.highlight {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan-glow);
+}
+.tensor-cell.highlight-amber {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.tensor-cell.highlight-green {
+  background: var(--green-dim);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* ── Controls ── */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.ctrl-btn {
+  font-family: var(--mono);
+  font-size: .82rem;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all .2s;
+}
+.ctrl-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.ctrl-btn.active {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+}
+.slider-row label {
+  font-family: var(--mono);
+  font-size: .82rem;
+  color: var(--text-muted);
+  min-width: 90px;
+}
+input[type="range"] {
+  flex: 1;
+  accent-color: var(--cyan);
+}
+.slider-val {
+  font-family: var(--mono);
+  font-size: .88rem;
+  color: var(--cyan);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── Output display ── */
+.output {
+  background: #0a0f1a;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: .85rem;
+  color: var(--green);
+  line-height: 1.6;
+  margin: 12px 0;
+  white-space: pre-wrap;
+  min-height: 40px;
+}
+
+/* ── Quiz ── */
+.quiz-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 20px 0;
+}
+.quiz-q {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--heading);
+  margin-bottom: 14px;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 8px; }
+.quiz-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: .92rem;
+  transition: all .2s;
+}
+.quiz-opt:hover { border-color: var(--cyan); }
+.quiz-opt.correct { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+.quiz-opt.wrong { border-color: var(--red); background: var(--red-dim); color: var(--red); }
+.quiz-opt.disabled { pointer-events: none; opacity: .85; }
+.quiz-letter {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: .78rem; font-weight: 600;
+  background: var(--surface2);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.quiz-opt.correct .quiz-letter { background: var(--green); color: #fff; }
+.quiz-opt.wrong .quiz-letter { background: var(--red); color: #fff; }
+.quiz-feedback {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: .88rem;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.pass { background: var(--green-dim); color: var(--green); border-left: 3px solid var(--green); }
+.quiz-feedback.fail { background: var(--red-dim); color: var(--red); border-left: 3px solid var(--red); }
+
+/* ── Divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 48px 0;
+}
+
+/* ── Summary grid ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.summary-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.summary-item code {
+  font-family: var(--mono);
+  font-size: .85rem;
+  color: var(--cyan);
+}
+.summary-item .desc {
+  font-size: .85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.9rem; }
+  .section h2 { font-size: 1.35rem; }
+  .dim-grid { grid-template-columns: 1fr 1fr; }
+  .summary-grid { grid-template-columns: 1fr; }
+  .tensor-cell { width: 38px; height: 38px; font-size: .78rem; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="container">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- HERO -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-tag">Lesson 01</div>
+  <h1><span>Tensors</span> — The Building Blocks</h1>
+  <p class="hero-sub">Multi-dimensional arrays that can run on GPUs and track gradients. Everything in deep learning starts here.</p>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 1: WHAT IS A TENSOR? -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="section-num">Part 01</div>
+  <h2>What Is a Tensor?</h2>
+
+  <p>A tensor is a <strong>multi-dimensional array</strong>. You already know some of these by other names — scalars, vectors, matrices. Tensors generalize all of them.</p>
+
+  <p>PyTorch tensors are special because they can <strong>run on GPUs</strong> (thousands of operations in parallel) and <strong>track every operation</strong> performed on them so gradients can be computed automatically during backpropagation.</p>
+
+  <div class="dim-grid">
+    <div class="dim-card">
+      <div class="dim-label">0-D</div>
+      <div class="dim-val">5</div>
+      <div class="dim-desc">Scalar — a single number</div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label">1-D</div>
+      <div class="dim-val">[1,2,3]</div>
+      <div class="dim-desc">Vector — a list</div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label">2-D</div>
+      <div class="dim-val">3×4</div>
+      <div class="dim-desc">Matrix — a table</div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label">3-D+</div>
+      <div class="dim-val">n×h×w</div>
+      <div class="dim-desc">Images, batches, etc.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="callout-icon">💡</span>
+    <strong>NumPy vs PyTorch:</strong> If you know NumPy arrays, tensors work almost identically. The two big additions are GPU support and automatic gradient tracking.
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 2: CREATING TENSORS -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="section-num">Part 02</div>
+  <h2>Creating Tensors</h2>
+
+  <p>The most direct way — from a Python list:</p>
+  <pre><span class="cm"># From a list</span>
+tensor = torch.<span class="fn">tensor</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>])
+<span class="cm"># Shape: (5,)   Dtype: torch.int64</span></pre>
+
+  <pre><span class="cm"># 2D tensor (matrix)</span>
+matrix = torch.<span class="fn">tensor</span>([
+    [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>],
+    [<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>]
+])
+<span class="cm"># Shape: (2, 3) — 2 rows, 3 columns</span></pre>
+
+  <p><strong>Click each method</strong> to see what it produces:</p>
+
+  <div class="canvas-wrap">
+    <div class="canvas-title">▸ Tensor Creation Explorer</div>
+    <div class="controls" id="createControls">
+      <button class="ctrl-btn active" onclick="showCreation('zeros')">zeros(3,4)</button>
+      <button class="ctrl-btn" onclick="showCreation('ones')">ones(2,3)</button>
+      <button class="ctrl-btn" onclick="showCreation('rand')">rand(3,3)</button>
+      <button class="ctrl-btn" onclick="showCreation('randn')">randn(3,3)</button>
+      <button class="ctrl-btn" onclick="showCreation('arange')">arange(12)</button>
+      <button class="ctrl-btn" onclick="showCreation('eye')">eye(4)</button>
+      <button class="ctrl-btn" onclick="showCreation('linspace')">linspace(0,1,5)</button>
+    </div>
+    <div class="output" id="createOutput"></div>
+    <div id="createDesc" style="font-size:.88rem;color:var(--text-muted);margin-top:8px;"></div>
+  </div>
+
+  <pre><span class="cm"># From NumPy (common with existing data)</span>
+np_array = np.<span class="fn">array</span>([<span class="num">1.0</span>, <span class="num">2.0</span>, <span class="num">3.0</span>])
+tensor = torch.<span class="fn">from_numpy</span>(np_array)</pre>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 3: ELEMENT-WISE OPERATIONS -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="section-num">Part 03</div>
+  <h2>Basic Operations</h2>
+
+  <p>Arithmetic on tensors works <strong>element-by-element</strong>. Each value in the result comes from the corresponding values in the inputs.</p>
+
+  <div class="canvas-wrap">
+    <div class="canvas-title">▸ Element-wise Operations</div>
+    <p style="font-size:.9rem;margin-bottom:10px;">a = [1, 2, 3] &nbsp;&nbsp; b = [4, 5, 6]</p>
+    <div class="controls" id="opsControls">
+      <button class="ctrl-btn active" onclick="showOp('add')">a + b</button>
+      <button class="ctrl-btn" onclick="showOp('sub')">a − b</button>
+      <button class="ctrl-btn" onclick="showOp('mul')">a × b</button>
+      <button class="ctrl-btn" onclick="showOp('div')">a / b</button>
+      <button class="ctrl-btn" onclick="showOp('sum')">a.sum()</button>
+      <button class="ctrl-btn" onclick="showOp('mean')">a.mean()</button>
+      <button class="ctrl-btn" onclick="showOp('max')">a.max()</button>
+    </div>
+    <div class="output" id="opsOutput"></div>
+  </div>
+
+  <p><strong>Matrix multiplication</strong> uses the <code style="color:var(--cyan);">@</code> operator:</p>
+
+  <div class="canvas-wrap">
+    <div class="canvas-title">▸ Matrix Multiplication Visualizer</div>
+    <canvas id="matmulCanvas" height="280"></canvas>
+    <div style="text-align:center;margin-top:8px;">
+      <button class="ctrl-btn" onclick="newMatmul()" style="font-size:.85rem;">🎲 New random matrices</button>
+    </div>
+  </div>
+
+  <pre>A = torch.<span class="fn">tensor</span>([[<span class="num">1.</span>, <span class="num">2.</span>], [<span class="num">3.</span>, <span class="num">4.</span>]])
+B = torch.<span class="fn">tensor</span>([[<span class="num">5.</span>, <span class="num">6.</span>], [<span class="num">7.</span>, <span class="num">8.</span>]])
+C = A <span class="op">@</span> B   <span class="cm"># matrix multiplication</span></pre>
+
+  <!-- Quiz 1 -->
+  <div class="quiz-card" id="quiz1">
+    <div class="quiz-q">🧩 If a = [2, 4, 6] and b = [1, 2, 3], what is a * b?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz('quiz1',this,false)"><span class="quiz-letter">A</span> [3, 6, 9]</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz1',this,true)"><span class="quiz-letter">B</span> [2, 8, 18]</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz1',this,false)"><span class="quiz-letter">C</span> 28</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz1',this,false)"><span class="quiz-letter">D</span> [2, 4, 6, 1, 2, 3]</div>
+    </div>
+    <div class="quiz-feedback" id="quiz1-fb"></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 4: INDEXING & SLICING -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="section-num">Part 04</div>
+  <h2>Indexing & Slicing</h2>
+
+  <p>Access specific elements or ranges just like Python lists — but with multi-dimensional support.</p>
+
+  <div class="canvas-wrap">
+    <div class="canvas-title">▸ Interactive Tensor — Click to Index</div>
+    <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:10px;">A 3×4 tensor. Select an indexing operation to highlight the result.</p>
+    <div class="controls" id="indexControls">
+      <button class="ctrl-btn active" onclick="showIndex('row0')">t[0]</button>
+      <button class="ctrl-btn" onclick="showIndex('row-1')">t[-1]</button>
+      <button class="ctrl-btn" onclick="showIndex('col0')">t[:, 0]</button>
+      <button class="ctrl-btn" onclick="showIndex('col-1')">t[:, -1]</button>
+      <button class="ctrl-btn" onclick="showIndex('elem')">t[1, 2]</button>
+      <button class="ctrl-btn" onclick="showIndex('slice_rows')">t[0:2]</button>
+      <button class="ctrl-btn" onclick="showIndex('slice_cols')">t[:, 1:3]</button>
+      <button class="ctrl-btn" onclick="showIndex('corner')">t[1:, 2:]</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:8px;">
+      <div id="indexGrid" style="display:inline-block;"></div>
+      <div id="indexResult" class="output" style="flex:1;min-width:160px;margin:0;"></div>
+    </div>
+    <div id="indexExplain" style="font-size:.88rem;color:var(--text-muted);margin-top:8px;"></div>
+  </div>
+
+  <pre><span class="cm"># Indexing examples</span>
+t[<span class="num">0</span>]         <span class="cm"># first row</span>
+t[<span class="num">0</span>, <span class="num">0</span>]      <span class="cm"># first element</span>
+t[<span class="num">-1</span>]        <span class="cm"># last row</span>
+t[:, <span class="num">0</span>]      <span class="cm"># first column (: means "all rows")</span>
+
+<span class="cm"># Slicing</span>
+t[<span class="num">0</span>:<span class="num">2</span>]       <span class="cm"># rows 0 and 1</span>
+t[:, <span class="num">1</span>:<span class="num">3</span>]    <span class="cm"># columns 1 and 2</span>
+t[<span class="num">1</span>:, <span class="num">2</span>:]    <span class="cm"># bottom-right corner</span></pre>
+
+  <!-- Quiz 2 -->
+  <div class="quiz-card" id="quiz2">
+    <div class="quiz-q">🧩 For a 3×4 tensor t, what does <code style="color:var(--cyan);">t[:, -1]</code> return?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz('quiz2',this,false)"><span class="quiz-letter">A</span> The last row</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz2',this,true)"><span class="quiz-letter">B</span> The last column (all rows, last column)</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz2',this,false)"><span class="quiz-letter">C</span> The last element</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz2',this,false)"><span class="quiz-letter">D</span> An error</div>
+    </div>
+    <div class="quiz-feedback" id="quiz2-fb"></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 5: RESHAPING -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="section-num">Part 05</div>
+  <h2>Reshaping Tensors</h2>
+
+  <p>The same 12 numbers can be arranged as a <strong>1D vector</strong>, a <strong>3×4 matrix</strong>, a <strong>4×3 matrix</strong>, or even a <strong>2×2×3 block</strong>. The data doesn't change — only how it's organized.</p>
+
+  <div class="canvas-wrap">
+    <div class="canvas-title">▸ Reshape Explorer — 12 Elements</div>
+    <div class="controls" id="reshapeControls">
+      <button class="ctrl-btn active" onclick="showReshape('flat')">Flat (12,)</button>
+      <button class="ctrl-btn" onclick="showReshape('3x4')">3 × 4</button>
+      <button class="ctrl-btn" onclick="showReshape('4x3')">4 × 3</button>
+      <button class="ctrl-btn" onclick="showReshape('6x2')">6 × 2</button>
+      <button class="ctrl-btn" onclick="showReshape('2x2x3')">2 × 2 × 3</button>
+    </div>
+    <div id="reshapeViz" style="margin-top:12px;"></div>
+    <div id="reshapeCode" class="output" style="margin-top:10px;color:var(--cyan);"></div>
+  </div>
+
+  <pre><span class="cm"># Reshape examples</span>
+t = torch.<span class="fn">arange</span>(<span class="num">12</span>)         <span class="cm"># [0, 1, 2, ..., 11]</span>
+t.<span class="fn">reshape</span>(<span class="num">3</span>, <span class="num">4</span>)             <span class="cm"># 3 rows × 4 columns</span>
+t.<span class="fn">reshape</span>(<span class="num">4</span>, <span class="num">3</span>)             <span class="cm"># 4 rows × 3 columns</span>
+t.<span class="fn">reshape</span>(<span class="num">2</span>, <span class="num">2</span>, <span class="num">3</span>)          <span class="cm"># 3D: 2 blocks of 2×3</span></pre>
+
+  <p><strong>Squeeze</strong> removes dimensions of size 1. <strong>Unsqueeze</strong> adds them.</p>
+
+  <pre><span class="cm"># squeeze: (1, 3) → (3,)</span>
+t = torch.<span class="fn">tensor</span>([[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]])   <span class="cm"># shape (1, 3)</span>
+t.<span class="fn">squeeze</span>()                      <span class="cm"># shape (3,)</span>
+
+<span class="cm"># unsqueeze: (3,) → (1, 3)</span>
+t = torch.<span class="fn">tensor</span>([<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>])      <span class="cm"># shape (3,)</span>
+t.<span class="fn">unsqueeze</span>(<span class="num">0</span>)                   <span class="cm"># shape (1, 3)</span></pre>
+
+  <!-- Quiz 3 -->
+  <div class="quiz-card" id="quiz3">
+    <div class="quiz-q">🧩 You have a tensor of shape (24,). Which reshape is <em>invalid</em>?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz('quiz3',this,false)"><span class="quiz-letter">A</span> reshape(6, 4) — 6×4 = 24 ✓</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz3',this,false)"><span class="quiz-letter">B</span> reshape(2, 3, 4) — 2×3×4 = 24 ✓</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz3',this,true)"><span class="quiz-letter">C</span> reshape(5, 5) — 5×5 = 25 ✗</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz3',this,false)"><span class="quiz-letter">D</span> reshape(8, 3) — 8×3 = 24 ✓</div>
+    </div>
+    <div class="quiz-feedback" id="quiz3-fb"></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 6: DEVICE MANAGEMENT -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="section-num">Part 06</div>
+  <h2>Device Management — CPU vs GPU</h2>
+
+  <p>A GPU can perform <strong>thousands of matrix operations simultaneously</strong>, while a CPU handles them roughly one at a time. Neural network training involves millions of multiplications, so a GPU turns hours into minutes.</p>
+
+  <p>The catch: CPU and GPU have <strong>separate memory</strong>. A tensor on the CPU can't interact with one on the GPU — you'd get an error. So you must be deliberate about where tensors live.</p>
+
+  <pre><span class="cm"># Device-agnostic code (works with or without GPU)</span>
+device = torch.<span class="fn">device</span>(<span class="str">'cuda'</span> <span class="kw">if</span> torch.cuda.<span class="fn">is_available</span>() <span class="kw">else</span> <span class="str">'cpu'</span>)
+
+<span class="cm"># Create on the right device</span>
+tensor = torch.<span class="fn">randn</span>(<span class="num">3</span>, <span class="num">3</span>).<span class="fn">to</span>(device)
+
+<span class="cm"># Move between devices</span>
+gpu_tensor = cpu_tensor.<span class="fn">to</span>(<span class="str">'cuda'</span>)
+back_to_cpu = gpu_tensor.<span class="fn">to</span>(<span class="str">'cpu'</span>)</pre>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <strong>Common error:</strong> "Expected all tensors to be on the same device." This means you tried to combine a CPU tensor with a GPU tensor. Fix: move everything to the same device with <code style="color:var(--amber);">.to(device)</code>.
+  </div>
+
+  <div class="canvas-wrap">
+    <div class="canvas-title">▸ CPU vs GPU Speed — Matrix Multiply</div>
+    <canvas id="speedCanvas" height="180"></canvas>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 7: DATA TYPES -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="section-num">Part 07</div>
+  <h2>Data Types</h2>
+
+  <p>PyTorch <strong>infers the type</strong> from your data. But sometimes you need to convert.</p>
+
+  <pre><span class="cm"># PyTorch infers types</span>
+torch.<span class="fn">tensor</span>([<span class="num">1.0</span>, <span class="num">2.0</span>])   <span class="cm"># → float32</span>
+torch.<span class="fn">tensor</span>([<span class="num">1</span>, <span class="num">2</span>])       <span class="cm"># → int64</span>
+torch.<span class="fn">tensor</span>([<span class="kw">True</span>, <span class="kw">False</span>]) <span class="cm"># → bool</span>
+
+<span class="cm"># Convert types</span>
+t = torch.<span class="fn">tensor</span>([<span class="num">1.5</span>, <span class="num">2.7</span>, <span class="num">3.9</span>])
+t.<span class="fn">int</span>()    <span class="cm"># → [1, 2, 3]  (truncates)</span>
+t.<span class="fn">long</span>()   <span class="cm"># → [1, 2, 3]  (int64)</span>
+t.<span class="fn">float</span>()  <span class="cm"># → stays float32</span></pre>
+
+  <div class="dim-grid">
+    <div class="dim-card">
+      <div class="dim-label">float32</div>
+      <div class="dim-val" style="font-size:1.2rem;">default</div>
+      <div class="dim-desc">Decimal numbers. Used for weights, data, loss.</div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label">int64</div>
+      <div class="dim-val" style="font-size:1.2rem;">labels</div>
+      <div class="dim-desc">Whole numbers. Used for class labels, indices.</div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label">bool</div>
+      <div class="dim-val" style="font-size:1.2rem;">masks</div>
+      <div class="dim-desc">True/False. Used for filtering and conditions.</div>
+    </div>
+  </div>
+
+  <!-- Quiz 4 -->
+  <div class="quiz-card" id="quiz4">
+    <div class="quiz-q">🧩 What happens when you run <code style="color:var(--cyan);">torch.tensor([1.5, 2.7]).int()</code>?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz('quiz4',this,false)"><span class="quiz-letter">A</span> Rounds to [2, 3]</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz4',this,true)"><span class="quiz-letter">B</span> Truncates to [1, 2]</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz4',this,false)"><span class="quiz-letter">C</span> Error — can't convert float to int</div>
+      <div class="quiz-opt" onclick="checkQuiz('quiz4',this,false)"><span class="quiz-letter">D</span> Returns [1.0, 2.0]</div>
+    </div>
+    <div class="quiz-feedback" id="quiz4-fb"></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 8: PRACTICE -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s8">
+  <div class="section-num">Part 08</div>
+  <h2>Practice Exercises</h2>
+
+  <p>Try these in your head, then reveal the answer.</p>
+
+  <div class="quiz-card">
+    <div class="quiz-q">1. Create a 4×4 identity matrix. Which function?</div>
+    <details style="margin-top:8px;">
+      <summary style="color:var(--cyan);cursor:pointer;font-family:var(--mono);font-size:.9rem;">Reveal answer</summary>
+      <div class="output" style="margin-top:8px;">torch.eye(4)
+→ tensor([[1., 0., 0., 0.],
+          [0., 1., 0., 0.],
+          [0., 0., 1., 0.],
+          [0., 0., 0., 1.]])</div>
+    </details>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">2. Create 5 evenly spaced numbers between 0 and 1.</div>
+    <details style="margin-top:8px;">
+      <summary style="color:var(--cyan);cursor:pointer;font-family:var(--mono);font-size:.9rem;">Reveal answer</summary>
+      <div class="output" style="margin-top:8px;">torch.linspace(0, 1, 5)
+→ tensor([0.0000, 0.2500, 0.5000, 0.7500, 1.0000])</div>
+    </details>
+  </div>
+
+  <div class="quiz-card">
+    <div class="quiz-q">3. Tensor [0..19] reshaped to (4, 5). What is <code style="color:var(--cyan);">t[-2:, -2:]</code>?</div>
+    <details style="margin-top:8px;">
+      <summary style="color:var(--cyan);cursor:pointer;font-family:var(--mono);font-size:.9rem;">Reveal answer</summary>
+      <div class="output" style="margin-top:8px;">t = torch.arange(20).reshape(4, 5)
+→ [[ 0,  1,  2,  3,  4],
+   [ 5,  6,  7,  8,  9],
+   [10, 11, 12, 13, 14],
+   [15, 16, 17, 18, 19]]
+
+t[-2:, -2:]  → last 2 rows, last 2 cols
+→ [[13, 14],
+   [18, 19]]</div>
+    </details>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- SECTION 9: SUMMARY -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section" id="s9">
+  <div class="section-num">Part 09</div>
+  <h2>Key Takeaways</h2>
+
+  <div class="summary-grid">
+    <div class="summary-item">
+      <code>torch.tensor()</code>
+      <div class="desc">Create from data</div>
+    </div>
+    <div class="summary-item">
+      <code>zeros / ones / rand / randn</code>
+      <div class="desc">Common creators</div>
+    </div>
+    <div class="summary-item">
+      <code>a + b, a * b</code>
+      <div class="desc">Element-wise ops</div>
+    </div>
+    <div class="summary-item">
+      <code>A @ B</code>
+      <div class="desc">Matrix multiplication</div>
+    </div>
+    <div class="summary-item">
+      <code>t[0], t[:, 0]</code>
+      <div class="desc">Index rows & columns</div>
+    </div>
+    <div class="summary-item">
+      <code>t.reshape(3, 4)</code>
+      <div class="desc">Rearrange dimensions</div>
+    </div>
+    <div class="summary-item">
+      <code>.to('cuda')</code>
+      <div class="desc">Move to GPU</div>
+    </div>
+    <div class="summary-item">
+      <code>.float() / .int() / .long()</code>
+      <div class="desc">Convert data types</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="callout-icon">🚀</span>
+    <strong>Next up:</strong> Lesson 2 — How PyTorch computes gradients automatically (autograd). This is where tensors become the engine of learning.
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT -->
+<!-- ════════════════════════════════════════════════════════ -->
+<script>
+// ── Scroll progress ──
+window.addEventListener('scroll', () => {
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+});
+
+// ── Section reveal on scroll ──
+const sections = document.querySelectorAll('.section');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+sections.forEach(s => observer.observe(s));
+
+// ══════════════════════════════════════════════════════════
+// CREATION EXPLORER
+// ══════════════════════════════════════════════════════════
+function showCreation(type) {
+  document.querySelectorAll('#createControls .ctrl-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const out = document.getElementById('createOutput');
+  const desc = document.getElementById('createDesc');
+
+  const makers = {
+    zeros: { val: '[[0. 0. 0. 0.]\n [0. 0. 0. 0.]\n [0. 0. 0. 0.]]', desc: 'All zeros — useful for initializing accumulators. Shape (3, 4).' },
+    ones:  { val: '[[1. 1. 1.]\n [1. 1. 1.]]', desc: 'All ones — useful for masks or initialization. Shape (2, 3).' },
+    rand:  { val: () => {
+      let rows = [];
+      for (let r = 0; r < 3; r++) {
+        let row = [];
+        for (let c = 0; c < 3; c++) row.push(Math.random().toFixed(4));
+        rows.push('[' + row.join('  ') + ']');
+      }
+      return rows.join('\n');
+    }, desc: 'Uniform random [0, 1) — common for weight initialization. Shape (3, 3).' },
+    randn: { val: () => {
+      let rows = [];
+      for (let r = 0; r < 3; r++) {
+        let row = [];
+        for (let c = 0; c < 3; c++) {
+          const u1 = Math.random(), u2 = Math.random();
+          const z = Math.sqrt(-2*Math.log(u1)) * Math.cos(2*Math.PI*u2);
+          row.push(z.toFixed(4).padStart(7));
+        }
+        rows.push('[' + row.join(' ') + ']');
+      }
+      return rows.join('\n');
+    }, desc: 'Normal distribution (mean=0, std=1) — the standard for neural network initialization. Shape (3, 3).' },
+    arange: { val: '[ 0  1  2  3  4  5  6  7  8  9  10  11]', desc: 'Sequential integers — like Python range(). Shape (12,).' },
+    eye:   { val: '[[1. 0. 0. 0.]\n [0. 1. 0. 0.]\n [0. 0. 1. 0.]\n [0. 0. 0. 1.]]', desc: 'Identity matrix — 1s on diagonal, 0s elsewhere. Shape (4, 4).' },
+    linspace: { val: '[0.0000  0.2500  0.5000  0.7500  1.0000]', desc: '5 evenly spaced values between 0 and 1. Shape (5,).' },
+  };
+
+  const m = makers[type];
+  out.textContent = typeof m.val === 'function' ? m.val() : m.val;
+  desc.textContent = m.desc;
+}
+showCreation('zeros');
+
+// ══════════════════════════════════════════════════════════
+// ELEMENT-WISE OPS
+// ══════════════════════════════════════════════════════════
+function showOp(type) {
+  document.querySelectorAll('#opsControls .ctrl-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const out = document.getElementById('opsOutput');
+  const a = [1,2,3], b = [4,5,6];
+  const ops = {
+    add:  `a + b = [${a.map((v,i)=>v+b[i]).join(', ')}]     ← each pair added`,
+    sub:  `a - b = [${a.map((v,i)=>v-b[i]).join(', ')}]    ← each pair subtracted`,
+    mul:  `a * b = [${a.map((v,i)=>v*b[i]).join(', ')}]   ← each pair multiplied`,
+    div:  `a / b = [${a.map((v,i)=>(v/b[i]).toFixed(4)).join(', ')}]`,
+    sum:  `a.sum() = ${a.reduce((s,v)=>s+v,0)}     ← 1 + 2 + 3`,
+    mean: `a.mean() = ${(a.reduce((s,v)=>s+v,0)/a.length).toFixed(4)}   ← (1+2+3)/3`,
+    max:  `a.max() = ${Math.max(...a)}`,
+  };
+  out.textContent = ops[type];
+}
+showOp('add');
+
+// ══════════════════════════════════════════════════════════
+// MATMUL CANVAS
+// ══════════════════════════════════════════════════════════
+let matA, matB;
+function newMatmul() {
+  matA = [[1+Math.floor(Math.random()*5), 1+Math.floor(Math.random()*5)],
+          [1+Math.floor(Math.random()*5), 1+Math.floor(Math.random()*5)]];
+  matB = [[1+Math.floor(Math.random()*5), 1+Math.floor(Math.random()*5)],
+          [1+Math.floor(Math.random()*5), 1+Math.floor(Math.random()*5)]];
+  drawMatmul();
+}
+function drawMatmul() {
+  const canvas = document.getElementById('matmulCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  canvas.width = w * dpr;
+  canvas.height = 280 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, w, 280);
+
+  const cellW = 52, cellH = 42, gap = 6;
+  const C = [
+    [matA[0][0]*matB[0][0]+matA[0][1]*matB[1][0], matA[0][0]*matB[0][1]+matA[0][1]*matB[1][1]],
+    [matA[1][0]*matB[0][0]+matA[1][1]*matB[1][0], matA[1][0]*matB[0][1]+matA[1][1]*matB[1][1]],
+  ];
+
+  const startY = 40;
+  const matXa = w * 0.08, matXb = w * 0.38, matXc = w * 0.72;
+
+  function drawMat(mat, x, y, label, color) {
+    ctx.fillStyle = '#7a8aa6';
+    ctx.font = '500 13px "IBM Plex Mono"';
+    ctx.fillText(label, x, y - 10);
+
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 2; c++) {
+        const cx = x + c * (cellW + gap);
+        const cy = y + r * (cellH + gap);
+        ctx.fillStyle = 'rgba(26,37,64,.9)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(cx, cy, cellW, cellH, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.font = '600 16px "IBM Plex Mono"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(mat[r][c], cx + cellW/2, cy + cellH/2);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+      }
+    }
+  }
+
+  drawMat(matA, matXa, startY, 'A', '#34d8e8');
+
+  // × symbol
+  ctx.fillStyle = '#7a8aa6';
+  ctx.font = '600 22px "Outfit"';
+  ctx.textAlign = 'center';
+  ctx.fillText('@', matXa + (cellW*2+gap)/2 + (matXb - matXa - (cellW*2+gap))/2 + (cellW*2+gap)/2, startY + cellH + gap/2);
+  ctx.textAlign = 'left';
+
+  drawMat(matB, matXb, startY, 'B', '#f0b840');
+
+  // = symbol
+  ctx.fillStyle = '#7a8aa6';
+  ctx.font = '600 22px "Outfit"';
+  ctx.textAlign = 'center';
+  ctx.fillText('=', matXb + (cellW*2+gap) + (matXc - matXb - (cellW*2+gap))/2, startY + cellH + gap/2);
+  ctx.textAlign = 'left';
+
+  drawMat(C, matXc, startY, 'C = A @ B', '#44d488');
+
+  // Show one calculation
+  const calcY = startY + 2*(cellH+gap) + 30;
+  ctx.fillStyle = '#7a8aa6';
+  ctx.font = '400 13px "IBM Plex Mono"';
+  const ex = `C[0,0] = ${matA[0][0]}×${matB[0][0]} + ${matA[0][1]}×${matB[1][0]} = ${matA[0][0]*matB[0][0]} + ${matA[0][1]*matB[1][0]} = ${C[0][0]}`;
+  ctx.fillText(ex, matXa, calcY);
+  const ex2 = `C[1,1] = ${matA[1][0]}×${matB[0][1]} + ${matA[1][1]}×${matB[1][1]} = ${matA[1][0]*matB[0][1]} + ${matA[1][1]*matB[1][1]} = ${C[1][1]}`;
+  ctx.fillText(ex2, matXa, calcY + 22);
+}
+newMatmul();
+window.addEventListener('resize', drawMatmul);
+
+// ══════════════════════════════════════════════════════════
+// INDEXING INTERACTIVE GRID
+// ══════════════════════════════════════════════════════════
+const tensorData = [
+  [1, 2, 3, 4],
+  [5, 6, 7, 8],
+  [9, 10, 11, 12]
+];
+
+function renderGrid(highlights) {
+  const grid = document.getElementById('indexGrid');
+  grid.innerHTML = '';
+  const g = document.createElement('div');
+  g.className = 'tensor-grid';
+  g.style.gridTemplateColumns = `repeat(4, 46px)`;
+
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 4; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'tensor-cell';
+      cell.textContent = tensorData[r][c];
+      if (highlights.some(h => h[0] === r && h[1] === c)) {
+        cell.classList.add('highlight');
+      }
+      g.appendChild(cell);
+    }
+  }
+  grid.appendChild(g);
+}
+
+function showIndex(type) {
+  document.querySelectorAll('#indexControls .ctrl-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const result = document.getElementById('indexResult');
+  const explain = document.getElementById('indexExplain');
+  let hl = [], res = '', exp = '';
+
+  switch(type) {
+    case 'row0':
+      hl = [[0,0],[0,1],[0,2],[0,3]];
+      res = '[1, 2, 3, 4]';
+      exp = 'First row — all columns of row 0.';
+      break;
+    case 'row-1':
+      hl = [[2,0],[2,1],[2,2],[2,3]];
+      res = '[9, 10, 11, 12]';
+      exp = 'Last row — negative index counts from the end.';
+      break;
+    case 'col0':
+      hl = [[0,0],[1,0],[2,0]];
+      res = '[1, 5, 9]';
+      exp = 'First column — : means "all rows", 0 means column 0.';
+      break;
+    case 'col-1':
+      hl = [[0,3],[1,3],[2,3]];
+      res = '[4, 8, 12]';
+      exp = 'Last column — all rows, last column index.';
+      break;
+    case 'elem':
+      hl = [[1,2]];
+      res = '7';
+      exp = 'Single element — row 1, column 2.';
+      break;
+    case 'slice_rows':
+      hl = [[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3]];
+      res = '[[1, 2, 3, 4],\n [5, 6, 7, 8]]';
+      exp = 'Rows 0 and 1 — 0:2 means "from 0, stop before 2".';
+      break;
+    case 'slice_cols':
+      hl = [[0,1],[0,2],[1,1],[1,2],[2,1],[2,2]];
+      res = '[[ 2,  3],\n [ 6,  7],\n [10, 11]]';
+      exp = 'Columns 1 and 2 — all rows, columns 1:3.';
+      break;
+    case 'corner':
+      hl = [[1,2],[1,3],[2,2],[2,3]];
+      res = '[[ 7,  8],\n [11, 12]]';
+      exp = 'Bottom-right corner — rows 1 onward, columns 2 onward.';
+      break;
+  }
+
+  renderGrid(hl);
+  result.textContent = res;
+  explain.textContent = exp;
+}
+showIndex('row0');
+
+// ══════════════════════════════════════════════════════════
+// RESHAPE EXPLORER
+// ══════════════════════════════════════════════════════════
+function showReshape(type) {
+  document.querySelectorAll('#reshapeControls .ctrl-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const viz = document.getElementById('reshapeViz');
+  const code = document.getElementById('reshapeCode');
+  const data = Array.from({length: 12}, (_, i) => i);
+  const colors = ['#34d8e8','#3ac','#44d488','#a0d848','#f0b840','#e8a030','#e87040','#e85454','#d870e8','#a870e8','#7888e8','#58b8e8'];
+
+  function makeGrid(rows, cols, blocks) {
+    let html = '';
+    if (blocks) {
+      html += '<div style="display:flex;gap:16px;flex-wrap:wrap;">';
+      for (let b = 0; b < blocks; b++) {
+        html += `<div><div style="font-family:var(--mono);font-size:.75rem;color:var(--text-muted);margin-bottom:4px;">Block ${b}</div>`;
+        html += `<div class="tensor-grid" style="grid-template-columns:repeat(${cols},46px);">`;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const idx = b * rows * cols + r * cols + c;
+            html += `<div class="tensor-cell" style="border-color:${colors[idx]};color:${colors[idx]}">${data[idx]}</div>`;
+          }
+        }
+        html += '</div></div>';
+      }
+      html += '</div>';
+    } else {
+      html += `<div class="tensor-grid" style="grid-template-columns:repeat(${cols},46px);">`;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const idx = r * cols + c;
+          html += `<div class="tensor-cell" style="border-color:${colors[idx]};color:${colors[idx]}">${data[idx]}</div>`;
+        }
+      }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  switch(type) {
+    case 'flat':
+      viz.innerHTML = makeGrid(1, 12);
+      code.textContent = 'torch.arange(12)  →  shape (12,)';
+      break;
+    case '3x4':
+      viz.innerHTML = makeGrid(3, 4);
+      code.textContent = '.reshape(3, 4)  →  shape (3, 4)';
+      break;
+    case '4x3':
+      viz.innerHTML = makeGrid(4, 3);
+      code.textContent = '.reshape(4, 3)  →  shape (4, 3)';
+      break;
+    case '6x2':
+      viz.innerHTML = makeGrid(6, 2);
+      code.textContent = '.reshape(6, 2)  →  shape (6, 2)';
+      break;
+    case '2x2x3':
+      viz.innerHTML = makeGrid(2, 3, 2);
+      code.textContent = '.reshape(2, 2, 3)  →  shape (2, 2, 3)';
+      break;
+  }
+}
+showReshape('flat');
+
+// ══════════════════════════════════════════════════════════
+// SPEED COMPARISON CHART
+// ══════════════════════════════════════════════════════════
+function drawSpeed() {
+  const canvas = document.getElementById('speedCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  canvas.width = w * dpr;
+  canvas.height = 180 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const data = [
+    { label: '256×256', cpu: 100, gpu: 8 },
+    { label: '1024×1024', cpu: 100, gpu: 3 },
+    { label: '4096×4096', cpu: 100, gpu: 1.2 },
+  ];
+
+  const barH = 22, groupGap = 32, startX = 120, startY = 20;
+  const maxW = w - startX - 80;
+
+  data.forEach((d, i) => {
+    const y = startY + i * (barH * 2 + groupGap);
+
+    // Label
+    ctx.fillStyle = '#d4dae8';
+    ctx.font = '500 13px "IBM Plex Mono"';
+    ctx.textAlign = 'right';
+    ctx.fillText(d.label, startX - 12, y + barH/2 + 5);
+    ctx.textAlign = 'left';
+
+    // CPU bar
+    const cpuW = (d.cpu / 100) * maxW;
+    ctx.fillStyle = 'rgba(232,84,84,.3)';
+    ctx.beginPath();
+    ctx.roundRect(startX, y, cpuW, barH, 4);
+    ctx.fill();
+    ctx.fillStyle = '#e85454';
+    ctx.font = '500 11px "IBM Plex Mono"';
+    ctx.fillText(`CPU ${d.cpu}%`, startX + cpuW + 8, y + barH/2 + 4);
+
+    // GPU bar
+    const gpuW = Math.max((d.gpu / 100) * maxW, 8);
+    ctx.fillStyle = 'rgba(52,216,232,.3)';
+    ctx.beginPath();
+    ctx.roundRect(startX, y + barH + 4, gpuW, barH, 4);
+    ctx.fill();
+    ctx.fillStyle = '#34d8e8';
+    ctx.fillText(`GPU ${d.gpu}%`, startX + gpuW + 8, y + barH + 4 + barH/2 + 4);
+  });
+
+  ctx.fillStyle = '#7a8aa6';
+  ctx.font = '400 11px "IBM Plex Mono"';
+  ctx.fillText('(relative time — lower is faster)', startX, startY + data.length * (barH*2+groupGap) - 4);
+}
+drawSpeed();
+window.addEventListener('resize', drawSpeed);
+
+// ══════════════════════════════════════════════════════════
+// QUIZ HANDLER
+// ══════════════════════════════════════════════════════════
+function checkQuiz(id, el, isCorrect) {
+  const card = document.getElementById(id);
+  if (card.dataset.answered) return;
+  card.dataset.answered = '1';
+
+  const opts = card.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.classList.add('disabled'));
+
+  const fb = document.getElementById(id + '-fb');
+
+  if (isCorrect) {
+    el.classList.add('correct');
+    fb.className = 'quiz-feedback pass show';
+    fb.textContent = '✅ Correct!';
+  } else {
+    el.classList.add('wrong');
+    opts.forEach(o => {
+      if (o.onclick && o.onclick.toString().includes('true')) o.classList.add('correct');
+    });
+    fb.className = 'quiz-feedback fail show';
+
+    const explanations = {
+      quiz1: '❌ Element-wise multiplication: [2×1, 4×2, 6×3] = [2, 8, 18].',
+      quiz2: '❌ The colon (:) means "all rows" and -1 means the last column.',
+      quiz3: '❌ 5×5 = 25 but we only have 24 elements — the total must match!',
+      quiz4: '❌ .int() truncates toward zero, it does not round.',
+    };
+    fb.textContent = explanations[id] || '❌ Not quite.';
+  }
+}
+</script>
+</body>
+</html>
