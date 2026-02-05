@@ -1,64 +1,59 @@
-# LLM Python Project – Setup & Useful Commands
+PYTHON LLM PROJECT – USEFUL COMMANDS
 
-This document lists common commands used to set up, run, and manage a Python-based LLM project on a Linux system (Ubuntu/Debian).
+SYSTEM SETUP
+------------
+Update system and install required tools:
 
----
-
-## System Update & Dependencies
-
-Update your system and install basic tools:
-
-```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y git python3-venv python3-pip
+sudo apt install -y git python3 python3-venv python3-pip build-essential
 
-(Optional but useful)
 
-sudo apt install -y build-essential
-
-Project Setup
-
-Create and enter the project directory:
+PROJECT SETUP
+-------------
+Create project folder and enter it:
 
 mkdir LLMproject
 cd LLMproject
 
-Clone a repository (if applicable):
+Clone a repository (optional):
 
-git clone <repo_url>
-cd <repo_name>
+git clone <repository_url>
+cd <repository_name>
 
-Python Virtual Environment
 
-Create a virtual environment:
+PYTHON VIRTUAL ENVIRONMENT
+--------------------------
+Create virtual environment:
 
 python3 -m venv venv
 
-Activate the virtual environment:
+Activate virtual environment:
 
 source venv/bin/activate
 
-Deactivate the virtual environment:
+Deactivate virtual environment:
 
 deactivate
 
-Install Dependencies
 
+DEPENDENCY MANAGEMENT
+---------------------
 Upgrade pip:
 
 pip install --upgrade pip
 
-Install project requirements:
+Install dependencies:
 
 pip install -r requirements.txt
 
-Save installed packages to requirements.txt:
+Save installed packages:
 
 pip freeze > requirements.txt
 
-Running Python Files
 
-Run a Python script:
+RUNNING THE PROJECT
+-------------------
+Run a Python file:
 
 python main.py
 
@@ -66,14 +61,15 @@ Run a module:
 
 python -m module_name
 
-File & Folder Management
 
-List files and folders:
+FILE & FOLDER COMMANDS
+----------------------
+List files:
 
 ls
 ls -la
 
-Create a new file:
+Create a file:
 
 touch anewfile.py
 
@@ -81,7 +77,7 @@ View file contents:
 
 cat anewfile.py
 
-Open file in editor (nano or vim):
+Edit file:
 
 nano anewfile.py
 vim anewfile.py
@@ -94,9 +90,11 @@ Remove a folder:
 
 rm -rf afolder
 
-Git Commands
 
-Initialize a repository:
+GIT COMMANDS 
+------------
+Use this only if you can use git or you want to learn how to use git 
+Initialize repository:
 
 git init
 
@@ -104,7 +102,7 @@ Check status:
 
 git status
 
-Add files:
+Stage files:
 
 git add .
 
@@ -112,7 +110,7 @@ Commit changes:
 
 git commit -m "Initial commit"
 
-Pull latest changes:
+Pull changes:
 
 git pull
 
@@ -120,17 +118,18 @@ Push changes:
 
 git push
 
-LLM / ML Helpful Commands
 
+LLM / ML UTILITIES
+------------------
 Check Python version:
 
 python --version
 
-Check installed packages:
+List installed packages:
 
 pip list
 
-Check GPU availability (NVIDIA):
+Check NVIDIA GPU:
 
 nvidia-smi
 
@@ -138,22 +137,20 @@ Check CUDA version:
 
 nvcc --version
 
-Test if PyTorch sees GPU:
+Check PyTorch GPU support:
 
 python -c "import torch; print(torch.cuda.is_available())"
 
-Environment Variables
 
-Set an environment variable (example: API key):
 
-export OPENAI_API_KEY="your_api_key_here"
-
-Verify variable:
-
-echo $OPENAI_API_KEY
-
-Cleanup
-
+CLEANUP
+-------
 Remove virtual environment:
 
 rm -rf venv
+
+
+NOTES
+-----
+- Always activate the virtual environment before running the project
+
