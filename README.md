@@ -11,7 +11,7 @@ sudo apt install -y git python3 python3-venv python3-pip build-essential
 PROJECT SETUP
 -------------
 Create project folder and enter it:
-
+'''bash
 mkdir LLMproject
 cd LLMproject
 
