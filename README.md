@@ -6,7 +6,7 @@ A practical cheat sheet for setting up, managing, and running a **Python-based L
 
 ##  System Setup
 
-Update the system and install required tools:
+### Update the system and install required tools:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -14,23 +14,28 @@ sudo apt install -y git python3 python3-venv python3-pip build-essential
 ```
 ## Project Setup
 
-Create a project folder and enter it:
+### Create a project folder and enter it:
 
+```bash
 mkdir LLMproject
 cd LLMproject
+```
+###Clone a repository (optional):
 
-Clone a repository (optional):
-
+```bash
 git clone <repository_url>
 cd <repository_name>
+```
+## Python Virtual Environment
 
-### Python Virtual Environment
+### Create a virtual environment:
 
-Create a virtual environment:
-
+```bash
 python3 -m venv venv
 
-Activate the virtual environment:
+```
+
+### Activate the virtual environment:
 
 source venv/bin/activate
 
