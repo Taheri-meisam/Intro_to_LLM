@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — Week 1: PyTorch Foundations</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Libre+Baskerville:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --surface: #ffffff;
+    --text: #2a2520;
+    --muted: #7a7268;
+    --accent: #3a5bc7;
+    --correct: #2a7a44;
+    --correct-bg: #e5f5eb;
+    --correct-border: #34a853;
+    --wrong: #c44830;
+    --wrong-bg: #fce8e4;
+    --wrong-border: #d9534f;
+    --warn: #b8860b;
+    --warn-bg: #fdf5dd;
+    --warn-border: #daa520;
+    --border: #e0d8c8;
+    --radius: 10px;
+    --code-bg: #2b2b2b;
+    --code-text: #e6e1dc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeDown .6s ease;
+  }
+  .header-icon { font-size: 3rem; margin-bottom: 8px; }
+  .header h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+  .header p { color: var(--muted); font-size: 1.05rem; }
+  .header .subtitle {
+    font-size: .88rem;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* ── Section Dividers ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 36px 0 18px;
+    animation: fadeUp .5s ease forwards;
+    opacity: 0;
+  }
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .74rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    white-space: nowrap;
+    padding: 4px 14px;
+    border: 1px solid rgba(58,91,199,.2);
+    border-radius: 20px;
+    background: rgba(58,91,199,.05);
+  }
+
+  /* ── Progress Bar ── */
+  .progress-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    padding: 12px 0 8px;
+    margin-bottom: 24px;
+  }
+  .progress-bar-outer {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    width: 0%;
+    transition: width .4s ease;
+  }
+  .progress-text {
+    text-align: right;
+    font-size: .82rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── Question Card ── */
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 28px 24px;
+    margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp .5s ease forwards;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .question-card.result-correct {
+    border-color: var(--correct-border);
+    box-shadow: 0 0 0 1px var(--correct-border), 0 2px 12px rgba(42,122,68,.1);
+  }
+  .question-card.result-wrong {
+    border-color: var(--wrong-border);
+    box-shadow: 0 0 0 1px var(--wrong-border), 0 2px 12px rgba(196,72,48,.1);
+  }
+  .question-card.result-skipped {
+    border-color: var(--warn-border);
+    box-shadow: 0 0 0 1px var(--warn-border), 0 2px 12px rgba(184,134,11,.1);
+  }
+
+  .q-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .q-text {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
+  .q-text code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .85em;
+    background: #ece8e0;
+    padding: 2px 7px;
+    border-radius: 4px;
+    color: #5a4e42;
+  }
+
+  /* ── Code Block in question ── */
+  .code-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .82rem;
+    line-height: 1.7;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 12px 0 18px;
+    overflow-x: auto;
+    white-space: pre;
+    border: 1px solid #3a3a3a;
+  }
+  .code-block .kw { color: #cc7832; }
+  .code-block .fn { color: #ffc66d; }
+  .code-block .num { color: #6897bb; }
+  .code-block .str { color: #6a8759; }
+  .code-block .cm { color: #808080; font-style: italic; }
+  .code-block .op { color: #a9b7c6; }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    color: var(--text);
+    line-height: 1.5;
+    transition: all .2s ease;
+    width: 100%;
+  }
+  .option-btn:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: #f0f2fa;
+  }
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: #ebeefa;
+    font-weight: 500;
+  }
+  .option-btn.disabled { cursor: default; }
+  .option-btn.correct-answer {
+    border-color: var(--correct-border) !important;
+    background: var(--correct-bg) !important;
+    font-weight: 500;
+  }
+  .option-btn.wrong-answer {
+    border-color: var(--wrong-border) !important;
+    background: var(--wrong-bg) !important;
+  }
+  .option-btn code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .84em;
+    background: #ece8e0;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .option-btn.correct-answer code { background: rgba(0,0,0,.07); }
+  .option-btn.wrong-answer code { background: rgba(0,0,0,.06); }
+
+  .option-letter {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-top: 1px;
+    transition: all .2s;
+  }
+  .option-btn.selected .option-letter {
+    background: var(--accent);
+    color: #fff;
+  }
+  .option-btn.correct-answer .option-letter {
+    background: var(--correct);
+    color: #fff;
+  }
+  .option-btn.wrong-answer .option-letter {
+    background: var(--wrong);
+    color: #fff;
+  }
+
+  /* ── Feedback ── */
+  .feedback {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: .9rem;
+    line-height: 1.65;
+    display: none;
+  }
+  .feedback.show { display: block; animation: fadeUp .3s ease; }
+  .feedback.correct {
+    background: var(--correct-bg);
+    color: #1a5c2c;
+    border-left: 4px solid var(--correct-border);
+  }
+  .feedback.wrong {
+    background: var(--wrong-bg);
+    color: #8a2c1a;
+    border-left: 4px solid var(--wrong-border);
+  }
+  .feedback.skipped {
+    background: var(--warn-bg);
+    color: #6a5010;
+    border-left: 4px solid var(--warn-border);
+  }
+  .feedback strong { font-weight: 700; }
+  .feedback code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .84em;
+    background: rgba(0,0,0,.07);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* ── Result badge on card ── */
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .result-badge.badge-correct { background: var(--correct-bg); color: var(--correct); }
+  .result-badge.badge-wrong { background: var(--wrong-bg); color: var(--wrong); }
+  .result-badge.badge-skipped { background: var(--warn-bg); color: var(--warn); }
+
+  /* ── Submit Area ── */
+  .submit-area { text-align: center; margin-top: 36px; }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 48px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 4px 16px rgba(58, 91, 199, .25);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(58, 91, 199, .35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 40px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: transparent;
+    border: 2px solid var(--accent);
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: 16px;
+  }
+  .btn-secondary:hover { background: var(--accent); color: #fff; }
+
+  .answered-count { color: var(--muted); font-size: .9rem; margin-bottom: 12px; }
+
+  /* ── Score Card ── */
+  .score-card {
+    text-align: center;
+    padding: 44px 32px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 32px;
+    animation: fadeUp .5s ease;
+  }
+  .score-emoji { font-size: 3.4rem; margin-bottom: 8px; }
+  .score-number {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+  }
+  .score-pct {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin: 4px 0 12px;
+  }
+  .score-msg { font-size: 1.05rem; font-weight: 500; }
+  .score-card.excellent { border-color: var(--correct-border); }
+  .score-card.excellent .score-number { color: var(--correct); }
+  .score-card.good { border-color: var(--warn-border); }
+  .score-card.good .score-number { color: var(--warn); }
+  .score-card.retry { border-color: var(--wrong-border); }
+  .score-card.retry .score-number { color: var(--wrong); }
+
+  /* ── Section breakdown in score ── */
+  .section-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  .section-score-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .78rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+
+  /* ── Summary chips ── */
+  .summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: .8rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .summary-chip.c { background: var(--correct-bg); color: var(--correct); }
+  .summary-chip.w { background: var(--wrong-bg); color: var(--wrong); }
+  .summary-chip.s { background: var(--warn-bg); color: var(--warn); }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 600px) {
+    .container { padding: 24px 16px 60px; }
+    .header h1 { font-size: 1.45rem; }
+    .question-card { padding: 20px 16px 18px; }
+    .q-text { font-size: .97rem; }
+    .option-btn { padding: 12px 14px; font-size: .9rem; }
+    .code-block { font-size: .75rem; padding: 12px 14px; }
+    .score-number { font-size: 2.2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon">🧠</div>
+    <h1>Week 1 Quiz</h1>
+    <p>PyTorch Foundations — 40 Questions</p>
+    <div class="subtitle">Tensors · Autograd · Neural Networks · Training Loop · MNIST Project</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText">0 / 40 answered</div>
+  </div>
+
+  <div id="questionsContainer"></div>
+
+  <div class="submit-area" id="submitArea">
+    <div class="answered-count" id="answeredCount"></div>
+    <button class="btn-primary" id="submitBtn" onclick="submitQuiz()" disabled>
+      📊 Submit Quiz
+    </button>
+  </div>
+
+  <div id="scoreArea" style="display:none;"></div>
+</div>
+
+<script>
+// ============================================================
+// SECTION MARKERS
+// ============================================================
+const SECTIONS = [
+  { before: 0,  label: "Lesson 1 — Tensors", start: 0, end: 9 },
+  { before: 10, label: "Lesson 2 — Autograd", start: 10, end: 19 },
+  { before: 20, label: "Lesson 3 — Neural Networks", start: 20, end: 29 },
+  { before: 30, label: "Lesson 4 — Training Loop", start: 30, end: 35 },
+  { before: 36, label: "Project — MNIST Classifier", start: 36, end: 39 },
+];
+
+// ============================================================
+// 40 QUESTIONS
+// ============================================================
+const QUESTIONS = [
+
+  // ══════════════════════════════════════════════════════
+  // LESSON 1: TENSORS  (Q1 – Q10)
+  // ══════════════════════════════════════════════════════
+  {
+    q: "What is the correct mapping of tensor dimensions?",
+    options: [
+      "0D = vector, 1D = matrix, 2D = scalar",
+      "0D = scalar (single number), 1D = vector (list), 2D = matrix (table)",
+      "0D = matrix, 1D = scalar, 2D = vector",
+      "0D = list, 1D = table, 2D = cube"
+    ],
+    answer: 1,
+    explain: "A 0D tensor is a single number (scalar), a 1D tensor is a list of numbers (vector), and a 2D tensor is a table of numbers (matrix). Higher dimensions stack these structures — for example a 3D tensor could represent a batch of images."
+  },
+  {
+    q: "What makes PyTorch tensors different from ordinary NumPy arrays?",
+    options: [
+      "Tensors can only hold integer data",
+      "Tensors can run on GPUs and track operations for automatic differentiation",
+      "Tensors are slower but more accurate than NumPy arrays",
+      "Tensors cannot be created from Python lists"
+    ],
+    answer: 1,
+    explain: "PyTorch tensors have two superpowers over NumPy: they can run on GPUs for massively parallel computation, and they can track every operation so gradients can be computed automatically for learning."
+  },
+  {
+    q: `What does this code output?
+<div class="code-block">x = torch.tensor([[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>],
+                  [<span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>]])
+<span class="fn">print</span>(x.shape)</div>`,
+    options: [
+      "<code>torch.Size([3, 2])</code>",
+      "<code>torch.Size([6])</code>",
+      "<code>torch.Size([2, 3])</code>",
+      "<code>torch.Size([1, 6])</code>"
+    ],
+    answer: 2,
+    explain: "The tensor has 2 rows and 3 columns, so the shape is <code>torch.Size([2, 3])</code>. The first dimension is rows, the second is columns."
+  },
+  {
+    q: `What does this code produce?
+<div class="code-block">t = torch.arange(<span class="num">12</span>)
+result = t.reshape(<span class="num">3</span>, <span class="num">4</span>)
+<span class="fn">print</span>(result[<span class="num">1</span>])</div>`,
+    options: [
+      "<code>tensor([0, 1, 2, 3])</code>",
+      "<code>tensor([4, 5, 6, 7])</code>",
+      "<code>tensor([1, 5, 9])</code>",
+      "<code>tensor([3, 4, 5, 6])</code>"
+    ],
+    answer: 1,
+    explain: "<code>torch.arange(12)</code> creates [0..11]. Reshaped to (3,4) gives rows [[0,1,2,3], [4,5,6,7], [8,9,10,11]]. Index [1] selects the second row: <code>tensor([4, 5, 6, 7])</code>."
+  },
+  {
+    q: `What is the result of this code?
+<div class="code-block">a = torch.tensor([<span class="num">1.0</span>, <span class="num">2.0</span>, <span class="num">3.0</span>])
+b = torch.tensor([<span class="num">4.0</span>, <span class="num">5.0</span>, <span class="num">6.0</span>])
+<span class="fn">print</span>(a * b)</div>`,
+    options: [
+      "<code>tensor([5., 7., 9.])</code>  — element-wise addition",
+      "<code>tensor(32.)</code>  — dot product",
+      "<code>tensor([4., 10., 18.])</code>  — element-wise multiplication",
+      "An error — you can't multiply two vectors"
+    ],
+    answer: 2,
+    explain: "The <code>*</code> operator performs element-wise multiplication: 1×4=4, 2×5=10, 3×6=18. For matrix multiplication, use the <code>@</code> operator instead."
+  },
+  {
+    q: `What does this indexing return?
+<div class="code-block">t = torch.tensor([[<span class="num">1</span>,  <span class="num">2</span>,  <span class="num">3</span>,  <span class="num">4</span>],
+                  [<span class="num">5</span>,  <span class="num">6</span>,  <span class="num">7</span>,  <span class="num">8</span>],
+                  [<span class="num">9</span>, <span class="num">10</span>, <span class="num">11</span>, <span class="num">12</span>]])
+<span class="fn">print</span>(t[:, <span class="num">0</span>])</div>`,
+    options: [
+      "<code>tensor([1, 2, 3, 4])</code>  — the first row",
+      "<code>tensor([1, 5, 9])</code>  — the first column",
+      "<code>tensor([1])</code>  — just the first element",
+      "<code>tensor([9, 10, 11, 12])</code>  — the last row"
+    ],
+    answer: 1,
+    explain: "The syntax <code>t[:, 0]</code> means \"all rows, column 0\". This selects the entire first column: <code>tensor([1, 5, 9])</code>."
+  },
+  {
+    q: `What is the result of this slicing?
+<div class="code-block">t = torch.tensor([[<span class="num">1</span>,  <span class="num">2</span>,  <span class="num">3</span>,  <span class="num">4</span>],
+                  [<span class="num">5</span>,  <span class="num">6</span>,  <span class="num">7</span>,  <span class="num">8</span>],
+                  [<span class="num">9</span>, <span class="num">10</span>, <span class="num">11</span>, <span class="num">12</span>]])
+<span class="fn">print</span>(t[<span class="num">-2</span>:, <span class="num">-2</span>:])</div>`,
+    options: [
+      "<code>tensor([[1, 2], [5, 6]])</code>  — top-left 2×2",
+      "<code>tensor([[7, 8], [11, 12]])</code>  — bottom-right 2×2",
+      "<code>tensor([11, 12])</code>  — last row, last 2 elements",
+      "<code>tensor([[3, 4], [7, 8], [11, 12]])</code>  — last 2 columns"
+    ],
+    answer: 1,
+    explain: "<code>t[-2:, -2:]</code> means \"last 2 rows, last 2 columns\". That gives the bottom-right 2×2 block: [[7, 8], [11, 12]]. This is the exercise from Lesson 1!"
+  },
+  {
+    q: "What is the standard pattern for writing device-agnostic PyTorch code?",
+    options: [
+      "<code>device = 'gpu'</code>",
+      "<code>device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')</code>",
+      "<code>device = torch.auto_device()</code>",
+      "<code>device = 'auto'</code>"
+    ],
+    answer: 1,
+    explain: "The standard pattern checks if CUDA (GPU) is available and falls back to CPU. This lets your code run on any machine. You then move tensors with <code>tensor.to(device)</code>."
+  },
+  {
+    q: `What are the default dtypes?
+<div class="code-block">a = torch.tensor([<span class="num">1.0</span>, <span class="num">2.0</span>])   <span class="cm"># dtype = ?</span>
+b = torch.tensor([<span class="num">1</span>, <span class="num">2</span>])       <span class="cm"># dtype = ?</span></div>`,
+    options: [
+      "<code>a</code>: float64, <code>b</code>: int32",
+      "<code>a</code>: float32, <code>b</code>: int64",
+      "<code>a</code>: float16, <code>b</code>: int64",
+      "Both are float32"
+    ],
+    answer: 1,
+    explain: "PyTorch infers types from your data. Decimal numbers default to <code>torch.float32</code> (the standard in deep learning), and integers default to <code>torch.int64</code>."
+  },
+  {
+    q: `What does <code>squeeze()</code> do here?
+<div class="code-block">t = torch.tensor([[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]])  <span class="cm"># shape: (1, 3)</span>
+<span class="fn">print</span>(t.squeeze().shape)</div>`,
+    options: [
+      "<code>torch.Size([1, 3])</code>  — unchanged",
+      "<code>torch.Size([3, 1])</code>  — transposed",
+      "<code>torch.Size([3])</code>  — removed the dimension of size 1",
+      "<code>torch.Size([1, 1, 3])</code>  — added a dimension"
+    ],
+    answer: 2,
+    explain: "<code>squeeze()</code> removes all dimensions of size 1. Shape (1, 3) becomes (3,). Its counterpart <code>unsqueeze(dim)</code> adds a dimension of size 1 at the specified position."
+  },
+
+  // ══════════════════════════════════════════════════════
+  // LESSON 2: AUTOGRAD  (Q11 – Q20)
+  // ══════════════════════════════════════════════════════
+  {
+    q: "What do gradients tell us during neural network training?",
+    options: [
+      "The exact value each weight should be set to",
+      "Which direction to adjust parameters to reduce the error, and how much each parameter contributes",
+      "How many epochs are needed for convergence",
+      "The final accuracy the model will achieve"
+    ],
+    answer: 1,
+    explain: "Gradients indicate which direction makes the error smaller and how much each parameter contributes to it. This is the core information used by gradient descent to update weights step by step."
+  },
+  {
+    q: `What is <code>x.grad</code> after this code runs?
+<div class="code-block">x = torch.tensor(<span class="num">3.0</span>, requires_grad=<span class="kw">True</span>)
+y = x ** <span class="num">2</span>
+y.backward()
+<span class="fn">print</span>(x.grad)</div>`,
+    options: [
+      "<code>tensor(3.)</code>",
+      "<code>tensor(9.)</code>",
+      "<code>tensor(6.)</code>",
+      "<code>tensor(2.)</code>"
+    ],
+    answer: 2,
+    explain: "The derivative of y = x² is dy/dx = 2x. At x = 3, the gradient is 2 × 3 = <strong>6</strong>. PyTorch computes this automatically via its computational graph."
+  },
+  {
+    q: `What is <code>x.grad</code> after running this code?
+<div class="code-block">x = torch.tensor(<span class="num">2.0</span>, requires_grad=<span class="kw">True</span>)
+f = x**<span class="num">3</span> + <span class="num">2</span>*x**<span class="num">2</span> - <span class="num">5</span>*x
+f.backward()
+<span class="fn">print</span>(x.grad)</div>`,
+    options: [
+      "<code>tensor(15.)</code>",
+      "<code>tensor(6.)</code>",
+      "<code>tensor(10.)</code>",
+      "<code>tensor(4.)</code>"
+    ],
+    answer: 0,
+    explain: "f'(x) = 3x² + 4x − 5. At x=2: 3(4) + 4(2) − 5 = 12 + 8 − 5 = <strong>15</strong>. This matches the practice exercise from Lesson 2."
+  },
+  {
+    q: `What is the gradient <code>dz/dx</code> after this code?
+<div class="code-block">x = torch.tensor(<span class="num">2.0</span>, requires_grad=<span class="kw">True</span>)
+a = x + <span class="num">2</span>       <span class="cm"># a = 4</span>
+b = a ** <span class="num">2</span>      <span class="cm"># b = 16</span>
+z = b * <span class="num">3</span>       <span class="cm"># z = 48</span>
+z.backward()
+<span class="fn">print</span>(x.grad)</div>`,
+    options: [
+      "<code>tensor(48.)</code>",
+      "<code>tensor(12.)</code>",
+      "<code>tensor(24.)</code>",
+      "<code>tensor(6.)</code>"
+    ],
+    answer: 2,
+    explain: "z = 3(x+2)². Using the chain rule: dz/dx = 3 · 2(x+2) · 1 = 6(x+2). At x=2: 6(4) = <strong>24</strong>. PyTorch builds and walks the computational graph to compute this automatically."
+  },
+  {
+    q: `What does <code>x.grad</code> print the second time?
+<div class="code-block">x = torch.tensor(<span class="num">2.0</span>, requires_grad=<span class="kw">True</span>)
+
+y = x ** <span class="num">2</span>
+y.backward()
+<span class="fn">print</span>(x.grad)  <span class="cm"># prints 4.0</span>
+
+y = x ** <span class="num">2</span>
+y.backward()
+<span class="fn">print</span>(x.grad)  <span class="cm"># prints ???</span></div>`,
+    options: [
+      "<code>4.0</code> — the gradient is overwritten",
+      "<code>8.0</code> — the gradients are accumulated (summed)",
+      "An error is thrown",
+      "<code>0.0</code> — gradients reset between calls"
+    ],
+    answer: 1,
+    explain: "PyTorch <strong>accumulates</strong> gradients by default! The first backward gives 4.0, and the second adds another 4.0, totaling <strong>8.0</strong>. This is why you must always call <code>.zero_()</code> or <code>optimizer.zero_grad()</code> in training loops."
+  },
+  {
+    q: `What does <code>requires_grad=True</code> actually do to a tensor?`,
+    options: [
+      "Makes the tensor read-only so it can't be modified",
+      "Converts the tensor to floating-point automatically",
+      "Tells PyTorch to record every operation in a computational graph so gradients can be computed later via the chain rule",
+      "Moves the tensor to GPU memory for faster computation"
+    ],
+    answer: 2,
+    explain: "Setting <code>requires_grad=True</code> tells PyTorch to build a computational graph tracking every operation. When <code>.backward()</code> is called, PyTorch walks this graph in reverse, applying the chain rule to compute gradients."
+  },
+  {
+    q: `What are two things <code>torch.no_grad()</code> does?`,
+    options: [
+      "Deletes model parameters and resets the optimizer",
+      "Disables gradient tracking — saves memory and speeds up computation",
+      "Freezes the learning rate and disables weight decay",
+      "Switches the model from training mode to evaluation mode"
+    ],
+    answer: 1,
+    explain: "Inside a <code>torch.no_grad()</code> block, PyTorch skips building the computational graph. This saves memory and is faster — essential during evaluation when you don't need to compute gradients."
+  },
+  {
+    q: `What value does <code>x</code> converge to?
+<div class="code-block">x = torch.tensor(<span class="num">10.0</span>, requires_grad=<span class="kw">True</span>)
+<span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">100</span>):
+    f = (x - <span class="num">3</span>) ** <span class="num">2</span>
+    f.backward()
+    <span class="kw">with</span> torch.no_grad():
+        x -= <span class="num">0.1</span> * x.grad
+    x.grad.zero_()</div>`,
+    options: [
+      "x ≈ 10.0 (doesn't change)",
+      "x ≈ 0.0 (finds zero)",
+      "x ≈ 3.0 (finds the minimum of the parabola)",
+      "x ≈ −3.0 (goes negative)"
+    ],
+    answer: 2,
+    explain: "f(x) = (x−3)² is a parabola with its minimum at x = 3. Gradient descent follows the slope downhill from x=10 toward this minimum. With 100 steps and lr=0.1, it converges very close to <strong>x = 3.0</strong>."
+  },
+  {
+    q: `What does <code>.detach()</code> do here?
+<div class="code-block">x = torch.tensor(<span class="num">3.0</span>, requires_grad=<span class="kw">True</span>)
+y = x ** <span class="num">2</span>
+z = y.detach()
+<span class="fn">print</span>(z.requires_grad)</div>`,
+    options: [
+      "<code>True</code> — detach has no effect",
+      "<code>False</code> — z is a copy disconnected from the computational graph",
+      "An error — you can't detach a tensor that requires gradients",
+      "It prints <code>None</code>"
+    ],
+    answer: 1,
+    explain: "<code>.detach()</code> creates a new tensor that shares the same data but is disconnected from the computational graph. It's like <code>torch.no_grad()</code> but for a specific tensor rather than a whole block."
+  },
+  {
+    q: "In the update rule <code>x = x - lr * gradient</code>, what does a very large learning rate risk?",
+    options: [
+      "Slower but guaranteed convergence",
+      "No change to the parameters at all",
+      "Overshooting the minimum — the optimization may oscillate or diverge",
+      "The learning rate automatically shrinks to compensate"
+    ],
+    answer: 2,
+    explain: "A large learning rate takes big steps. If the steps are too large, the optimizer can jump over the minimum and oscillate wildly, or even diverge. Finding a good learning rate is one of the key challenges in training."
+  },
+
+  // ══════════════════════════════════════════════════════
+  // LESSON 3: NEURAL NETWORKS  (Q21 – Q30)
+  // ══════════════════════════════════════════════════════
+  {
+    q: `What mathematical operation does <code>nn.Linear(4, 3)</code> compute?`,
+    options: [
+      "<code>y = max(0, x)</code>",
+      "<code>y = Wx + b</code>  where W is shape (3, 4) and b is shape (3,)",
+      "<code>y = softmax(x)</code>",
+      "<code>y = x ** 2</code>"
+    ],
+    answer: 1,
+    explain: "<code>nn.Linear(4, 3)</code> computes y = Wx + b, transforming a 4-dimensional input into a 3-dimensional output. The weight matrix W has shape (3, 4) and bias b has shape (3,)."
+  },
+  {
+    q: `What is the output of <code>F.relu(x)</code>?
+<div class="code-block">x = torch.tensor([<span class="num">-2.0</span>, <span class="num">-1.0</span>, <span class="num">0.0</span>, <span class="num">1.0</span>, <span class="num">2.0</span>])
+<span class="fn">print</span>(F.relu(x))</div>`,
+    options: [
+      "<code>tensor([-2., -1.,  0.,  1.,  2.])</code>  — unchanged",
+      "<code>tensor([2., 1., 0., 1., 2.])</code>  — absolute value",
+      "<code>tensor([0., 0., 0., 1., 2.])</code>  — negatives become zero",
+      "<code>tensor([0.12, 0.27, 0.50, 0.73, 0.88])</code>  — squashed to (0,1)"
+    ],
+    answer: 2,
+    explain: "ReLU (Rectified Linear Unit) computes <code>max(0, x)</code> element-wise. All negative values become 0, positive values pass through unchanged. It's the most widely used activation function in deep learning."
+  },
+  {
+    q: "Why are activation functions necessary between linear layers?",
+    options: [
+      "They speed up matrix multiplication on the GPU",
+      "They reduce the total number of parameters in the model",
+      "Without them, stacking linear layers is mathematically just one big linear transformation — activations add non-linearity to learn complex patterns",
+      "They are optional and only used for debugging purposes"
+    ],
+    answer: 2,
+    explain: "Mathematically, a stack of linear layers (without activations) collapses to a single linear layer. Activations like ReLU break this linearity, allowing the network to model complex, non-linear relationships in data."
+  },
+  {
+    q: `What is the output shape?
+<div class="code-block">model = nn.Sequential(
+    nn.Linear(<span class="num">10</span>, <span class="num">32</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="num">32</span>, <span class="num">16</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="num">16</span>, <span class="num">2</span>)
+)
+x = torch.randn(<span class="num">5</span>, <span class="num">10</span>)
+<span class="fn">print</span>(model(x).shape)</div>`,
+    options: [
+      "<code>torch.Size([5, 10])</code>",
+      "<code>torch.Size([5, 32])</code>",
+      "<code>torch.Size([5, 2])</code>",
+      "<code>torch.Size([2, 5])</code>"
+    ],
+    answer: 2,
+    explain: "Data flows: (5,10) → Linear(10,32) → (5,32) → ReLU → (5,32) → Linear(32,16) → (5,16) → ReLU → (5,16) → Linear(16,2) → <strong>(5,2)</strong>. The batch dimension (5) is preserved, the final layer outputs 2 features."
+  },
+  {
+    q: "When building a custom model with <code>nn.Module</code>, which two methods must you define?",
+    options: [
+      "<code>train()</code> and <code>eval()</code>",
+      "<code>__init__()</code> to define layers and <code>forward()</code> to define data flow",
+      "<code>backward()</code> and <code>step()</code>",
+      "<code>fit()</code> and <code>predict()</code>"
+    ],
+    answer: 1,
+    explain: "In <code>__init__</code> you declare your layers (calling <code>super().__init__()</code> first!). In <code>forward</code> you define how data passes through those layers. PyTorch handles the backward pass and gradient computation automatically."
+  },
+  {
+    q: `What does <code>F.softmax</code> guarantee?
+<div class="code-block">logits = torch.tensor([<span class="num">2.0</span>, <span class="num">1.0</span>, <span class="num">0.1</span>])
+probs = F.softmax(logits, dim=<span class="num">0</span>)
+<span class="fn">print</span>(probs.sum())</div>`,
+    options: [
+      "All values are between −1 and 1",
+      "All values are non-negative and sum to exactly 1.0 — they form a probability distribution",
+      "All values are between 0 and 1, but don't necessarily sum to 1",
+      "The largest value becomes 1.0 and all others become 0.0"
+    ],
+    answer: 1,
+    explain: "Softmax converts raw logits into a probability distribution: all values are ≥ 0 and they sum to 1.0. The highest logit gets the highest probability. It's the standard output for multi-class classification."
+  },
+  {
+    q: "Why should you NOT put a softmax on the final layer when using <code>nn.CrossEntropyLoss</code>?",
+    options: [
+      "Because softmax is too slow for training",
+      "Because <code>CrossEntropyLoss</code> applies log-softmax internally — adding softmax would apply it twice and hurt numerical stability",
+      "Because softmax can only handle binary (2-class) problems",
+      "Because PyTorch doesn't support the softmax function"
+    ],
+    answer: 1,
+    explain: "<code>CrossEntropyLoss</code> expects raw logits and applies log-softmax + negative log-likelihood internally for numerical stability. Applying softmax beforehand would double-apply it, leading to incorrect gradients and poor training."
+  },
+  {
+    q: `Which loss function is correct for this task?
+<div class="code-block"><span class="cm"># Regression: predict house prices (continuous values)</span>
+predictions = torch.tensor([<span class="num">250000.</span>, <span class="num">300000.</span>, <span class="num">180000.</span>])
+targets     = torch.tensor([<span class="num">260000.</span>, <span class="num">290000.</span>, <span class="num">175000.</span>])</div>`,
+    options: [
+      "<code>nn.CrossEntropyLoss()</code> — for classification",
+      "<code>nn.MSELoss()</code> — Mean Squared Error for regression",
+      "<code>nn.NLLLoss()</code> — Negative Log Likelihood",
+      "<code>nn.BCELoss()</code> — Binary Cross Entropy"
+    ],
+    answer: 1,
+    explain: "MSELoss (Mean Squared Error) measures the average squared difference between predictions and targets. It's the standard loss for regression tasks where you're predicting continuous values. CrossEntropyLoss is for classification."
+  },
+  {
+    q: "What are the correct five steps of a training iteration, in order?",
+    options: [
+      "Forward → Loss → Zero grad → Backward → Step",
+      "Zero grad → Forward → Loss → Backward → Step",
+      "Backward → Forward → Loss → Step → Zero grad",
+      "Loss → Forward → Backward → Zero grad → Step"
+    ],
+    answer: 1,
+    explain: "The standard training step: (1) <code>optimizer.zero_grad()</code> — clear old gradients, (2) <code>output = model(x)</code> — forward pass, (3) <code>loss = criterion(output, y)</code>, (4) <code>loss.backward()</code> — compute gradients, (5) <code>optimizer.step()</code> — update weights."
+  },
+  {
+    q: `How many total trainable parameters does this model have?
+<div class="code-block">model = nn.Linear(<span class="num">4</span>, <span class="num">3</span>)
+<span class="cm"># weight shape: (3, 4) = 12 params</span>
+<span class="cm"># bias shape:   (3,)  = 3  params</span></div>`,
+    options: [
+      "4 (only the input features count)",
+      "12 (only the weights, biases don't count)",
+      "15 (12 weights + 3 biases)",
+      "7 (4 inputs + 3 outputs)"
+    ],
+    answer: 2,
+    explain: "A Linear(4, 3) layer has a weight matrix of shape (3, 4) = 12 parameters plus a bias vector of shape (3,) = 3 parameters, totaling <strong>15</strong> trainable parameters."
+  },
+
+  // ══════════════════════════════════════════════════════
+  // LESSON 4: TRAINING LOOP  (Q31 – Q36)
+  // ══════════════════════════════════════════════════════
+  {
+    q: "A custom PyTorch <code>Dataset</code> must implement which two methods?",
+    options: [
+      "<code>load()</code> and <code>save()</code>",
+      "<code>__len__()</code> (total samples) and <code>__getitem__()</code> (retrieve one sample by index)",
+      "<code>forward()</code> and <code>backward()</code>",
+      "<code>train()</code> and <code>test()</code>"
+    ],
+    answer: 1,
+    explain: "PyTorch's Dataset class requires <code>__len__</code> to return the number of samples and <code>__getitem__</code> to retrieve a sample by index. The DataLoader then uses these to handle batching and shuffling automatically."
+  },
+  {
+    q: "Why do we split data into training and validation sets?",
+    options: [
+      "To make training faster by using less data",
+      "To check if the model is overfitting — validation data is never used to update weights",
+      "Because PyTorch requires exactly two datasets to function",
+      "To double the amount of data through augmentation"
+    ],
+    answer: 1,
+    explain: "The validation set is held-out data the model never trains on. By evaluating on it each epoch, you detect overfitting — when training loss keeps dropping but validation loss starts increasing."
+  },
+  {
+    q: `What do the DataLoader parameters do here?
+<div class="code-block">train_loader = DataLoader(
+    train_dataset,
+    batch_size=<span class="num">32</span>,
+    shuffle=<span class="kw">True</span>
+)</div>`,
+    options: [
+      "<code>batch_size</code> is the number of epochs; <code>shuffle</code> shuffles model weights",
+      "<code>batch_size=32</code> groups 32 samples per iteration; <code>shuffle=True</code> randomizes sample order each epoch",
+      "<code>batch_size</code> sets the learning rate; <code>shuffle</code> enables dropout",
+      "<code>batch_size</code> limits total samples used; <code>shuffle</code> reverses the data order"
+    ],
+    answer: 1,
+    explain: "DataLoader handles batching (32 samples at a time instead of all at once) and shuffling (random order each epoch for better generalization). For validation we set <code>shuffle=False</code> since order doesn't matter."
+  },
+  {
+    q: "What is the difference between <code>model.train()</code> and <code>model.eval()</code>?",
+    options: [
+      "They are identical — just aliases for the same function",
+      "<code>train()</code> enables dropout and batch norm in training mode; <code>eval()</code> disables them for consistent, deterministic evaluation",
+      "<code>train()</code> starts the training loop; <code>eval()</code> deletes all parameters",
+      "<code>eval()</code> is only needed when saving models to disk"
+    ],
+    answer: 1,
+    explain: "<code>model.train()</code> enables training behaviors — dropout randomly zeroes neurons (regularization), batch norm uses batch statistics. <code>model.eval()</code> disables dropout and uses running statistics for deterministic output."
+  },
+  {
+    q: `What does this code save, and how do you reload it?
+<div class="code-block">torch.save(model.state_dict(), <span class="str">'model.pth'</span>)
+
+<span class="cm"># To load later:</span>
+new_model = Classifier()
+new_model.load_state_dict(
+    torch.load(<span class="str">'model.pth'</span>, weights_only=<span class="kw">True</span>)
+)
+new_model.eval()</div>`,
+    options: [
+      "It saves the training data; loaded via DataLoader",
+      "It saves a dictionary of all learned parameter tensors; loading copies them into a fresh model of the same architecture",
+      "It saves the Python source code of the model class",
+      "It saves the optimizer state and learning rate schedule only"
+    ],
+    answer: 1,
+    explain: "<code>state_dict()</code> is a dictionary mapping layer names (like <code>'fc1.weight'</code>) to their learned tensors. Saving and loading this lets you restore a trained model's exact parameters into a new instance."
+  },
+  {
+    q: `What is wrong with this validation function?
+<div class="code-block"><span class="kw">def</span> <span class="fn">validate</span>(model, loader, criterion):
+    model.eval()
+    total_loss = <span class="num">0</span>
+    <span class="kw">for</span> x, y <span class="kw">in</span> loader:
+        output = model(x)
+        loss = criterion(output, y)
+        total_loss += loss.item()
+    <span class="kw">return</span> total_loss / len(loader)</div>`,
+    options: [
+      "Nothing — this is perfectly correct",
+      "Missing <code>with torch.no_grad():</code> around the loop — gradients are being tracked unnecessarily, wasting memory",
+      "<code>model.eval()</code> is in the wrong place — it should be inside the loop",
+      "It should use <code>nn.MSELoss</code> instead of the given criterion"
+    ],
+    answer: 1,
+    explain: "Even though <code>model.eval()</code> disables dropout, PyTorch still builds the computational graph by default. Wrapping the loop in <code>with torch.no_grad():</code> prevents this, saving significant memory during validation."
+  },
+
+  // ══════════════════════════════════════════════════════
+  // PROJECT: MNIST  (Q37 – Q40)
+  // ══════════════════════════════════════════════════════
+  {
+    q: `Why does the MNIST model use 784 input features?
+<div class="code-block"><span class="kw">self</span>.fc1 = nn.Linear(<span class="num">28</span> * <span class="num">28</span>, hidden_size)  <span class="cm"># 784</span>
+
+<span class="kw">def</span> <span class="fn">forward</span>(<span class="kw">self</span>, x):
+    x = x.view(x.size(<span class="num">0</span>), <span class="num">-1</span>)  <span class="cm"># flatten</span>
+    ...</div>`,
+    options: [
+      "There are 784 images in the dataset",
+      "Each 28×28 pixel image is flattened into a single vector of 784 values by <code>x.view()</code>",
+      "The model has 784 hidden neurons",
+      "MNIST has 784 different digit classes"
+    ],
+    answer: 1,
+    explain: "Each MNIST image is 28×28 = 784 pixels. <code>x.view(x.size(0), -1)</code> flattens each image from shape (batch, 1, 28, 28) to (batch, 784), creating a 1D vector for the linear layer."
+  },
+  {
+    q: `Why does the final layer have 10 outputs and no activation?
+<div class="code-block"><span class="kw">self</span>.fc3 = nn.Linear(<span class="num">64</span>, <span class="num">10</span>)  <span class="cm"># no activation after this!</span>
+
+criterion = nn.CrossEntropyLoss()</div>`,
+    options: [
+      "10 outputs for 10 digits (0–9), and <code>CrossEntropyLoss</code> expects raw logits — it applies softmax internally",
+      "Because softmax would make the model 10 times slower",
+      "Because the model only processes batches of exactly 10 images",
+      "Because ReLU is applied automatically by PyTorch after every layer"
+    ],
+    answer: 0,
+    explain: "MNIST has 10 classes (digits 0–9), so the output has 10 neurons — one raw score per digit. <code>CrossEntropyLoss</code> applies softmax internally, so adding an activation would be redundant and numerically unstable."
+  },
+  {
+    q: `What does this normalization do?
+<div class="code-block">transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="num">0.1307</span>,), (<span class="num">0.3081</span>,))
+])</div>`,
+    options: [
+      "Resizes images to 13×30 pixels",
+      "Converts grayscale to RGB color images",
+      "Applies <code>(pixel − mean) / std</code> so values are centered around zero with unit variance, using MNIST's precomputed statistics",
+      "Randomly rotates images by 13.07 degrees for augmentation"
+    ],
+    answer: 2,
+    explain: "<code>ToTensor()</code> converts pixel values from [0,255] to [0,1]. Then <code>Normalize(0.1307, 0.3081)</code> applies (x − 0.1307) / 0.3081 using MNIST's mean and std. This centers data around zero, helping the network train faster."
+  },
+  {
+    q: `What does <code>outputs.argmax(dim=1)</code> return?
+<div class="code-block"><span class="cm"># outputs shape: (batch_size, 10)</span>
+<span class="cm"># Each row has 10 logits, one per digit class</span>
+predictions = outputs.argmax(dim=<span class="num">1</span>)
+<span class="fn">print</span>(predictions)  <span class="cm"># e.g. tensor([7, 2, 1, 0, 4, ...])</span></div>`,
+    options: [
+      "The 10 raw logit values for each sample in the batch",
+      "The index of the highest logit for each sample — the predicted digit (0–9)",
+      "The smallest logit value for each sample",
+      "The sum of all 10 logits for each sample"
+    ],
+    answer: 1,
+    explain: "<code>argmax(dim=1)</code> finds the index of the maximum value along the class dimension for each sample. Since class indices map directly to digits (index 0 = digit 0, index 7 = digit 7), this gives the predicted digit."
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let answers = new Array(QUESTIONS.length).fill(null);
+let submitted = false;
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderQuestions() {
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+  let sectionIdx = 0;
+
+  QUESTIONS.forEach((qdata, i) => {
+    if (sectionIdx < SECTIONS.length && SECTIONS[sectionIdx].before === i) {
+      const divider = document.createElement('div');
+      divider.className = 'section-divider';
+      divider.innerHTML = `<span class="section-label">${SECTIONS[sectionIdx].label}</span>`;
+      divider.style.animationDelay = `${i * 0.03}s`;
+      container.appendChild(divider);
+      sectionIdx++;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = `card-${i}`;
+    card.style.animationDelay = `${0.04 + i * 0.03}s`;
+
+    const letters = ['A', 'B', 'C', 'D'];
+
+    card.innerHTML = `
+      <div class="q-number">
+        <span>Question ${i + 1} of ${QUESTIONS.length}</span>
+        <span id="badge-${i}"></span>
+      </div>
+      <div class="q-text">${qdata.q}</div>
+      <div class="options" id="options-${i}">
+        ${qdata.options.map((opt, j) => `
+          <button class="option-btn" id="opt-${i}-${j}" onclick="selectOption(${i}, ${j})">
+            <span class="option-letter">${letters[j]}</span>
+            <span>${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="feedback-${i}"></div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+// ============================================================
+// SELECT
+// ============================================================
+function selectOption(qIndex, optIndex) {
+  if (submitted) return;
+  answers[qIndex] = optIndex;
+
+  const options = document.querySelectorAll(`#options-${qIndex} .option-btn`);
+  options.forEach((btn, j) => {
+    btn.classList.remove('selected');
+    if (j === optIndex) btn.classList.add('selected');
+  });
+  updateProgress();
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function updateProgress() {
+  const answered = answers.filter(a => a !== null).length;
+  const total = QUESTIONS.length;
+  const pct = (answered / total) * 100;
+
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${answered} / ${total} answered`;
+  document.getElementById('answeredCount').textContent = `${answered} of ${total} questions answered`;
+  document.getElementById('submitBtn').disabled = answered === 0;
+}
+
+// ============================================================
+// SUBMIT
+// ============================================================
+function submitQuiz() {
+  if (submitted) return;
+  submitted = true;
+
+  let score = 0;
+  const letters = ['A', 'B', 'C', 'D'];
+
+  QUESTIONS.forEach((qdata, i) => {
+    const options = document.querySelectorAll(`#options-${i} .option-btn`);
+    const feedback = document.getElementById(`feedback-${i}`);
+    const card = document.getElementById(`card-${i}`);
+    const badge = document.getElementById(`badge-${i}`);
+
+    options.forEach(btn => btn.classList.add('disabled'));
+
+    if (answers[i] === null) {
+      // ── SKIPPED (orange) ──
+      options[qdata.answer].classList.add('correct-answer');
+      card.classList.add('result-skipped');
+      badge.innerHTML = `<span class="result-badge badge-skipped">⚠ SKIPPED</span>`;
+      feedback.className = 'feedback skipped show';
+      feedback.innerHTML = `<strong>⚠️ Not answered.</strong> The correct answer was <strong>${letters[qdata.answer]}</strong>.<br>${qdata.explain}`;
+    } else if (answers[i] === qdata.answer) {
+      // ── CORRECT (green) ──
+      score++;
+      options[answers[i]].classList.add('correct-answer');
+      card.classList.add('result-correct');
+      badge.innerHTML = `<span class="result-badge badge-correct">✓ CORRECT</span>`;
+      feedback.className = 'feedback correct show';
+      feedback.innerHTML = `<strong>✅ Correct!</strong> ${qdata.explain}`;
+    } else {
+      // ── WRONG (red) ──
+      options[answers[i]].classList.add('wrong-answer');
+      options[qdata.answer].classList.add('correct-answer');
+      card.classList.add('result-wrong');
+      badge.innerHTML = `<span class="result-badge badge-wrong">✗ INCORRECT</span>`;
+      feedback.className = 'feedback wrong show';
+      feedback.innerHTML = `<strong>❌ Incorrect.</strong> The correct answer was <strong>${letters[qdata.answer]}</strong>.<br>${qdata.explain}`;
+    }
+  });
+
+  document.getElementById('submitArea').style.display = 'none';
+  showScore(score);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// SCORE
+// ============================================================
+function showScore(score) {
+  const total = QUESTIONS.length;
+  const pct = Math.round((score / total) * 100);
+
+  let emoji, msg, cls;
+  if (pct >= 80) {
+    emoji = '🎉'; msg = 'Excellent! You have a strong grasp of PyTorch foundations.'; cls = 'excellent';
+  } else if (pct >= 60) {
+    emoji = '👍'; msg = 'Good effort — review the lessons for the topics you missed.'; cls = 'good';
+  } else {
+    emoji = '📖'; msg = "Re-run the lesson scripts and try again — you'll get there!"; cls = 'retry';
+  }
+
+  // Section scores
+  let sectionHTML = '';
+  SECTIONS.forEach(sec => {
+    let secCorrect = 0, secTotal = 0;
+    for (let i = sec.start; i <= sec.end; i++) {
+      secTotal++;
+      if (answers[i] === QUESTIONS[i].answer) secCorrect++;
+    }
+    const secPct = Math.round((secCorrect / secTotal) * 100);
+    let chipColor = secPct >= 80 ? 'var(--correct)' : secPct >= 50 ? 'var(--warn)' : 'var(--wrong)';
+    sectionHTML += `<span class="section-score-chip" style="color:${chipColor};border-color:${chipColor}">${sec.label.split(' — ')[1]}: ${secCorrect}/${secTotal}</span>`;
+  });
+
+  // Per-question chips
+  let chips = '';
+  QUESTIONS.forEach((qdata, i) => {
+    if (answers[i] === null) {
+      chips += `<span class="summary-chip s">Q${i+1} ⚠</span>`;
+    } else if (answers[i] === qdata.answer) {
+      chips += `<span class="summary-chip c">Q${i+1} ✓</span>`;
+    } else {
+      chips += `<span class="summary-chip w">Q${i+1} ✗</span>`;
+    }
+  });
+
+  const area = document.getElementById('scoreArea');
+  area.style.display = 'block';
+  area.innerHTML = `
+    <div class="score-card ${cls}">
+      <div class="score-emoji">${emoji}</div>
+      <div class="score-number">${score} / ${total}</div>
+      <div class="score-pct">${pct}%</div>
+      <div class="score-msg">${msg}</div>
+    </div>
+    <div class="section-breakdown">${sectionHTML}</div>
+    <div class="summary-row">${chips}</div>
+    <div style="text-align:center;">
+      <button class="btn-secondary" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+    </div>
+  `;
+
+  const bar = document.getElementById('progressBar');
+  bar.style.width = '100%';
+  if (pct >= 80) bar.style.background = 'var(--correct)';
+  else if (pct >= 60) bar.style.background = 'var(--warn)';
+  else bar.style.background = 'var(--wrong)';
+  document.getElementById('progressText').textContent = `Score: ${score} / ${total} (${pct}%)`;
+}
+
+// ============================================================
+// RETAKE
+// ============================================================
+function retakeQuiz() {
+  answers = new Array(QUESTIONS.length).fill(null);
+  submitted = false;
+
+  document.getElementById('scoreArea').style.display = 'none';
+  document.getElementById('submitArea').style.display = 'block';
+  document.getElementById('progressBar').style.background = 'var(--accent)';
+
+  renderQuestions();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderQuestions();
+updateProgress();
+</script>
+</body>
+</html>
