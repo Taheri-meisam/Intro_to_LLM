@@ -70,6 +70,10 @@ pip freeze > requirements.txt
 ```bash
 python main.py
 ```
+### or
+```bash
+python3 main.py
+```
 
 # File & Folder Commands
 
