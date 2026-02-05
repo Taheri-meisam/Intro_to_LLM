@@ -20,7 +20,7 @@ sudo apt install -y git python3 python3-venv python3-pip build-essential
 mkdir LLMproject
 cd LLMproject
 ```
-###Clone a repository (optional):
+### Clone a repository (optional):
 
 ```bash
 git clone <repository_url>
@@ -41,22 +41,22 @@ python3 -m venv venv
 source venv/bin/activate
 
 ```
-###Deactivate the virtual environment:
+### Deactivate the virtual environment:
 
 ```bash
 deactivate
 ```
 
-##Dependency Management
+## Dependency Management
 
-###Upgrade pip:
+### Upgrade pip:
 
 ```bash
 pip install --upgrade pip
 
 ```
 
-###Install dependencies:
+### Install dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -68,14 +68,14 @@ pip freeze > requirements.txt
 ```
 ## Running the Project
 
-###Run a Python file:
+### Run a Python file:
 ```bash
 python main.py
 ```
 
-#File & Folder Commands
+# File & Folder Commands
 
-##List files:
+## List files:
 ```bash
 ls
 ls -la
@@ -85,13 +85,13 @@ ls -la
 ```bash
 touch anewfile.py
 ```
-###View file contents:
+### View file contents:
 
 ```bash
 cat anewfile.py
 ```
 
-##Edit a file:
+## Edit a file:
 
 ```bash
 nano anewfile.py
@@ -107,9 +107,9 @@ rm file.py
 ```bash
 rm -rf afolder
 ```
-#Git Commands
+# Git Commands
 
-##Use this section if you want to use or learn Git:
+## Use this section if you want to use or learn Git:
 ```bash
 git init
 git status
@@ -118,9 +118,9 @@ git commit -m "Initial commit"
 git pull
 git push
 ```
-#LLM / ML Utilities
+# LLM / ML Utilities
 
-##Useful checks for Python, packages, and GPU support:
+## Useful checks for Python, packages, and GPU support:
 
 ```bash
 python --version
@@ -129,9 +129,9 @@ nvidia-smi
 nvcc --version
 python -c "import torch; print(torch.cuda.is_available())"
 ```
-#Cleanup
+# Cleanup
 
-##Remove the virtual environment:
+## Remove the virtual environment:
 ```bash
 rm -rf venv
 ```
