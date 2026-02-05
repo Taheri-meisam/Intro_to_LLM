@@ -1,14 +1,14 @@
-╔════════════════════════════════════════════════════╗
-║        PYTHON LLM PROJECT – USEFUL COMMANDS         ║
-╚════════════════════════════════════════════════════╝
+#╔════════════════════════════════════════════════════╗
+#║        PYTHON LLM PROJECT – USEFUL COMMANDS         ║
+#╚════════════════════════════════════════════════════╝
 
-A practical cheat sheet for setting up and running a
-Python-based LLM project on Linux (Ubuntu/Debian).
+##A practical cheat sheet for setting up and running a
+###Python-based LLM project on Linux (Ubuntu/Debian).
 
-──────────────────────────────────────────────────────
-SYSTEM SETUP
-──────────────────────────────────────────────────────
-Update system and install required tools:
+#──────────────────────────────────────────────────────
+#SYSTEM SETUP
+#──────────────────────────────────────────────────────
+## Update system and install required tools:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
