@@ -37,29 +37,38 @@ python3 -m venv venv
 
 ### Activate the virtual environment:
 
+```bash
 source venv/bin/activate
 
-Deactivate the virtual environment:
+```
+###Deactivate the virtual environment:
 
+```bash
 deactivate
+```
 
-Dependency Management
+##Dependency Management
 
-Upgrade pip:
+###Upgrade pip:
 
+```bash
 pip install --upgrade pip
 
-Install dependencies:
+```
 
+###Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
+###Save installed packages:
 
-Save installed packages:
-
+```bash
 pip freeze > requirements.txt
+```
+## Running the Project
 
-Running the Project
-
-##Run a Python file:
+###Run a Python file:
 ```bash
 python main.py
 ```
