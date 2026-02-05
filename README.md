@@ -1,7 +1,5 @@
 #  Python LLM Project – Useful Commands
 
-A practical cheat sheet for setting up, managing, and running a **Python-based LLM project** on Linux (Ubuntu/Debian).
-
 ---
 
 ##  System Setup
