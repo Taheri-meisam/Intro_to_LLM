@@ -54,62 +54,70 @@ pip freeze > requirements.txt
 
 Running the Project
 
-Run a Python file:
-
+##Run a Python file:
+```bash
 python main.py
+```
 
-File & Folder Commands
+#File & Folder Commands
 
-List files:
-
+##List files:
+```bash
 ls
 ls -la
+```
+##Create a file:
 
-Create a file:
-
+```bash
 touch anewfile.py
+```
+###View file contents:
 
-View file contents:
-
+```bash
 cat anewfile.py
+```
 
-Edit a file:
+##Edit a file:
 
+```bash
 nano anewfile.py
 # or
 vim anewfile.py
-
-Remove a file:
-
+```
+##Remove a file:
+```bash
 rm file.py
+```
 
-Remove a folder:
-
+## Remove a folder:
+```bash
 rm -rf afolder
+```
+#Git Commands
 
-Git Commands
-
-Use this section if you want to use or learn Git:
-
+##Use this section if you want to use or learn Git:
+```bash
 git init
 git status
 git add .
 git commit -m "Initial commit"
 git pull
 git push
+```
+#LLM / ML Utilities
 
-LLM / ML Utilities
+##Useful checks for Python, packages, and GPU support:
 
-Useful checks for Python, packages, and GPU support:
-
+```bash
 python --version
 pip list
 nvidia-smi
 nvcc --version
 python -c "import torch; print(torch.cuda.is_available())"
+```
+#Cleanup
 
-🧹 Cleanup
-
-Remove the virtual environment:
-
+##Remove the virtual environment:
+```bash
 rm -rf venv
+```
