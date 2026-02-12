@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 · Lesson 2: Byte Pair Encoding</title>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700&family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a1a14;--surface:#0f241c;--surface2:#142e24;--border:#1e4434;
+  --text:#c0d8cc;--muted:#6a9480;--heading:#e8f4ec;
+  --em:#40e890;--em-dim:rgba(64,232,144,.12);--em-glow:rgba(64,232,144,.25);
+  --gold:#e8c840;--gold-dim:rgba(232,200,64,.12);
+  --red:#e86050;--red-dim:rgba(232,96,80,.12);
+  --blue:#60a8e8;--blue-dim:rgba(96,168,232,.12);
+  --mono:'Inconsolata',monospace;--serif:'Fraunces',serif;--sans:'Work Sans',sans-serif;
+  --r:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.76;font-size:15.5px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 30% 20%,rgba(64,232,144,.04),transparent 60%)}
+.container{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:48px 24px 100px}
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--surface);z-index:999}.pfill{height:100%;width:0%;background:var(--em);box-shadow:0 0 8px var(--em-glow);transition:width .3s}
+.hero{text-align:center;padding:32px 0 48px}.hero-tag{font-family:var(--mono);font-size:.76rem;color:var(--em);letter-spacing:.14em;text-transform:uppercase}.hero h1{font-family:var(--serif);font-size:2.4rem;font-weight:700;color:var(--heading);margin:8px 0}.hero h1 em{color:var(--em);font-style:normal}.hero p{color:var(--muted);font-size:1.05rem;max-width:560px;margin:0 auto}
+.section{margin-bottom:56px;opacity:0;transform:translateY(20px);transition:all .5s}.section.vis{opacity:1;transform:none}.stag{font-family:var(--mono);font-size:.72rem;color:var(--em);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}.section h2{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--heading);margin-bottom:14px}.section h3{font-family:var(--serif);font-size:1.15rem;font-weight:600;color:var(--heading);margin:20px 0 10px}.section p{margin-bottom:12px}.section p strong{color:var(--heading)}
+pre{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--em);border-radius:var(--r);padding:16px 18px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:.84rem;line-height:1.6;color:var(--text)}
+code.il{font-family:var(--mono);font-size:.86em;color:var(--em);background:var(--em-dim);padding:2px 6px;border-radius:4px}
+.kw{color:#e0a0c8}.fn{color:#60e8c0}.num{color:#e8c060}.str{color:#a0e880}.cm{color:var(--muted);font-style:italic}
+.callout{background:var(--em-dim);border:1px solid rgba(64,232,144,.2);border-radius:var(--r);padding:16px 18px;margin:18px 0;font-size:.93rem}.callout.gold{background:var(--gold-dim);border-color:rgba(232,200,64,.2)}.callout.warn{background:var(--red-dim);border-color:rgba(232,96,80,.2)}
+.analogy{border-left:3px solid var(--gold);padding:10px 16px;margin:16px 0;background:var(--gold-dim);border-radius:0 var(--r) var(--r) 0;font-size:.93rem}
+.analogy strong{color:var(--heading)}
+hr.div{border:none;border-top:1px solid var(--border);margin:52px 0}
+.cw{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:18px 0}.cw-title{font-family:var(--mono);font-size:.76rem;color:var(--em);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.cbtn{font-family:var(--mono);font-size:.8rem;padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s}.cbtn:hover{border-color:var(--em);color:var(--em)}.cbtn.on{background:var(--em-dim);border-color:var(--em);color:var(--em)}
+.out{background:#060e0a;border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:.84rem;color:var(--em);line-height:1.65;margin:10px 0;white-space:pre-wrap;min-height:36px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0}.chip{padding:5px 10px;border-radius:16px;font-family:var(--mono);font-size:.82rem;border:1px solid var(--border);background:var(--surface)}.chip.merged{border-color:var(--em);color:var(--em);background:var(--em-dim)}.chip.new{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.ptable{width:100%;border-collapse:collapse;margin:10px 0;font-family:var(--mono);font-size:.84rem}.ptable th{text-align:left;padding:6px 10px;color:var(--muted);border-bottom:1px solid var(--border);font-weight:500;font-size:.76rem;text-transform:uppercase;letter-spacing:.06em}.ptable td{padding:6px 10px;border-bottom:1px solid rgba(30,68,52,.4)}.ptable tr.top td{color:var(--em);font-weight:600}
+.step{display:flex;gap:12px;margin:10px 0;align-items:flex-start}.step-n{font-family:var(--mono);font-size:.75rem;color:#000;background:var(--em);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-weight:600}.step-c{flex:1}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin:18px 0}.qq{font-family:var(--serif);font-size:1.05rem;color:var(--heading);margin-bottom:12px}.qopts{display:flex;flex-direction:column;gap:7px}.qo{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .2s}.qo:hover{border-color:var(--em)}.qo.c{border-color:#40e890;background:rgba(64,232,144,.1);color:#40e890}.qo.w{border-color:var(--red);background:var(--red-dim);color:var(--red)}.qo.d{pointer-events:none;opacity:.85}
+.ql{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.75rem;font-weight:600;background:var(--surface2);color:var(--muted);flex-shrink:0}.qo.c .ql{background:#40e890;color:#000}.qo.w .ql{background:var(--red);color:#fff}
+.qfb{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:.88rem;display:none;line-height:1.6}.qfb.show{display:block}.qfb.p{background:rgba(64,232,144,.1);color:#40e890;border-left:3px solid #40e890}.qfb.f{background:var(--red-dim);color:var(--red);border-left:3px solid var(--red)}
+.algrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.alcard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px}.alcard h4{font-family:var(--mono);font-size:.82rem;color:var(--em);margin-bottom:4px}.alcard .used{font-size:.82rem;color:var(--gold);margin-bottom:4px}.alcard .desc{font-size:.86rem;color:var(--muted);line-height:1.6}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.sitem{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}.sitem code{font-family:var(--mono);font-size:.84rem;color:var(--em)}.sitem .d{font-size:.86rem;color:var(--muted);margin-top:3px}
+@media(max-width:600px){.hero h1{font-size:1.8rem}.algrid,.sgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-tag">Week 2 · Lesson 2</div>
+  <h1><em>Byte Pair Encoding</em></h1>
+  <p>Last lesson, you learned WHY we need subword tokenization. Now you'll learn HOW it works by understanding the BPE algorithm that GPT uses. It's surprisingly simple — just four steps, repeated.</p>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 1: THE CORE IDEA ═══ -->
+<div class="section" id="s1">
+  <div class="stag">Part 01</div>
+  <h2>The Core Idea</h2>
+
+  <p>BPE was originally invented in 1994 as a <strong>data compression</strong> algorithm. The key insight: if certain byte pairs appear frequently in data, replace them with a single new byte. Applied to text, this means: if certain character pairs appear frequently, merge them into a single token.</p>
+
+  <div class="step"><div class="step-n">1</div><div class="step-c"><strong>Start with characters</strong> as your vocabulary. Every word is split into individual characters.</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-c"><strong>Count all adjacent pairs</strong> of tokens across the entire corpus. Which pair appears most often?</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-c"><strong>Merge the most common pair</strong> into a single new token. Add it to the vocabulary.</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-c"><strong>Repeat</strong> steps 2-3 until you reach your desired vocabulary size.</div></div>
+
+  <p>That's the entire algorithm. No linguistic rules, no grammar, no dictionary — just frequency counting and merging. The algorithm <strong>discovers</strong> from data which character sequences are useful to combine.</p>
+
+  <div class="analogy">
+    <strong>📱 Analogy — Autocomplete:</strong> Think of how your phone's keyboard learns shortcuts. At first, you type letter by letter. But if you type "lol" constantly, the phone learns to suggest the whole thing. BPE works the same way — if "th" appears everywhere, it merges those characters into one token. Then if "the" appears a lot, it merges "th"+"e" into "the". The most common patterns become single units.
+  </div>
+
+  <p>The beauty of BPE is that <strong>frequency determines everything</strong>. Common English words like "the" will eventually become a single token (because "t"→"th"→"the" all get merged). Rare words will only partially merge, leaving them as a mix of subword pieces and characters. This naturally creates the adaptive behavior we want.</p>
+
+  <!-- Quiz 1 -->
+  <div class="qcard" id="q1">
+    <div class="qq">🧩 What does BPE use to decide which tokens to merge?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q1',this,false)"><span class="ql">A</span> English grammar rules and morphology</div>
+      <div class="qo" onclick="ck('q1',this,true)"><span class="ql">B</span> Frequency — the most common adjacent pair gets merged</div>
+      <div class="qo" onclick="ck('q1',this,false)"><span class="ql">C</span> A dictionary of prefixes and suffixes</div>
+      <div class="qo" onclick="ck('q1',this,false)"><span class="ql">D</span> Random selection</div>
+    </div>
+    <div class="qfb" id="q1-fb"></div>
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 2: STEP BY STEP ═══ -->
+<div class="section" id="s2">
+  <div class="stag">Part 02</div>
+  <h2>Step-by-Step Walkthrough</h2>
+
+  <p>Let's trace through BPE on a small corpus: <code class="il">"low lower lowest"</code>. We'll add a special end-of-word marker <code class="il">◇</code> so the algorithm knows where word boundaries are (this is important for decoding later).</p>
+
+  <h3>Why the end-of-word marker?</h3>
+  <p>Without it, the algorithm can't tell if "er" is the end of "lower" or the start of a new word. The marker keeps words separate. In real implementations, GPT uses a space prefix instead of an end marker, but the idea is the same.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ BPE Merge Stepper</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Click through each merge step. Watch how the algorithm progressively combines characters into larger tokens.</p>
+    <div class="ctrls">
+      <button class="cbtn on" id="stepBtn0" onclick="showStep(0)">Start</button>
+      <button class="cbtn" id="stepBtn1" onclick="showStep(1)">Merge 1</button>
+      <button class="cbtn" id="stepBtn2" onclick="showStep(2)">Merge 2</button>
+      <button class="cbtn" id="stepBtn3" onclick="showStep(3)">Merge 3</button>
+      <button class="cbtn" id="stepBtn4" onclick="showStep(4)">Merge 4</button>
+      <button class="cbtn" id="stepBtn5" onclick="showStep(5)">Merge 5</button>
+    </div>
+    <div id="stepPairs" style="margin-top:12px;"></div>
+    <div id="stepVocab" style="margin-top:12px;"></div>
+    <div id="stepNote" style="font-size:.88rem;color:var(--muted);margin-top:10px;line-height:1.6;"></div>
+  </div>
+
+  <h3>Key Observations</h3>
+  <p>Notice what happened: the algorithm naturally discovered that "lo" and "low" are common sequences. It didn't know any English — it just counted pairs. After enough merges, common words like "low" become a single token, while the rarer parts ("er", "est") stay as separate pieces. This is exactly the subword behavior we wanted!</p>
+
+  <div class="callout">
+    <strong>💡 Think about it:</strong> If we continued merging on a large English corpus, eventually "the" would become one token (very common), "running" might become "run" + "ning" (moderately common), and "antidisestablishmentarianism" would stay as many small pieces (very rare). The algorithm automatically adapts to word frequency.
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 3: THE CODE ═══ -->
+<div class="section" id="s3">
+  <div class="stag">Part 03</div>
+  <h2>The BPE Algorithm in Code</h2>
+
+  <p>Let's look at each function the algorithm needs:</p>
+
+  <h3>Step 1: Prepare the corpus</h3>
+  <p>Split each word into characters and count how often each word appears:</p>
+
+  <pre><span class="kw">def</span> <span class="fn">get_word_frequencies</span>(corpus):
+    word_freqs = Counter(corpus.split())  <span class="cm"># {"low": 1, "lower": 1, ...}</span>
+
+    char_vocab = {}
+    <span class="kw">for</span> word, freq <span class="kw">in</span> word_freqs.items():
+        <span class="cm"># "low" → "l o w ◇"</span>
+        chars = <span class="str">' '</span>.join(<span class="fn">list</span>(word)) + <span class="str">' ◇'</span>
+        char_vocab[chars] = freq
+
+    <span class="kw">return</span> char_vocab
+
+<span class="cm"># Result: {"l o w ◇": 1, "l o w e r ◇": 1, "l o w e s t ◇": 1}</span></pre>
+
+  <h3>Step 2: Count adjacent pairs</h3>
+  <p>Scan through every word, counting how often each pair of adjacent tokens appears:</p>
+
+  <pre><span class="kw">def</span> <span class="fn">count_pairs</span>(vocab):
+    pairs = Counter()
+    <span class="kw">for</span> word, freq <span class="kw">in</span> vocab.items():
+        tokens = word.split()
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(tokens) - <span class="num">1</span>):
+            pairs[(tokens[i], tokens[i+<span class="num">1</span>])] += freq
+    <span class="kw">return</span> pairs
+
+<span class="cm"># Result: {("l","o"): 3, ("o","w"): 3, ("w","e"): 2, ...}</span>
+<span class="cm"># ("l","o") appears 3 times: once in low, lower, lowest</span></pre>
+
+  <p>Notice that <code class="il">freq</code> matters: if "the" appeared 1000 times in our corpus, the pair ("t","h") would get +1000 to its count. This is how frequency drives the merging decisions.</p>
+
+  <h3>Step 3: Merge the top pair</h3>
+  <p>Find the most common pair and replace all occurrences:</p>
+
+  <pre><span class="kw">def</span> <span class="fn">merge_pair</span>(vocab, pair):
+    bigram = <span class="str">' '</span>.join(pair)    <span class="cm"># "l o"</span>
+    merged = <span class="str">''</span>.join(pair)     <span class="cm"># "lo"</span>
+
+    new_vocab = {}
+    <span class="kw">for</span> word, freq <span class="kw">in</span> vocab.items():
+        new_vocab[word.replace(bigram, merged)] = freq
+    <span class="kw">return</span> new_vocab
+
+<span class="cm"># "l o w ◇" → "lo w ◇"  (replaced "l o" with "lo")</span></pre>
+
+  <h3>Step 4: Repeat until desired vocab size</h3>
+  <pre><span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(num_merges):
+    pairs = <span class="fn">count_pairs</span>(vocab)
+    best = pairs.<span class="fn">most_common</span>(<span class="num">1</span>)[<span class="num">0</span>][<span class="num">0</span>]  <span class="cm"># most frequent pair</span>
+    vocab = <span class="fn">merge_pair</span>(vocab, best)
+    merges.<span class="fn">append</span>(best)                   <span class="cm"># save the merge rule</span></pre>
+
+  <p>The list of merges is the <strong>learned vocabulary</strong>. During encoding, we apply these merges in the same order they were learned.</p>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 4: LIVE BPE TRAINER ═══ -->
+<div class="section" id="s4">
+  <div class="stag">Part 04</div>
+  <h2>Live BPE Trainer</h2>
+
+  <p>Now you can train BPE yourself! Enter any text below and click <strong>Merge</strong> repeatedly. Watch the pair counts change and new tokens form. Try different corpora to see how the algorithm adapts.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Train BPE on Your Text</div>
+    <textarea id="bpeCorpus" style="width:100%;height:80px;padding:10px;font-family:var(--sans);font-size:.93rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);resize:vertical;">the cat sat on the mat the cat and the dog the dog sat on the rug</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="cbtn" onclick="bpeReset()" style="border-color:var(--gold);color:var(--gold);">↺ Reset</button>
+      <button class="cbtn on" onclick="bpeMerge()">▶ Merge next pair</button>
+      <button class="cbtn" onclick="bpeAuto()">▶▶ Auto-merge 5</button>
+    </div>
+    <div id="bpePairTable" style="margin-top:12px;"></div>
+    <div id="bpeVocabDisplay" style="margin-top:12px;"></div>
+    <div id="bpeMergeLog" class="out" style="max-height:180px;overflow-y:auto;"></div>
+  </div>
+
+  <h3>Things to Try</h3>
+  <p>Change the corpus and see how it affects the merges:</p>
+  <div style="font-size:.93rem;margin:8px 0;line-height:1.8;">
+    <strong>Repetitive text:</strong> <code class="il">aaa bbb aaa bbb aaa bbb</code> — merges happen fast because pairs repeat often.<br>
+    <strong>All unique:</strong> <code class="il">cat dog bat fox hen owl</code> — very few merges since no pairs repeat across words.<br>
+    <strong>Shared suffixes:</strong> <code class="il">running jumping sitting playing</code> — the algorithm discovers "ing" is common.
+  </div>
+
+  <!-- Quiz 2 -->
+  <div class="qcard" id="q2">
+    <div class="qq">🧩 If "the" appears 5000 times in a corpus and "theater" appears 3 times, what will happen during BPE training?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q2',this,false)"><span class="ql">A</span> Both will be split into individual characters</div>
+      <div class="qo" onclick="ck('q2',this,true)"><span class="ql">B</span> "the" will quickly become a single token; "theater" will be split into pieces like "the" + "ater"</div>
+      <div class="qo" onclick="ck('q2',this,false)"><span class="ql">C</span> Both will become single tokens since they share letters</div>
+      <div class="qo" onclick="ck('q2',this,false)"><span class="ql">D</span> "theater" will be merged first because it's longer</div>
+    </div>
+    <div class="qfb" id="q2-fb"></div>
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 5: ENCODING NEW TEXT ═══ -->
+<div class="section" id="s5">
+  <div class="stag">Part 05</div>
+  <h2>How Encoding Works</h2>
+
+  <p>Training BPE gives us a list of merge rules. But how do we <strong>use</strong> those rules to tokenize new text? The encoding process replays the merges in order:</p>
+
+  <div class="step"><div class="step-n">1</div><div class="step-c">Split the word into characters: <code class="il">"lower"</code> → <code class="il">['l', 'o', 'w', 'e', 'r']</code></div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-c">Apply merge rule #1 (l+o → lo): <code class="il">['lo', 'w', 'e', 'r']</code></div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-c">Apply merge rule #2 (lo+w → low): <code class="il">['low', 'e', 'r']</code></div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-c">Apply merge rule #3 (e+r → er): <code class="il">['low', 'er']</code></div></div>
+  <div class="step"><div class="step-n">5</div><div class="step-c">No more applicable rules → done! Token list: <code class="il">['low', 'er']</code></div></div>
+
+  <p>The <strong>order matters</strong>. Merge rules learned earlier are applied first, because they represent more frequent patterns. If we applied them in a different order, we might get different tokenizations.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ How BPE Handles Different Words</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Click each word to see how BPE would encode it (with a typical English BPE vocabulary):</p>
+    <div class="ctrls" id="encCtrls">
+      <button class="cbtn on" onclick="showEnc('running')">running</button>
+      <button class="cbtn" onclick="showEnc('elephant')">elephant</button>
+      <button class="cbtn" onclick="showEnc('ChatGPT')">ChatGPT</button>
+      <button class="cbtn" onclick="showEnc('xyzzy')">xyzzy</button>
+      <button class="cbtn" onclick="showEnc('unhappiness')">unhappiness</button>
+    </div>
+    <div id="encSteps" class="out" style="min-height:60px;"></div>
+    <div id="encNote" style="font-size:.88rem;color:var(--muted);margin-top:8px;line-height:1.6;"></div>
+  </div>
+
+  <div class="analogy">
+    <strong>🧩 Analogy — Jigsaw Puzzle:</strong> Think of encoding as assembling a jigsaw puzzle in reverse. You start with individual pieces (characters) and try to snap together the biggest pieces you can, following the rules you learned during training. Common words snap together completely. Rare words leave some small pieces showing. Gibberish is just a pile of individual pieces — but at least you can still represent it.
+  </div>
+
+  <!-- Quiz 3 -->
+  <div class="qcard" id="q3">
+    <div class="qq">🧩 Why does the ORDER of merge rules matter during encoding?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q3',this,false)"><span class="ql">A</span> It doesn't matter — you can apply them in any order</div>
+      <div class="qo" onclick="ck('q3',this,true)"><span class="ql">B</span> Earlier rules represent more frequent patterns and should be applied first to get consistent results</div>
+      <div class="qo" onclick="ck('q3',this,false)"><span class="ql">C</span> Later rules are more important because they create bigger tokens</div>
+      <div class="qo" onclick="ck('q3',this,false)"><span class="ql">D</span> The order only matters for rare words</div>
+    </div>
+    <div class="qfb" id="q3-fb"></div>
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 6: BPE VS OTHERS ═══ -->
+<div class="section" id="s6">
+  <div class="stag">Part 06</div>
+  <h2>BPE vs Other Subword Algorithms</h2>
+
+  <p>BPE isn't the only way to build a subword vocabulary. There are three major alternatives, each with a different philosophy:</p>
+
+  <div class="algrid">
+    <div class="alcard"><h4>BPE (Byte Pair Encoding)</h4><div class="used">GPT-2, GPT-3, GPT-4, Llama</div><div class="desc"><strong>Bottom-up.</strong> Starts with characters, merges the most frequent pair, repeat. Simple and widely used. Deterministic: always produces the same tokenization.</div></div>
+    <div class="alcard"><h4>WordPiece</h4><div class="used">BERT, DistilBERT, Electra</div><div class="desc"><strong>Bottom-up, likelihood-based.</strong> Similar to BPE but merges the pair that maximizes the likelihood of the training data, not just the most frequent. Uses <code class="il">##</code> prefix: "playing" → ["play", "##ing"].</div></div>
+    <div class="alcard"><h4>Unigram</h4><div class="used">T5, XLNet, mBART</div><div class="desc"><strong>Top-down.</strong> Opposite approach: starts with a huge vocabulary and progressively removes tokens that contribute least to the training data. Probabilistic: can produce multiple possible tokenizations.</div></div>
+    <div class="alcard"><h4>SentencePiece</h4><div class="used">Multilingual models</div><div class="desc"><strong>Language-agnostic.</strong> Treats the entire input as a stream of bytes rather than words. Doesn't need whitespace to find word boundaries — critical for Chinese, Japanese, and Thai which don't use spaces.</div></div>
+  </div>
+
+  <p>For practical purposes, they all perform similarly. BPE is the most widely used (and easiest to understand), so it's the standard choice. When people say "GPT's tokenizer," they mean BPE (specifically, the <code class="il">tiktoken</code> library).</p>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 7: REAL-WORLD ═══ -->
+<div class="section" id="s7">
+  <div class="stag">Part 07</div>
+  <h2>Real-World Vocabulary Sizes</h2>
+
+  <p>How many merges should you do? More merges = bigger vocabulary = shorter sequences but more parameters in the embedding table. It's a tradeoff:</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Vocab Sizes in Production Models</div>
+    <div style="margin:8px 0;">
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0;"><span style="font-family:var(--mono);font-size:.82rem;width:80px;color:var(--muted);">GPT-2</span><div style="flex:1;height:24px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;"><div style="height:100%;width:50%;background:rgba(64,232,144,.25);border-radius:4px;"></div><span style="position:absolute;right:8px;top:3px;font-family:var(--mono);font-size:.78rem;color:var(--em);">50,257 tokens</span></div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0;"><span style="font-family:var(--mono);font-size:.82rem;width:80px;color:var(--muted);">BERT</span><div style="flex:1;height:24px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;"><div style="height:100%;width:30%;background:rgba(96,168,232,.25);border-radius:4px;"></div><span style="position:absolute;right:8px;top:3px;font-family:var(--mono);font-size:.78rem;color:var(--blue);">30,522 tokens</span></div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0;"><span style="font-family:var(--mono);font-size:.82rem;width:80px;color:var(--muted);">GPT-4</span><div style="flex:1;height:24px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;"><div style="height:100%;width:100%;background:rgba(232,200,64,.25);border-radius:4px;"></div><span style="position:absolute;right:8px;top:3px;font-family:var(--mono);font-size:.78rem;color:var(--gold);">~100,000 tokens</span></div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0;"><span style="font-family:var(--mono);font-size:.82rem;width:80px;color:var(--muted);">Llama 2</span><div style="flex:1;height:24px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;"><div style="height:100%;width:32%;background:rgba(232,96,80,.25);border-radius:4px;"></div><span style="position:absolute;right:8px;top:3px;font-family:var(--mono);font-size:.78rem;color:var(--red);">32,000 tokens</span></div></div>
+    </div>
+  </div>
+
+  <p>GPT-4 doubled its vocabulary from ~50K to ~100K. This made it more efficient for multilingual text (fewer tokens per Chinese character, for example) but also increased memory usage. The sweet spot depends on your use case.</p>
+
+  <div class="callout gold">
+    <strong>📊 In practice:</strong> You'll almost never train your own BPE tokenizer. Instead, you use the pretrained tokenizer that comes with the model. For GPT models, that's OpenAI's <code class="il">tiktoken</code> library. For BERT, it's the Hugging Face <code class="il">tokenizers</code> library. The tokenizer is trained once on a large corpus and then frozen — it never changes during model training.
+  </div>
+
+  <!-- Quiz 4 -->
+  <div class="qcard" id="q4">
+    <div class="qq">🧩 What is the tradeoff of having a larger vocabulary?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q4',this,false)"><span class="ql">A</span> Larger vocab always better — no tradeoffs</div>
+      <div class="qo" onclick="ck('q4',this,false)"><span class="ql">B</span> Larger vocab = longer sequences but smaller embedding table</div>
+      <div class="qo" onclick="ck('q4',this,true)"><span class="ql">C</span> Larger vocab = shorter sequences (more efficient) but bigger embedding table (more parameters to store)</div>
+      <div class="qo" onclick="ck('q4',this,false)"><span class="ql">D</span> Larger vocab makes encoding slower but has no effect on model size</div>
+    </div>
+    <div class="qfb" id="q4-fb"></div>
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 7b: TRAINING VS ENCODING ═══ -->
+<div class="section" id="s7b">
+  <div class="stag">Part 07b</div>
+  <h2>Training vs. Encoding: Two Different Phases</h2>
+
+  <p>A critical distinction that confuses many beginners: <strong>training the tokenizer</strong> and <strong>using the tokenizer</strong> are completely separate phases that happen at different times.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;">
+      <div style="font-family:var(--mono);font-size:.82rem;color:var(--gold);margin-bottom:8px;">PHASE 1: TRAIN THE TOKENIZER</div>
+      <div style="font-size:.9rem;color:var(--muted);line-height:1.7;">
+        Happens <strong style="color:var(--heading);">once</strong>, on a large corpus<br>
+        Learns which merges to make<br>
+        Produces a merge list + vocabulary<br>
+        Saved to a file (e.g. <code class="il">merges.txt</code>)<br>
+        Takes hours on large corpora<br>
+        <strong style="color:var(--heading);">Done by model creators (OpenAI, Meta)</strong>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;">
+      <div style="font-family:var(--mono);font-size:.82rem;color:var(--em);margin-bottom:8px;">PHASE 2: ENCODE TEXT (USE IT)</div>
+      <div style="font-size:.9rem;color:var(--muted);line-height:1.7;">
+        Happens <strong style="color:var(--heading);">every time</strong> you feed text to the model<br>
+        Applies the saved merge rules in order<br>
+        Converts text → token IDs<br>
+        Milliseconds, even for long text<br>
+        <strong style="color:var(--heading);">Done by everyone who uses the model</strong>
+      </div>
+    </div>
+  </div>
+
+  <p>This is analogous to a dictionary: writing the dictionary (training) is a massive, one-time effort. Looking up a word (encoding) is fast and happens all the time. You'd never rewrite the dictionary every time you need to spell-check a word.</p>
+
+  <div class="callout">
+    <strong>💡 Key implication:</strong> The tokenizer is <strong>frozen</strong> once trained. It cannot adapt to new words that appear after training. If GPT-2's tokenizer was trained in 2019, it doesn't know that "COVID-19" should be one token — it probably splits it into ["CO", "VID", "-", "19"]. Newer models like GPT-4 retrained their tokenizer on more recent data to handle this better.
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 7c: BPE GOTCHAS ═══ -->
+<div class="section" id="s7c">
+  <div class="stag">Part 07c</div>
+  <h2>BPE Gotchas & Edge Cases</h2>
+
+  <p>BPE works remarkably well, but has some surprising failure modes worth understanding:</p>
+
+  <h3>Gotcha 1: Whitespace sensitivity</h3>
+  <p><code class="il">"Hello"</code> and <code class="il">" Hello"</code> (with a leading space) are <strong>completely different</strong> to BPE. The space is treated as a character, so "Hello" at the start of a sentence gets a different merge path than "Hello" after a space. GPT models use a special <code class="il">Ġ</code> character to mark word-initial spaces: <code class="il">["ĠHello", "Ġworld"]</code>.</p>
+
+  <h3>Gotcha 2: Case sensitivity</h3>
+  <p><code class="il">"The"</code> and <code class="il">"the"</code> are different tokens because BPE is case-sensitive. This means the model has to independently learn that "The" at the start of a sentence means the same thing as "the" in the middle. Most models handle this fine because "The" and "the" appear in extremely similar contexts, so their embeddings end up close together — but it still wastes vocabulary space.</p>
+
+  <h3>Gotcha 3: "Fertile" vs "fertilizer" problem</h3>
+  <p>BPE doesn't understand morphology. If "fertile" is a single token, the word "fertilizer" might get split as <code class="il">["fertile", "izer"]</code> or <code class="il">["fert", "ilizer"]</code> — depending entirely on which merges happened to win during training. There's no guarantee the splits align with meaningful word parts.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Surprising Splits</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:8px 0;font-size:.93rem;">
+      <code class="il">" indistinguishable"</code><span>→ [" in", "dist", "inguish", "able"] — meaningful pieces!</span>
+      <code class="il">" transformer"</code><span>→ [" transform", "er"] — clean morpheme split</span>
+      <code class="il">" Schwarzenegger"</code><span>→ [" Sch", "war", "zen", "egger"] — no meaningful parts</span>
+      <code class="il">" https"</code><span>→ [" https"] — common enough to be one token</span>
+      <code class="il">" 127.0.0.1"</code><span>→ [" 127", ".", "0", ".", "0", ".", "1"] — 7 tokens for one IP!</span>
+    </div>
+    <p style="font-size:.86rem;color:var(--muted);margin-top:6px;">Sometimes BPE finds meaningful morphemes (transform+er), sometimes it doesn't (Sch+war+zen+egger). It depends entirely on frequency in the training data.</p>
+  </div>
+
+  <!-- Quiz 6 -->
+  <div class="qcard" id="q6">
+    <div class="qq">🧩 Why might "COVID-19" tokenize poorly with GPT-2's tokenizer?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q6',this,false)"><span class="ql">A</span> The tokenizer can't handle hyphens</div>
+      <div class="qo" onclick="ck('q6',this,true)"><span class="ql">B</span> The tokenizer was trained before COVID-19 existed, so it never learned to merge those characters together</div>
+      <div class="qo" onclick="ck('q6',this,false)"><span class="ql">C</span> Numbers can't be tokenized at all</div>
+      <div class="qo" onclick="ck('q6',this,false)"><span class="ql">D</span> BPE can only handle lowercase text</div>
+    </div>
+    <div class="qfb" id="q6-fb"></div>
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ PART 8: WHAT THE VOCAB LOOKS LIKE ═══ -->
+<div class="section" id="s8">
+  <div class="stag">Part 08</div>
+  <h2>What's Inside a Real BPE Vocabulary</h2>
+
+  <p>A trained BPE vocabulary contains a mix of token types. Understanding this mix helps you understand why models behave the way they do:</p>
+
+  <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:14px 0;font-size:.93rem;">
+    <span class="chip merged" style="justify-self:start;">Special tokens</span><span><code class="il">&lt;PAD&gt;</code>, <code class="il">&lt;UNK&gt;</code>, <code class="il">&lt;BOS&gt;</code> — reserved control signals (IDs 0-3 typically)</span>
+    <span class="chip" style="justify-self:start;">Single characters</span><span>All ASCII characters, digits, punctuation — the "fallback" for any unknown sequence</span>
+    <span class="chip merged" style="justify-self:start;">Common subwords</span><span>"ing", "tion", "un", "re", "ed" — frequent morphemes discovered by BPE</span>
+    <span class="chip new" style="justify-self:start;">Whole words</span><span>"the", "and", "of", "is" — so common they became single tokens</span>
+    <span class="chip" style="justify-self:start;">Byte-level fallback</span><span>Raw byte values (0x00-0xFF) for handling unusual Unicode characters</span>
+  </div>
+
+  <p>GPT-2's vocabulary of 50,257 tokens breaks down roughly as: ~256 byte tokens, ~10,000 character/short-subword tokens, ~30,000 longer subword tokens, and ~10,000 complete words.</p>
+
+  <!-- Quiz 5 -->
+  <div class="qcard" id="q5">
+    <div class="qq">🧩 What is the correct order of the BPE algorithm?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q5',this,false)"><span class="ql">A</span> Count words → merge rarest → repeat until vocabulary is small</div>
+      <div class="qo" onclick="ck('q5',this,false)"><span class="ql">B</span> Start with words → split into characters → remove unlikely tokens</div>
+      <div class="qo" onclick="ck('q5',this,true)"><span class="ql">C</span> Start with characters → count adjacent pairs → merge the most common pair → repeat until desired vocab size</div>
+      <div class="qo" onclick="ck('q5',this,false)"><span class="ql">D</span> Start with sentences → split into words → merge rare words</div>
+    </div>
+    <div class="qfb" id="q5-fb"></div>
+  </div>
+</div>
+<hr class="div">
+
+<!-- ═══ SUMMARY ═══ -->
+<div class="section" id="s9">
+  <div class="stag">Summary</div>
+  <h2>Key Takeaways</h2>
+  <div class="sgrid">
+    <div class="sitem"><code>The Algorithm</code><div class="d">Characters → count pairs → merge most frequent → repeat. Simple but effective.</div></div>
+    <div class="sitem"><code>Why It Works</code><div class="d">Common sequences become tokens. Rare words break into known pieces. No OOV problem.</div></div>
+    <div class="sitem"><code>Merge Order Matters</code><div class="d">During encoding, apply merges in the order they were learned (most frequent first).</div></div>
+    <div class="sitem"><code>Vocab Size Tradeoff</code><div class="d">Bigger vocab = shorter sequences but more embedding parameters. ~50K-100K is typical.</div></div>
+    <div class="sitem"><code>Alternatives Exist</code><div class="d">WordPiece (BERT), Unigram (T5), SentencePiece (multilingual) — all similar in practice.</div></div>
+    <div class="sitem"><code>In Practice</code><div class="d">Use pretrained tokenizers (tiktoken for GPT). Don't build your own for production.</div></div>
+  </div>
+  <div class="callout"><strong>🚀 Next up:</strong> Lesson 3 — Embeddings. Now that we have token IDs, how do we convert them into rich vectors that capture meaning? That's where embeddings come in.</div>
+</div>
+
+</div>
+
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById('pf').style.width=(h>0?scrollY/h*100:0)+'%'});
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.08});
+document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+
+// ═══ BPE Stepper ═══
+const steps=[
+  {merge:null,vocab:{'l o w ◇':1,'l o w e r ◇':1,'l o w e s t ◇':1},pairs:[['l','o',3],['o','w',3],['w','◇',1],['w','e',2],['e','r',1],['r','◇',1],['e','s',1],['s','t',1],['t','◇',1]],note:'Starting state: each word is split into individual characters plus the end-of-word marker ◇. We count all adjacent pairs. The pairs ("l","o") and ("o","w") both appear 3 times — once in each word. We pick ("l","o") as our first merge.'},
+  {merge:['l','o'],vocab:{'lo w ◇':1,'lo w e r ◇':1,'lo w e s t ◇':1},pairs:[['lo','w',3],['w','◇',1],['w','e',2],['e','r',1],['r','◇',1],['e','s',1],['s','t',1],['t','◇',1]],note:'Merge 1: l + o → "lo". This new token replaces "l o" everywhere it appears. Now "lo" is a single token in all three words. The pair ("lo","w") now appears 3 times — it\'s the next most common.'},
+  {merge:['lo','w'],vocab:{'low ◇':1,'low e r ◇':1,'low e s t ◇':1},pairs:[['low','◇',1],['low','e',2],['e','r',1],['r','◇',1],['e','s',1],['s','t',1],['t','◇',1]],note:'Merge 2: lo + w → "low". Now "low" is a single token! Notice how the common root of all three words was discovered purely from frequency. The pair ("low","e") appears twice (in "lower" and "lowest").'},
+  {merge:['low','e'],vocab:{'low ◇':1,'lowe r ◇':1,'lowe s t ◇':1},pairs:[['low','◇',1],['lowe','r',1],['r','◇',1],['lowe','s',1],['s','t',1],['t','◇',1]],note:'Merge 3: low + e → "lowe". The algorithm keeps building longer tokens. Now all remaining pairs appear only once each, so ties are broken arbitrarily.'},
+  {merge:['lowe','r'],vocab:{'low ◇':1,'lower ◇':1,'lowe s t ◇':1},pairs:[['low','◇',1],['lower','◇',1],['lowe','s',1],['s','t',1],['t','◇',1]],note:'Merge 4: lowe + r → "lower". The complete word "lower" is now one token. Meanwhile "lowest" still has pieces left: "lowe", "s", "t", "◇".'},
+  {merge:['s','t'],vocab:{'low ◇':1,'lower ◇':1,'lowe st ◇':1},pairs:[['low','◇',1],['lower','◇',1],['lowe','st',1],['st','◇',1]],note:'Merge 5: s + t → "st". The algorithm discovered a common cluster ("st" appears in many English words). "lowest" is now: "lowe" + "st" + "◇".'},
+];
+function showStep(i){
+  document.querySelectorAll('[id^=stepBtn]').forEach(b=>b.classList.remove('on'));
+  document.getElementById('stepBtn'+i).classList.add('on');
+  const s=steps[i];
+  let pt=s.merge?`<div style="font-family:var(--mono);font-size:.95rem;color:var(--em);margin-bottom:10px;padding:8px 12px;background:var(--em-dim);border-radius:6px;">Merge: <strong>${s.merge[0]}</strong> + <strong>${s.merge[1]}</strong> → <strong>${s.merge.join('')}</strong></div>`:'';
+  pt+='<table class="ptable"><tr><th>Adjacent Pair</th><th>Frequency</th></tr>';
+  const sorted=[...s.pairs].sort((a,b)=>b[2]-a[2]);
+  sorted.forEach((p,j)=>{pt+=`<tr ${j===0&&i<5?'class="top"':''}><td>${p[0]} + ${p[1]}</td><td>${p[2]}</td></tr>`});
+  pt+='</table>';
+  document.getElementById('stepPairs').innerHTML=pt;
+  let vhtml='<div style="font-family:var(--mono);font-size:.82rem;color:var(--muted);margin-bottom:6px;">Current vocabulary state:</div>';
+  for(const[w,f]of Object.entries(s.vocab)){
+    const toks=w.split(' ');
+    vhtml+='<div class="chips" style="margin:4px 0">'+toks.map(t=>`<span class="chip ${s.merge&&t===s.merge.join('')?'merged':''}">${t}</span>`).join('')+`<span style="color:var(--muted);font-size:.8rem;margin-left:4px;">×${f}</span></div>`;
+  }
+  document.getElementById('stepVocab').innerHTML=vhtml;
+  document.getElementById('stepNote').textContent=s.note;
+}
+showStep(0);
+
+// ═══ Live BPE Trainer ═══
+let bpeVocab,bpeMerges,bpeMergeCount;
+function bpeReset(){
+  const corpus=document.getElementById('bpeCorpus').value;
+  const wf={};corpus.split(/\s+/).filter(Boolean).forEach(w=>{wf[w]=(wf[w]||0)+1});
+  bpeVocab={};for(const[w,f]of Object.entries(wf))bpeVocab[[...w].join(' ')+' ◇']=f;
+  bpeMerges=[];bpeMergeCount=0;
+  document.getElementById('bpeMergeLog').textContent='Ready. Click "Merge next pair" to begin.';renderBpe();
+}
+function bpeCountPairs(){
+  const p={};for(const[w,f]of Object.entries(bpeVocab)){const t=w.split(' ');for(let i=0;i<t.length-1;i++){const k=t[i]+'|||'+t[i+1];p[k]=(p[k]||0)+f}}return p;
+}
+function bpeMerge(){
+  if(!bpeVocab)bpeReset();
+  const p=bpeCountPairs();if(!Object.keys(p).length){document.getElementById('bpeMergeLog').textContent+='\nNo more pairs to merge!';return}
+  let best='',bestF=0;for(const[k,f]of Object.entries(p))if(f>bestF){bestF=f;best=k}
+  const[a,b]=best.split('|||');const nv={};
+  for(const[w,f]of Object.entries(bpeVocab))nv[w.split(a+' '+b).join(a+b)]=f;
+  bpeVocab=nv;bpeMergeCount++;bpeMerges.push([a,b]);
+  const log=document.getElementById('bpeMergeLog');
+  log.textContent+=`\nMerge ${bpeMergeCount}: ${a} + ${b} → ${a+b}  (freq: ${bestF})`;log.scrollTop=log.scrollHeight;renderBpe();
+}
+function bpeAuto(){for(let i=0;i<5;i++)bpeMerge()}
+function renderBpe(){
+  const p=bpeCountPairs();const sorted=Object.entries(p).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(sorted.length){let pt='<table class="ptable"><tr><th>Pair</th><th>Freq</th></tr>';sorted.forEach(([k,f],i)=>{const[a,b]=k.split('|||');pt+=`<tr ${i===0?'class="top"':''}><td>${a} + ${b}</td><td>${f}</td></tr>`});pt+='</table>';document.getElementById('bpePairTable').innerHTML=pt}
+  else document.getElementById('bpePairTable').innerHTML='<div style="color:var(--muted);font-size:.9rem;">No pairs remaining.</div>';
+  let v='<div style="font-family:var(--mono);font-size:.82rem;color:var(--muted);margin-bottom:4px;">Words in vocabulary:</div>';
+  for(const[w,f]of Object.entries(bpeVocab))v+=`<div class="chips" style="margin:3px 0">`+w.split(' ').map(t=>`<span class="chip">${t}</span>`).join('')+`<span style="color:var(--muted);font-size:.78rem;margin-left:4px;">×${f}</span></div>`;
+  document.getElementById('bpeVocabDisplay').innerHTML=v;
+}
+bpeReset();
+
+// ═══ Encoding demo ═══
+const encData={
+  running:{steps:['r u n n i n g','r u n n ing','r u nn ing','run n ing','runn ing','running'],final:['running'],note:'Common word: "running" appears very frequently in English text, so BPE has merged it all the way to a single token. The merge path: "in"→"ing", "nn", "run", "runn", "running". This is the ideal case — one word, one token.'},
+  elephant:{steps:['e l e p h a n t','el e p h a n t','el e ph a n t','el e ph ant','el eph ant','eleph ant'],final:['eleph','ant'],note:'"elephant" is moderately common. BPE knows "ant" (very common suffix/word) and merges most of the word, but "eleph" might stay as a piece. The model can still leverage what it knows about the "ant" piece from other words.'},
+  ChatGPT:{steps:['C h a t G P T','Ch at G P T','Chat G P T','Chat GP T','Chat GPT'],final:['Chat','GPT'],note:'Mixed-case words: BPE treats uppercase and lowercase separately. "Chat" is common enough to be one token. "GPT" is also common (appeared frequently in training data). So this splits cleanly into two known pieces.'},
+  xyzzy:{steps:['x y z z y'],final:['x','y','z','z','y'],note:'Complete gibberish: BPE has no useful merges for this character sequence. It falls back to individual characters. This is the worst case — but it still works! No <UNK>, no information loss. The model just sees 5 character tokens.'},
+  unhappiness:{steps:['u n h a p p i n e s s','un h a p p i n e s s','un h a pp i n e s s','un h app i n e s s','un happ i n e s s','un happi n e s s','un happi ness','unhappi ness','unhappiness'],final:['un','happiness'],note:'"un" is a very common prefix — BPE learns it early. "happiness" is common enough to be a single token. So BPE naturally decomposes this into meaningful morphemes: "un" + "happiness". The model can leverage both pieces!'}
+};
+function showEnc(w){
+  document.querySelectorAll('#encCtrls .cbtn').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');
+  const d=encData[w];let txt=`Encoding "${w}":\n\n`;
+  d.steps.forEach((s,i)=>{txt+=`  Step ${i}: [${s.split(' ').join(', ')}]\n`});
+  txt+=`\n  Final tokens: [${d.final.join(', ')}]`;
+  document.getElementById('encSteps').textContent=txt;
+  document.getElementById('encNote').textContent=d.note;
+}
+showEnc('running');
+
+// ═══ Quiz ═══
+function ck(id,el,ok){
+  const card=document.getElementById(id);if(card.dataset.a)return;card.dataset.a='1';
+  card.querySelectorAll('.qo').forEach(o=>o.classList.add('d'));
+  const fb=document.getElementById(id+'-fb');
+  if(ok){el.classList.add('c');fb.className='qfb p show';fb.textContent='✅ Correct!';}
+  else{el.classList.add('w');card.querySelectorAll('.qo').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true'))o.classList.add('c')});
+    fb.className='qfb f show';
+    const ex={
+      q1:'BPE uses pure frequency — it counts how often each adjacent pair appears and merges the most common one. No grammar rules, no dictionary, just statistics from the data.',
+      q2:'"the" appears 5000 times, so its character pairs get huge counts and merge early — becoming a single token. "theater" benefits from sharing the "the" prefix (which already merged), so it becomes "the"+"ater". Frequency drives everything.',
+      q3:'Earlier merge rules represent more frequent patterns. Applying them first ensures consistent tokenization — the same input always produces the same tokens. If you changed the order, you might merge different pairs and get different results.',
+      q4:'Bigger vocabulary means each word needs fewer tokens (shorter sequences = more text in the context window), but the embedding table has more rows (more parameters = more memory). It\'s a classic size-vs-efficiency tradeoff.',
+      q5:'BPE is bottom-up: start with characters, count adjacent pairs, merge the most frequent pair, repeat. This is the opposite of Unigram, which is top-down (starts big, prunes down).',
+      q6:'GPT-2\'s tokenizer was trained on text from before 2020. The string "COVID-19" never appeared in that training data, so BPE never learned to merge those characters. It splits it into fragments like ["CO","VID","-","19"]. This is a fundamental limitation of frozen tokenizers.'
+    };
+    fb.textContent='❌ '+ex[id];
+  }
+}
+</script>
+</body>
+</html>

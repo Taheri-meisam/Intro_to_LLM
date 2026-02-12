@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 · Lesson 1: Tokenization</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Fira+Code:wght@400;500&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf6f0;--surface:#fff;--surface2:#f3ede3;--border:#e0d6c6;
+  --text:#3a3228;--muted:#8a7e6e;--heading:#1e1812;
+  --amber:#d48820;--amber-dim:rgba(212,136,32,.1);--amber-glow:rgba(212,136,32,.3);
+  --green:#3a8a50;--green-dim:rgba(58,138,80,.1);
+  --red:#c44830;--red-dim:rgba(196,72,48,.1);
+  --blue:#3060b8;--blue-dim:rgba(48,96,184,.1);
+  --mono:'Fira Code',monospace;--serif:'Crimson Pro',serif;--sans:'Nunito Sans',sans-serif;
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.76;font-size:15.5px}
+.container{max-width:760px;margin:0 auto;padding:48px 24px 100px}
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--border);z-index:999}.pfill{height:100%;width:0%;background:var(--amber);transition:width .3s}
+.hero{text-align:center;padding:32px 0 48px}.hero-tag{font-family:var(--mono);font-size:.76rem;color:var(--amber);letter-spacing:.14em;text-transform:uppercase}.hero h1{font-family:var(--serif);font-size:2.5rem;font-weight:700;color:var(--heading);margin:8px 0}.hero h1 em{color:var(--amber);font-style:normal}.hero p{color:var(--muted);font-size:1.05rem;max-width:540px;margin:0 auto}
+.section{margin-bottom:56px;opacity:0;transform:translateY(20px);transition:all .5s}.section.vis{opacity:1;transform:none}.stag{font-family:var(--mono);font-size:.72rem;color:var(--amber);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}.section h2{font-family:var(--serif);font-size:1.55rem;font-weight:700;color:var(--heading);margin-bottom:14px}.section h3{font-family:var(--serif);font-size:1.2rem;font-weight:600;color:var(--heading);margin:20px 0 10px}.section p{margin-bottom:12px}.section p strong{color:var(--heading)}
+pre{background:var(--heading);color:#e8dfd4;border-radius:var(--radius);padding:16px 18px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:.84rem;line-height:1.6}
+code.il{font-family:var(--mono);font-size:.86em;color:var(--amber);background:var(--amber-dim);padding:2px 6px;border-radius:4px}
+.kw{color:#e8a0c0}.fn{color:#80c8e0}.num{color:#e8c060}.str{color:#a0d880}.cm{color:#7a7268;font-style:italic}
+.callout{background:var(--amber-dim);border:1px solid rgba(212,136,32,.2);border-radius:var(--radius);padding:16px 18px;margin:18px 0;font-size:.93rem}.callout.warn{background:var(--red-dim);border-color:rgba(196,72,48,.2)}.callout.info{background:var(--blue-dim);border-color:rgba(48,96,184,.2)}.callout.green{background:var(--green-dim);border-color:rgba(58,138,80,.2)}
+hr.div{border:none;border-top:1px solid var(--border);margin:52px 0}
+.cw{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin:18px 0}.cw-title{font-family:var(--mono);font-size:.76rem;color:var(--amber);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.cbtn{font-family:var(--mono);font-size:.8rem;padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s}.cbtn:hover{border-color:var(--amber);color:var(--amber)}.cbtn.on{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+.out{background:var(--heading);border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:.84rem;color:#a0d880;line-height:1.6;margin:10px 0;white-space:pre-wrap;min-height:36px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.chip{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:20px;font-family:var(--mono);font-size:.82rem;border:1px solid var(--border);background:var(--surface)}.chip.word{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}.chip.char{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}.chip.sub{border-color:var(--green);color:var(--green);background:var(--green-dim)}.chip.unk{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+.bar-row{display:flex;align-items:center;gap:10px;margin:6px 0}.bar-label{font-family:var(--mono);font-size:.8rem;color:var(--muted);width:90px;text-align:right;flex-shrink:0}.bar-track{flex:1;height:24px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative}.bar-fill{height:100%;border-radius:4px;transition:width .6s}.bar-val{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:.75rem;color:var(--heading)}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin:18px 0}.qq{font-family:var(--serif);font-size:1.05rem;color:var(--heading);margin-bottom:12px}.qopts{display:flex;flex-direction:column;gap:7px}.qo{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .2s}.qo:hover{border-color:var(--amber)}.qo.c{border-color:var(--green);background:var(--green-dim);color:var(--green)}.qo.w{border-color:var(--red);background:var(--red-dim);color:var(--red)}.qo.d{pointer-events:none;opacity:.85}.ql{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.75rem;font-weight:600;background:var(--surface2);color:var(--muted);flex-shrink:0}.qo.c .ql{background:var(--green);color:#fff}.qo.w .ql{background:var(--red);color:#fff}.qfb{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:.88rem;display:none;line-height:1.6}.qfb.show{display:block}.qfb.p{background:var(--green-dim);color:var(--green);border-left:3px solid var(--green)}.qfb.f{background:var(--red-dim);color:var(--red);border-left:3px solid var(--red)}
+.text-input{width:100%;padding:10px 14px;font-family:var(--sans);font-size:.95rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);margin:8px 0;outline:none}.text-input:focus{border-color:var(--amber)}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.sitem{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}.sitem code{font-family:var(--mono);font-size:.84rem;color:var(--amber)}.sitem .d{font-size:.86rem;color:var(--muted);margin-top:3px}
+.analogy{border-left:3px solid var(--amber);padding:10px 16px;margin:16px 0;background:var(--amber-dim);border-radius:0 var(--radius) var(--radius) 0;font-size:.93rem}
+.analogy strong{color:var(--heading)}
+.step{display:flex;gap:12px;margin:10px 0;align-items:flex-start}.step-n{font-family:var(--mono);font-size:.75rem;color:#fff;background:var(--amber);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}.step-c{flex:1}
+@media(max-width:600px){.hero h1{font-size:1.8rem}.sgrid{grid-template-columns:1fr}.bar-label{width:70px;font-size:.72rem}}
+</style>
+</head>
+<body>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-tag">Week 2 · Lesson 1</div>
+  <h1><em>Tokenization</em></h1>
+  <p>Neural networks only understand numbers. Tokenization is the bridge that turns human language into something a model can process — and the choices here ripple through everything.</p>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 1: THE FUNDAMENTAL PROBLEM ═══════ -->
+<div class="section" id="s1">
+  <div class="stag">Part 01</div>
+  <h2>The Fundamental Problem</h2>
+
+  <p>Here's the core tension: <strong>humans think in words, but neural networks think in numbers</strong>. Everything inside a neural network — every weight, every activation, every gradient — is a floating-point number. So before we can feed text to a model, we need to convert it into a sequence of numbers.</p>
+
+  <p>This conversion process is called <strong>tokenization</strong>, and the individual pieces we break text into are called <strong>tokens</strong>.</p>
+
+  <div class="analogy">
+    <strong>🎵 Analogy — Sheet Music:</strong> Think of tokenization like converting a song into sheet music. A singer hears continuous melody, but a musician reading sheet music sees discrete notes. Tokenization is the process of deciding how to break continuous text into discrete pieces a model can "read." Just as different notations exist (Western staff notation vs. guitar tablature vs. Nashville number system), different tokenization strategies exist — and each has tradeoffs.
+  </div>
+
+  <p>The naive approach seems simple: assign each word a number.</p>
+
+  <pre><span class="cm"># Naive word-to-number mapping</span>
+vocab = {
+    <span class="str">"the"</span>:  <span class="num">1</span>,
+    <span class="str">"cat"</span>:  <span class="num">2</span>,
+    <span class="str">"sat"</span>:  <span class="num">3</span>,
+    <span class="str">"on"</span>:   <span class="num">4</span>,
+    <span class="str">"mat"</span>:  <span class="num">5</span>,
+}
+
+<span class="cm"># "The cat sat on the mat" → [1, 2, 3, 4, 1, 5]</span></pre>
+
+  <p>This seems fine — until you look closer. This approach has <strong>three serious problems</strong> that make it impractical for real language models.</p>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 2: PROBLEM 1 — VOCABULARY EXPLOSION ═══════ -->
+<div class="section" id="s2">
+  <div class="stag">Part 02</div>
+  <h2>Problem 1: Vocabulary Explosion</h2>
+
+  <p>English doesn't just have a lot of words — it has a <strong>combinatorial explosion</strong> of word forms. Consider: every verb has multiple tenses (run, ran, running, runs). Every noun can be singular or plural (cat, cats). Many words have prefixes and suffixes (un-happy, happi-ness, un-happi-ness). When you multiply all these variations together, you easily get <strong>500,000+ unique word forms</strong>.</p>
+
+  <p>Why is this a problem? Because each word needs its own row in the <strong>embedding table</strong> (we'll learn about embeddings in Lesson 3). With 500,000 words and a typical embedding dimension of 768, that's a 500,000 × 768 table — <strong>384 million parameters</strong> just for the vocabulary! And most of those words are rare. The word "precomputed" might appear 3 times in the entire training set, which isn't enough data for the model to learn a useful representation.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Vocabulary Explosion Demo</div>
+    <p style="font-size:.9rem;margin-bottom:8px;">Select a base word to see how many forms it creates. Each form needs its own vocabulary entry:</p>
+    <div class="ctrls" id="vocabCtrls">
+      <button class="cbtn on" onclick="showVocab('run')">run</button>
+      <button class="cbtn" onclick="showVocab('play')">play</button>
+      <button class="cbtn" onclick="showVocab('compute')">compute</button>
+      <button class="cbtn" onclick="showVocab('happy')">happy</button>
+    </div>
+    <div class="chips" id="vocabChips"></div>
+    <div id="vocabNote" style="font-size:.86rem;color:var(--muted);margin-top:6px;"></div>
+  </div>
+
+  <p>And here's the really frustrating part: the model doesn't know that "run" and "running" are related! They're just two different numbers in the vocabulary. The model has to <strong>independently learn</strong> what each form means, with no structural hint that they share a root word. That's enormously wasteful.</p>
+
+  <div class="callout">
+    <strong>📊 Real numbers:</strong> The Oxford English Dictionary has ~170,000 words. But when you add inflections, proper nouns, technical terms, slang, multilingual words, and misspellings, a practical word-level vocabulary needs 500,000+ entries. GPT-2 uses only ~50,000 tokens instead — because it uses subword tokenization, which we'll get to shortly.
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 3: PROBLEM 2 — OOV ═══════ -->
+<div class="section" id="s3">
+  <div class="stag">Part 03</div>
+  <h2>Problem 2: Unknown Words (OOV)</h2>
+
+  <p>No matter how large your vocabulary, someone will eventually type a word you haven't seen before. This is called the <strong>Out-Of-Vocabulary (OOV)</strong> problem. New product names ("ChatGPT"), misspellings ("teh"), slang ("yeet"), scientific terms ("methylprednisolone") — the world creates new words constantly.</p>
+
+  <p>The standard fix is to replace unknown words with a special <code class="il">&lt;UNK&gt;</code> token. But this <strong>destroys information</strong>. Consider these two sentences:</p>
+
+  <pre><span class="cm"># Both sentences become identical after UNK replacement!</span>
+<span class="str">"The patient took ibuprofen"</span>  → [the, patient, took, <span class="kw">&lt;UNK&gt;</span>]
+<span class="str">"The patient took acetaminophen"</span> → [the, patient, took, <span class="kw">&lt;UNK&gt;</span>]
+<span class="cm"># The model can't tell these apart — dangerously different drugs!</span></pre>
+
+  <div class="cw">
+    <div class="cw-title">▸ OOV Demo — Try It</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:6px;">Our tiny vocabulary: {the, cat, sat, on, mat, dog, ran, in, park, love, machine, learning}. Type any sentence and see what gets lost:</p>
+    <input class="text-input" id="oovInput" placeholder="Type a sentence…" value="The elephant sat on the mattress">
+    <button class="cbtn" onclick="runOOV()" style="margin-top:4px;">Tokenize</button>
+    <div class="chips" id="oovChips"></div>
+    <div id="oovNote" style="font-size:.86rem;color:var(--muted);margin-top:4px;"></div>
+  </div>
+
+  <p>Try typing "The dog sat on the park" (all known words) vs. "The poodle sat on the bench" (two unknowns). The second sentence loses the specific breed and location — exactly the kind of detail that matters.</p>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 4: PROBLEM 3 — PUNCTUATION ═══════ -->
+<div class="section" id="s4">
+  <div class="stag">Part 04</div>
+  <h2>Problem 3: Punctuation & Edge Cases</h2>
+
+  <p>When you split text on spaces, punctuation sticks to words. <code class="il">"Hello,"</code> and <code class="il">"Hello"</code> become two different vocabulary entries. So do <code class="il">"world"</code> and <code class="il">"world!"</code> and <code class="il">"world?"</code> and <code class="il">"world."</code>. This <strong>quadruples</strong> the vocabulary for every word that might appear next to punctuation.</p>
+
+  <p>You could strip punctuation, but that loses meaning too:</p>
+
+  <pre><span class="cm"># Punctuation carries meaning!</span>
+<span class="str">"Let's eat, grandma!"</span>   <span class="cm"># Inviting grandma to dinner</span>
+<span class="str">"Let's eat grandma!"</span>    <span class="cm"># Very different meaning 😱</span>
+
+<span class="str">"I never said she stole my money"</span>
+<span class="cm"># Emphasis on different words changes meaning entirely</span>
+<span class="cm"># "I" vs "she" vs "stole" vs "money" — each emphasis = different meaning</span></pre>
+
+  <p>There are also edge cases like contractions (<code class="il">don't</code> — is that one word or two?), hyphenated words (<code class="il">well-known</code>), numbers (<code class="il">3.14</code>), URLs, and emoji. Every edge case needs a special rule, and the rules interact in complex ways.</p>
+
+  <div class="callout warn">
+    <strong>⚠️ Real-world consequence:</strong> GPT's tokenizer splits numbers in unexpected ways. "380" might become ["3", "80"], while "381" might become ["381"]. This inconsistency is one reason LLMs struggle with arithmetic — the model sees different numerical structures depending on the digits.
+  </div>
+
+  <!-- Quiz 1 -->
+  <div class="qcard" id="q1">
+    <div class="qq">🧩 Which of these is NOT a problem with word-level tokenization?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q1',this,false)"><span class="ql">A</span> Vocabulary grows too large with all word forms</div>
+      <div class="qo" onclick="ck('q1',this,false)"><span class="ql">B</span> Unknown words get replaced with &lt;UNK&gt;, losing information</div>
+      <div class="qo" onclick="ck('q1',this,true)"><span class="ql">C</span> Sequences become too long for the model's context window</div>
+      <div class="qo" onclick="ck('q1',this,false)"><span class="ql">D</span> Punctuation creates duplicate vocabulary entries</div>
+    </div>
+    <div class="qfb" id="q1-fb"></div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 5: CHARACTER APPROACH ═══════ -->
+<div class="section" id="s5">
+  <div class="stag">Part 05</div>
+  <h2>Attempt 1: Character-Level Tokenization</h2>
+
+  <p>What if we go to the other extreme? Instead of whole words, tokenize every <strong>individual character</strong>:</p>
+
+  <pre><span class="str">"Hello"</span> → [<span class="str">"H"</span>, <span class="str">"e"</span>, <span class="str">"l"</span>, <span class="str">"l"</span>, <span class="str">"o"</span>]
+<span class="str">"world"</span> → [<span class="str">"w"</span>, <span class="str">"o"</span>, <span class="str">"r"</span>, <span class="str">"l"</span>, <span class="str">"d"</span>]</pre>
+
+  <p>This solves all three problems at once! The vocabulary is tiny (~100 characters covers all of English), there are no unknown tokens (every possible input is already a character), and punctuation is naturally its own token.</p>
+
+  <h3>The Catch: Sequence Length</h3>
+
+  <p>But there's a devastating tradeoff. Characters create <strong>much longer sequences</strong>. Modern LLMs have a fixed <strong>context window</strong> — the maximum number of tokens they can process at once. If each token is only one character, the model sees far less text.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Sequence Length Comparison</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">The same text, tokenized two ways:</p>
+    <input class="text-input" id="seqInput" value="The quick brown fox jumps over the lazy dog." oninput="updateSeq()">
+    <div style="margin-top:10px;">
+      <div class="bar-row"><div class="bar-label">Words</div><div class="bar-track"><div class="bar-fill" id="barWord" style="background:var(--amber);"></div><div class="bar-val" id="barWordV"></div></div></div>
+      <div class="bar-row"><div class="bar-label">Characters</div><div class="bar-track"><div class="bar-fill" id="barChar" style="background:var(--blue);"></div><div class="bar-val" id="barCharV"></div></div></div>
+      <div class="bar-row"><div class="bar-label">Ratio</div><div class="bar-track" style="background:transparent;"><div class="bar-val" id="barRatio" style="left:8px;right:auto;color:var(--red);font-weight:600;"></div></div></div>
+    </div>
+  </div>
+
+  <p>There's another problem: the model must <strong>learn</strong> that "c" + "a" + "t" = the concept of a cat. With word-level tokenization, "cat" is directly given as a single unit. With characters, the model has to figure out letter combinations from scratch. This makes training much harder and slower.</p>
+
+  <div class="analogy">
+    <strong>📖 Analogy — Reading Speed:</strong> Imagine reading a book letter by letter: "T-h-e c-a-t s-a-t…" vs. reading word by word: "The cat sat…" You can read much faster (and understand more) when you process whole words. Characters are like forcing the model to spell out every word.
+  </div>
+
+  <div class="cw">
+    <div class="cw-title">▸ Context Window Impact</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">With a 4,096-token context window, how much text fits?</p>
+    <div class="bar-row"><div class="bar-label">Words</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--amber);"></div><div class="bar-val">~4,096 words ≈ 15 pages</div></div></div>
+    <div class="bar-row"><div class="bar-label">Subwords</div><div class="bar-track"><div class="bar-fill" style="width:75%;background:var(--green);"></div><div class="bar-val">~3,000 words ≈ 11 pages</div></div></div>
+    <div class="bar-row"><div class="bar-label">Characters</div><div class="bar-track"><div class="bar-fill" style="width:18%;background:var(--blue);"></div><div class="bar-val">~700 words ≈ 1.5 pages</div></div></div>
+    <p style="font-size:.86rem;color:var(--muted);margin-top:6px;">That's a 10× difference between words and characters. The model literally "sees" 10× less of your document.</p>
+  </div>
+
+  <!-- Quiz 2 -->
+  <div class="qcard" id="q2">
+    <div class="qq">🧩 What is the main advantage of character-level tokenization?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q2',this,false)"><span class="ql">A</span> It creates the shortest sequences</div>
+      <div class="qo" onclick="ck('q2',this,false)"><span class="ql">B</span> It's the fastest to train</div>
+      <div class="qo" onclick="ck('q2',this,true)"><span class="ql">C</span> It has a tiny vocabulary and can handle any text, including misspellings</div>
+      <div class="qo" onclick="ck('q2',this,false)"><span class="ql">D</span> It captures word meaning better than word-level</div>
+    </div>
+    <div class="qfb" id="q2-fb"></div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 6: SUBWORD TOKENIZATION ═══════ -->
+<div class="section" id="s6">
+  <div class="stag">Part 06</div>
+  <h2>The Solution: Subword Tokenization</h2>
+
+  <p>The breakthrough insight: instead of choosing between words and characters, split text into <strong>subword pieces</strong> that balance both approaches. The algorithm <strong>learns</strong> from data which pieces are useful.</p>
+
+  <h3>How Subword Tokenization Handles Different Words</h3>
+
+  <p>The beauty of subword tokenization is that it adapts to word frequency:</p>
+
+  <div style="display:grid;grid-template-columns:auto 1fr auto;gap:4px 16px;margin:14px 0;font-size:.93rem;">
+    <strong>Common word:</strong><span>"the"</span><span class="chip sub" style="margin:0;">the</span>
+    <strong>Normal word:</strong><span>"running"</span><span><span class="chip sub" style="margin:0;">run</span> <span class="chip sub" style="margin:0;">ning</span></span>
+    <strong>Rare word:</strong><span>"ChatGPT"</span><span><span class="chip sub" style="margin:0;">Chat</span> <span class="chip sub" style="margin:0;">G</span> <span class="chip sub" style="margin:0;">PT</span></span>
+    <strong>Misspelling:</strong><span>"teh"</span><span><span class="chip sub" style="margin:0;">t</span> <span class="chip sub" style="margin:0;">eh</span></span>
+    <strong>New word:</strong><span>"unfriend"</span><span><span class="chip sub" style="margin:0;">un</span> <span class="chip sub" style="margin:0;">friend</span></span>
+  </div>
+
+  <p>Common words stay whole (efficient). Normal words split into meaningful morphemes (smart). Rare or unknown words split further — but never become <code class="il">&lt;UNK&gt;</code> because at worst they decompose into individual characters.</p>
+
+  <p>Notice how "unfriend" splits into "un" + "friend" — the model can leverage what it already knows about both pieces! This is a huge advantage over word-level tokenization, where "unfriend" would be a completely new entry (or <code class="il">&lt;UNK&gt;</code>).</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Three Strategies Side-by-Side</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:6px;">Click each strategy to compare:</p>
+    <div class="ctrls" id="stratCtrls">
+      <button class="cbtn on" onclick="showStrat('word')">Word-level</button>
+      <button class="cbtn" onclick="showStrat('char')">Character-level</button>
+      <button class="cbtn" onclick="showStrat('sub')">Subword (BPE)</button>
+    </div>
+    <div class="chips" id="stratChips"></div>
+    <div id="stratNote" style="font-size:.88rem;color:var(--muted);margin-top:8px;line-height:1.6;"></div>
+  </div>
+
+  <div class="callout green">
+    <strong>✅ The Goldilocks Solution:</strong> Subword tokenization gives us moderate vocabulary size (~50K tokens), reasonable sequence lengths, ability to handle any text, and meaningful decomposition of words. This is what GPT, BERT, T5, Llama, and essentially all modern language models use.
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 7: LIVE TOKENIZER ═══════ -->
+<div class="section" id="s7">
+  <div class="stag">Part 07</div>
+  <h2>Interactive Tokenizer Comparison</h2>
+
+  <p>Type anything below and see it tokenized all three ways simultaneously. Try typing a misspelling, a number, or a made-up word to see how each strategy handles it.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Live Tokenizer</div>
+    <input class="text-input" id="liveInput" value="Unfortunately, I misspelled ChatGPT again!" oninput="liveTokenize()">
+    <div style="margin-top:12px;">
+      <div style="font-size:.82rem;font-family:var(--mono);color:var(--amber);margin-bottom:4px;">WORD-LEVEL <span id="liveWordC" style="float:right;"></span></div>
+      <div class="chips" id="liveWord"></div>
+      <div style="font-size:.82rem;font-family:var(--mono);color:var(--blue);margin:10px 0 4px;">CHARACTER-LEVEL <span id="liveCharC" style="float:right;"></span></div>
+      <div class="chips" id="liveChar"></div>
+      <div style="font-size:.82rem;font-family:var(--mono);color:var(--green);margin:10px 0 4px;">SUBWORD (SIMULATED BPE) <span id="liveSubC" style="float:right;"></span></div>
+      <div class="chips" id="liveSub"></div>
+    </div>
+  </div>
+
+  <h3>Things to Try</h3>
+  <p>Type each of these and watch how the three strategies differ:</p>
+  <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:.93rem;margin:8px 0;">
+    <code class="il">3.14159</code><span>How does each handle numbers with decimals?</span>
+    <code class="il">don't</code><span>Contractions — one word or two?</span>
+    <code class="il">xyzzy123</code><span>Complete gibberish — only character-level handles this cleanly</span>
+    <code class="il">unhappiness</code><span>Subword should split into meaningful pieces: un + happi + ness</span>
+  </div>
+
+  <!-- Quiz 3 -->
+  <div class="qcard" id="q3">
+    <div class="qq">🧩 Why does subword tokenization split "unfortunately" into ["un", "fortunate", "ly"] but keep "the" as a single token?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q3',this,false)"><span class="ql">A</span> It uses grammar rules to find morphemes</div>
+      <div class="qo" onclick="ck('q3',this,true)"><span class="ql">B</span> "the" appears so frequently it stays whole; less common words get split into smaller learned pieces</div>
+      <div class="qo" onclick="ck('q3',this,false)"><span class="ql">C</span> Short words are always kept whole</div>
+      <div class="qo" onclick="ck('q3',this,false)"><span class="ql">D</span> It randomly decides how to split each word</div>
+    </div>
+    <div class="qfb" id="q3-fb"></div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 8: SPECIAL TOKENS ═══════ -->
+<div class="section" id="s8">
+  <div class="stag">Part 08</div>
+  <h2>Special Tokens</h2>
+
+  <p>Every tokenizer reserves a few token IDs for <strong>control purposes</strong>. These aren't real words — they're signals that help the model understand the structure of its input.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Special Tokens Explained</div>
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:10px 16px;margin:8px 0;font-size:.93rem;">
+      <code class="il">&lt;PAD&gt;</code><div><strong>Padding.</strong> When batching sequences of different lengths together, shorter sequences get padded with this token to make them all the same length. The model learns to ignore these. Example: if batch has sequences of length 5 and 8, the length-5 one gets 3 PAD tokens added.</div>
+      <code class="il">&lt;UNK&gt;</code><div><strong>Unknown.</strong> Replaces words not in the vocabulary. With BPE this is rarely needed since words decompose into characters, but word-level tokenizers use it heavily.</div>
+      <code class="il">&lt;BOS&gt;</code><div><strong>Beginning of Sequence.</strong> Placed at the start of text to signal "this is where the input begins." During generation, this is the seed token that starts the process.</div>
+      <code class="il">&lt;EOS&gt;</code><div><strong>End of Sequence.</strong> Signals "the text is done." During generation, when the model predicts this token, it stops producing output.</div>
+    </div>
+  </div>
+
+  <pre><span class="cm"># Special tokens always get the lowest IDs</span>
+vocab = {
+    <span class="str">'&lt;PAD&gt;'</span>: <span class="num">0</span>,     <span class="cm"># Always ID 0</span>
+    <span class="str">'&lt;UNK&gt;'</span>: <span class="num">1</span>,     <span class="cm"># Always ID 1</span>
+    <span class="str">'&lt;BOS&gt;'</span>: <span class="num">2</span>,     <span class="cm"># Start marker</span>
+    <span class="str">'&lt;EOS&gt;'</span>: <span class="num">3</span>,     <span class="cm"># Stop marker</span>
+    <span class="str">'the'</span>:   <span class="num">4</span>,     <span class="cm"># First real token</span>
+    <span class="str">'cat'</span>:   <span class="num">5</span>,
+    ...
+}
+
+<span class="cm"># During generation:</span>
+<span class="cm"># Model receives: [&lt;BOS&gt;]</span>
+<span class="cm"># Model predicts: [&lt;BOS&gt;, "Once"]</span>
+<span class="cm"># Model predicts: [&lt;BOS&gt;, "Once", "upon"]</span>
+<span class="cm"># ...</span>
+<span class="cm"># Model predicts: [&lt;BOS&gt;, "Once", ..., "end", ".", &lt;EOS&gt;]  ← stops!</span></pre>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 9: BUILDING A TOKENIZER ═══════ -->
+<div class="section" id="s9">
+  <div class="stag">Part 09</div>
+  <h2>Building a Tokenizer from Scratch</h2>
+
+  <p>A tokenizer has two essential operations that must be perfect inverses of each other:</p>
+
+  <div class="step"><div class="step-n">1</div><div class="step-c"><strong>encode(text) → list of IDs.</strong> Converts a string like "The cat sat" into a list of numbers like [4, 5, 6]. This is what you call before feeding text to the model.</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-c"><strong>decode(IDs) → text.</strong> Converts numbers back into readable text. This is what you call after the model produces output token IDs.</div></div>
+
+  <p>The encode/decode roundtrip must be <strong>lossless</strong> — you should get back exactly what you put in (ignoring case normalization).</p>
+
+  <pre><span class="kw">class</span> <span class="fn">SimpleTokenizer</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.token_to_id = {}   <span class="cm"># "cat" → 5</span>
+        self.id_to_token = {}   <span class="cm"># 5 → "cat"</span>
+
+    <span class="kw">def</span> <span class="fn">train</span>(self, texts):
+        <span class="cm">"""Build vocabulary from training texts."""</span>
+        <span class="kw">for</span> text <span class="kw">in</span> texts:
+            <span class="kw">for</span> word <span class="kw">in</span> text.lower().split():
+                <span class="kw">if</span> word <span class="kw">not in</span> self.token_to_id:
+                    idx = <span class="fn">len</span>(self.token_to_id)
+                    self.token_to_id[word] = idx
+                    self.id_to_token[idx] = word
+
+    <span class="kw">def</span> <span class="fn">encode</span>(self, text):
+        <span class="cm">"""Text → list of IDs"""</span>
+        <span class="kw">return</span> [self.token_to_id.get(w, <span class="num">1</span>) <span class="kw">for</span> w <span class="kw">in</span> text.lower().split()]
+
+    <span class="kw">def</span> <span class="fn">decode</span>(self, ids):
+        <span class="cm">"""List of IDs → text"""</span>
+        <span class="kw">return</span> <span class="str">' '</span>.join(self.id_to_token[i] <span class="kw">for</span> i <span class="kw">in</span> ids)</pre>
+
+  <div class="cw">
+    <div class="cw-title">▸ Encode → Decode Roundtrip</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:4px;">Vocabulary: the, cat, sat, on, mat, dog, ran, in, park, love, machine, learning, is, fascinating</p>
+    <input class="text-input" id="roundInput" value="The cat sat on the mat" oninput="roundTrip()">
+    <div style="margin-top:8px;font-family:var(--mono);font-size:.84rem;">
+      <div style="color:var(--amber);margin-bottom:4px;">encode() — each word maps to its ID</div>
+      <div class="out" id="roundEnc"></div>
+      <div style="color:var(--green);margin:8px 0 4px;">decode() — IDs map back to words</div>
+      <div class="out" id="roundDec" style="color:var(--green)"></div>
+      <div style="color:var(--muted);margin:8px 0 4px;">roundtrip match?</div>
+      <div class="out" id="roundMatch" style="color:var(--blue)"></div>
+    </div>
+  </div>
+
+  <!-- Quiz 4 -->
+  <div class="qcard" id="q4">
+    <div class="qq">🧩 A tokenizer's encode() and decode() should be:</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q4',this,false)"><span class="ql">A</span> As fast as possible, even if they lose information</div>
+      <div class="qo" onclick="ck('q4',this,true)"><span class="ql">B</span> Perfect inverses — decode(encode(text)) should return the original text</div>
+      <div class="qo" onclick="ck('q4',this,false)"><span class="ql">C</span> Only defined for English text</div>
+      <div class="qo" onclick="ck('q4',this,false)"><span class="ql">D</span> Lossy, like JPEG compression</div>
+    </div>
+    <div class="qfb" id="q4-fb"></div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 10: WHY IT MATTERS ═══════ -->
+<div class="section" id="s10">
+  <div class="stag">Part 10</div>
+  <h2>Why Tokenization Matters for LLMs</h2>
+
+  <p>Tokenization isn't just a preprocessing step you do once and forget. It affects <strong>everything downstream</strong>:</p>
+
+  <div class="sgrid">
+    <div class="sitem"><code>Context Window</code><div class="d">GPT-4 has 128K tokens. Efficient tokenization means more text fits — you can include more context, more examples, more relevant information.</div></div>
+    <div class="sitem"><code>Training Efficiency</code><div class="d">If "unfortunately" is 1 token (vs. 4 subwords), the model needs 4× fewer examples to learn it equally well. More efficient tokenization = faster training.</div></div>
+    <div class="sitem"><code>Multilingual Quality</code><div class="d">English-centric tokenizers represent Chinese or Arabic very inefficiently (sometimes 1 character = 3-4 tokens!). This means less context window for those languages.</div></div>
+    <div class="sitem"><code>API Cost</code><div class="d">OpenAI charges per token. If your tokenizer needs 1.3× as many tokens for the same text, you pay 30% more for every API call.</div></div>
+    <div class="sitem"><code>Math & Code Ability</code><div class="d">"123" tokenized as ["1","23"] vs ["123"] vs ["12","3"] gives the model different views of the same number. This affects arithmetic performance significantly.</div></div>
+    <div class="sitem"><code>Generation Quality</code><div class="d">The model predicts one token at a time. If your tokens are meaningful units (words, morphemes), the model makes higher-level decisions. Character-level prediction requires thousands of micro-decisions.</div></div>
+  </div>
+
+  <div class="analogy">
+    <strong>🧱 Analogy — LEGO Bricks:</strong> Think of tokens as LEGO bricks. Word-level tokenization is like having a unique custom brick for every object (a cat-shaped brick, a dog-shaped brick) — you need an enormous factory. Character-level is like using only 1×1 bricks — anything is buildable but tedious. Subword tokenization is like standard LEGO sets — a reasonable number of versatile pieces that combine to build anything efficiently.
+  </div>
+
+  <!-- Quiz 5 -->
+  <div class="qcard" id="q5">
+    <div class="qq">🧩 Why might a multilingual LLM's tokenizer work poorly for Japanese text?</div>
+    <div class="qopts">
+      <div class="qo" onclick="ck('q5',this,false)"><span class="ql">A</span> Japanese characters are too complex for neural networks</div>
+      <div class="qo" onclick="ck('q5',this,true)"><span class="ql">B</span> An English-centric tokenizer may represent each Japanese character as multiple tokens, wasting the context window</div>
+      <div class="qo" onclick="ck('q5',this,false)"><span class="ql">C</span> Japanese can't be tokenized at all</div>
+      <div class="qo" onclick="ck('q5',this,false)"><span class="ql">D</span> Tokenization doesn't affect multilingual performance</div>
+    </div>
+    <div class="qfb" id="q5-fb"></div>
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 11: REAL-WORLD GOTCHAS ═══════ -->
+<div class="section" id="s11">
+  <div class="stag">Part 11</div>
+  <h2>Real-World Tokenization Gotchas</h2>
+
+  <p>Tokenization seems straightforward, but it creates surprising behaviors in real LLMs. Understanding these helps you debug mysterious model failures.</p>
+
+  <h3>Gotcha 1: Spaces are tokens too</h3>
+  <p>In GPT's tokenizer, the <strong>space before a word</strong> is part of the token. So <code class="il">"hello"</code> at the start of a sentence and <code class="il">" hello"</code> in the middle are <strong>different tokens</strong> with different IDs. This is why GPT sometimes adds or removes unexpected spaces — it's predicting tokens that include the space character.</p>
+
+  <pre><span class="cm"># GPT's actual tokenization (simplified):</span>
+<span class="str">"Hello world"</span>   → [<span class="str">"Hello"</span>, <span class="str">" world"</span>]   <span class="cm"># Note the space in " world"</span>
+<span class="str">"  Hello  world"</span> → [<span class="str">"  Hello"</span>, <span class="str">"  world"</span>]  <span class="cm"># Double spaces = different token!</span></pre>
+
+  <h3>Gotcha 2: Numbers are tokenized inconsistently</h3>
+  <p>The number <code class="il">2024</code> might become one token, but <code class="il">2025</code> might split into <code class="il">["202", "5"]</code>. This happens because 2024 appeared often enough in training data to merge completely, but 2025 didn't. This inconsistency is a major reason <strong>LLMs struggle with math</strong> — the model doesn't even "see" numbers consistently.</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Number Tokenization Surprise</div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:4px;">The same digits, split differently based on frequency in training data:</p>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-family:var(--mono);font-size:.88rem;margin:8px 0;">
+      <span>"100"</span><span class="chips" style="margin:0;"><span class="chip sub">100</span> <span style="color:var(--muted);font-size:.8rem;">→ 1 token (very common)</span></span>
+      <span>"1000"</span><span class="chips" style="margin:0;"><span class="chip sub">100</span><span class="chip sub">0</span> <span style="color:var(--muted);font-size:.8rem;">→ 2 tokens</span></span>
+      <span>"10000"</span><span class="chips" style="margin:0;"><span class="chip sub">100</span><span class="chip sub">00</span> <span style="color:var(--muted);font-size:.8rem;">→ 2 tokens (different split!)</span></span>
+      <span>"13579"</span><span class="chips" style="margin:0;"><span class="chip sub">1</span><span class="chip sub">35</span><span class="chip sub">79</span> <span style="color:var(--muted);font-size:.8rem;">→ 3 tokens (arbitrary)</span></span>
+    </div>
+    <p style="font-size:.86rem;color:var(--muted);margin-top:6px;">The model doesn't see "13579" as a number. It sees three random-looking fragments. Imagine trying to add 13579 + 24681 when you see ["1","35","79"] + ["246","81"].</p>
+  </div>
+
+  <h3>Gotcha 3: Trailing whitespace matters</h3>
+  <p>A prompt that ends with a space vs. one that doesn't can produce different model outputs, because the tokenization changes. <code class="il">"Tell me about "</code> (trailing space) creates a different final token than <code class="il">"Tell me about"</code>. This is a common source of mysterious inconsistency.</p>
+
+  <h3>Gotcha 4: Emoji and special characters</h3>
+  <p>A single emoji like 👨‍👩‍👧‍👦 (family) can become <strong>7+ tokens</strong> because it's actually multiple Unicode code points joined together. This means emoji-heavy text consumes far more of your context window than you'd expect.</p>
+
+  <div class="callout warn">
+    <strong>⚠️ Pro tip:</strong> When debugging strange LLM behavior, always check how your input gets tokenized first. Tools like OpenAI's <code class="il">tiktoken</code> or Hugging Face's <code class="il">tokenizers</code> let you inspect the exact tokenization. Many "bugs" are actually tokenization artifacts.
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ PART 12: COMMON MISCONCEPTIONS ═══════ -->
+<div class="section" id="s12">
+  <div class="stag">Part 12</div>
+  <h2>Common Misconceptions</h2>
+
+  <p>Let's clear up some things beginners often get wrong about tokenization:</p>
+
+  <div class="cw">
+    <div class="cw-title">▸ Misconception vs Reality</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;" id="miscGrid">
+      <div style="background:var(--red-dim);border-radius:6px;padding:12px;font-size:.9rem;border-left:3px solid var(--red)"><strong style="color:var(--red)">❌ "Tokens are words"</strong><br>Tokens can be words, subwords, characters, or even individual bytes. "unfortunately" might be 1 token or 4.</div>
+      <div style="background:var(--green-dim);border-radius:6px;padding:12px;font-size:.9rem;border-left:3px solid var(--green)"><strong style="color:var(--green)">✅ Reality</strong><br>Tokens are whatever pieces the tokenizer algorithm decided are useful. Common words become single tokens; rare words get split into learned subword pieces.</div>
+      <div style="background:var(--red-dim);border-radius:6px;padding:12px;font-size:.9rem;border-left:3px solid var(--red)"><strong style="color:var(--red)">❌ "The model understands letters"</strong><br>Since letters appear in the vocabulary, the model must know what individual letters are.</div>
+      <div style="background:var(--green-dim);border-radius:6px;padding:12px;font-size:.9rem;border-left:3px solid var(--green)"><strong style="color:var(--green)">✅ Reality</strong><br>The model rarely sees individual letters — most text is tokenized as multi-character pieces. This is why LLMs can struggle to count letters in a word or reverse a string.</div>
+      <div style="background:var(--red-dim);border-radius:6px;padding:12px;font-size:.9rem;border-left:3px solid var(--red)"><strong style="color:var(--red)">❌ "1 token ≈ 1 word"</strong><br>OpenAI says ~4 characters per token. Close enough to 1 word, right?</div>
+      <div style="background:var(--green-dim);border-radius:6px;padding:12px;font-size:.9rem;border-left:3px solid var(--green)"><strong style="color:var(--green)">✅ Reality</strong><br>~4 chars/token is an average for English. For code, it's ~2-3. For Chinese, it's ~1-2 characters per token. For emoji, a single character can be 7+ tokens. The ratio varies wildly.</div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <strong>🔍 Why this matters for you:</strong> Understanding that LLMs "see" subword tokens (not words or letters) explains many quirks. Why does ChatGPT struggle to count the letters in "strawberry"? Because it probably sees <code class="il">["str", "aw", "berry"]</code> — three tokens, none of which cleanly map to individual letters. The model literally cannot see the individual letters 's', 't', 'r' because they were merged away during tokenization.
+  </div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════ SUMMARY ═══════ -->
+<div class="section" id="s13">
+  <div class="stag">Summary</div>
+  <h2>Key Takeaways</h2>
+  <div class="sgrid">
+    <div class="sitem"><code>The Problem</code><div class="d">Neural networks need numbers, not text. We must convert text into numerical sequences.</div></div>
+    <div class="sitem"><code>Word-Level Issues</code><div class="d">Vocabulary too large (500K+), can't handle unknown words, punctuation creates duplicates.</div></div>
+    <div class="sitem"><code>Character-Level Issues</code><div class="d">Sequences become ~5× longer, drastically reducing context window. Hard to learn meaning from individual characters.</div></div>
+    <div class="sitem"><code>Subword = The Winner</code><div class="d">Moderate vocab (~50K), handles any text, splits words into meaningful learned pieces. Used by all modern LLMs.</div></div>
+    <div class="sitem"><code>Special Tokens</code><div class="d">PAD (padding), UNK (unknown), BOS (start), EOS (stop) — control signals for the model.</div></div>
+    <div class="sitem"><code>Everything is Affected</code><div class="d">Cost, context window, training efficiency, multilingual quality, math ability — tokenization touches it all.</div></div>
+  </div>
+  <div class="callout green">
+    <strong>🚀 Next up:</strong> Lesson 2 — Byte Pair Encoding (BPE). You'll implement the exact algorithm GPT uses to learn which subword pieces to create. The algorithm is surprisingly simple — just 4 steps, repeated.
+  </div>
+</div>
+
+</div>
+
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById('pf').style.width=(h>0?scrollY/h*100:0)+'%'});
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.08});
+document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+
+// ── Vocab explosion ──
+const vocabData={
+  run:['run','runs','running','ran','runner','runners','rerun','overrun','runnable','outrun','runaway','forerun'],
+  play:['play','plays','playing','played','player','players','replay','playable','playful','gameplay','playwright','horseplay'],
+  compute:['compute','computes','computing','computed','computer','computers','recompute','precomputed','computation','computational','computerize','supercomputer'],
+  happy:['happy','happily','happiness','happier','happiest','unhappy','unhappily','unhappiness','overhappy']
+};
+function showVocab(w){
+  document.querySelectorAll('#vocabCtrls .cbtn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  const words=vocabData[w];
+  document.getElementById('vocabChips').innerHTML=words.map(v=>`<span class="chip word">${v}</span>`).join('');
+  document.getElementById('vocabNote').textContent=`Just 1 base word "${w}" creates ${words.length} vocabulary entries — and this list isn't exhaustive. The model treats each form as completely independent.`;
+}
+showVocab('run');
+
+// ── OOV demo ──
+const oovVocab=new Set(['the','cat','sat','on','mat','dog','ran','in','park','love','machine','learning','is','fascinating']);
+function runOOV(){
+  const text=document.getElementById('oovInput').value;
+  const words=text.toLowerCase().split(/\s+/).filter(Boolean);
+  const clean=w=>w.replace(/[.,!?;:'"]/g,'');
+  let unkCount=0;
+  document.getElementById('oovChips').innerHTML=words.map(w=>{
+    const inV=oovVocab.has(clean(w));
+    if(!inV)unkCount++;
+    return `<span class="chip ${inV?'word':'unk'}">${w}${inV?'':' → <UNK>'}</span>`;
+  }).join('');
+  document.getElementById('oovNote').textContent=unkCount>0?`${unkCount} word(s) became <UNK> — all their specific meaning is lost.`:'All words recognized! Try adding a word not in the vocabulary.';
+}
+runOOV();
+
+// ── Sequence length ──
+function updateSeq(){
+  const text=document.getElementById('seqInput').value;
+  const wc=text.split(/\s+/).filter(Boolean).length;
+  const cc=text.length;
+  const max=Math.max(wc,cc);
+  document.getElementById('barWord').style.width=(wc/max*100)+'%';
+  document.getElementById('barWordV').textContent=wc+' tokens';
+  document.getElementById('barChar').style.width=(cc/max*100)+'%';
+  document.getElementById('barCharV').textContent=cc+' tokens';
+  document.getElementById('barRatio').textContent=`Characters are ${(cc/wc).toFixed(1)}× longer`;
+}
+updateSeq();
+
+// ── Strategy comparison ──
+function showStrat(s){
+  document.querySelectorAll('#stratCtrls .cbtn').forEach(b=>b.classList.remove('on'));
+  event.target.classList.add('on');
+  const text="The unfortunately misspelled wrods";
+  let tokens,cls,note;
+  if(s==='word'){
+    tokens=text.split(/\s+/);cls='word';
+    note='4 tokens — very compact! But "wrods" is a misspelling not in any vocabulary, so it becomes <UNK>. We lose the information that the user probably meant "words". Also, "unfortunately" wastes a vocabulary slot for a relatively rare word.';
+  } else if(s==='char'){
+    tokens=[...text];cls='char';
+    note=`${tokens.length} tokens — over 8× longer than word-level! With a 4096-token context window, that's 8× less text the model can see at once. And the model must learn from scratch that "w"+"r"+"o"+"d"+"s" = a word.`;
+  } else{
+    tokens=['The','▁un','fortunate','ly','▁mis','spell','ed','▁wr','ods'];cls='sub';
+    note='9 tokens — a middle ground. Notice: "unfortunately" splits into meaningful pieces (un + fortunate + ly), so the model can reuse what it knows about each piece. The misspelled "wrods" becomes "wr"+"ods" — not perfect, but no information is completely lost.';
+  }
+  document.getElementById('stratChips').innerHTML=tokens.map(t=>`<span class="chip ${cls}">${t==='▁'?'_':t.replace(/▁/g,'_')}</span>`).join('');
+  document.getElementById('stratNote').innerHTML=`<strong>${tokens.length} tokens.</strong> ${note}`;
+}
+showStrat('word');
+
+// ── Live tokenizer ──
+const subRules=[['ing',3],['tion',4],['ment',4],['ness',4],['able',4],['ible',4],['ful',3],['less',4],['ous',3],['ive',3],['ly',2],['ed',2],['er',2],['es',2],['un',2],['re',2],['pre',3],['dis',3],['mis',3],['over',4],['out',3]];
+function simBPE(word){
+  if(word.length<=3)return [word];
+  let w=word.toLowerCase();const parts=[];
+  for(const[pfx,len]of subRules){if(w.startsWith(pfx)&&w.length>len+2){parts.push(pfx);w=w.slice(len);break}}
+  const suffixes=subRules.filter(([s])=>w.endsWith(s)&&w.length>s.length+1);
+  let suf=null;
+  if(suffixes.length){suf=suffixes[0][0];w=w.slice(0,w.length-suf.length)}
+  if(w.length>6){const mid=Math.ceil(w.length/2);parts.push(w.slice(0,mid));parts.push(w.slice(mid))}else if(w)parts.push(w);
+  if(suf)parts.push(suf);
+  return parts;
+}
+function liveTokenize(){
+  const text=document.getElementById('liveInput').value;
+  const words=text.split(/\s+/).filter(Boolean);
+  const chars=[...text];
+  const subs=[];words.forEach(w=>{const p=simBPE(w);subs.push(...p)});
+  document.getElementById('liveWord').innerHTML=words.map(w=>`<span class="chip word">${w}</span>`).join('');
+  document.getElementById('liveWordC').textContent=words.length+' tokens';
+  document.getElementById('liveChar').innerHTML=chars.map(c=>`<span class="chip char">${c==='\n'?'↵':c===' '?'·':c}</span>`).join('');
+  document.getElementById('liveCharC').textContent=chars.length+' tokens';
+  document.getElementById('liveSub').innerHTML=subs.map(t=>`<span class="chip sub">${t}</span>`).join('');
+  document.getElementById('liveSubC').textContent=subs.length+' tokens';
+}
+liveTokenize();
+
+// ── Encode/decode roundtrip ──
+const rtVocab={'<pad>':0,'<unk>':1,'the':2,'cat':3,'sat':4,'on':5,'mat':6,'dog':7,'ran':8,'in':9,'park':10,'love':11,'machine':12,'learning':13,'is':14,'fascinating':15};
+const rtId2tok=Object.fromEntries(Object.entries(rtVocab).map(([k,v])=>[v,k]));
+function roundTrip(){
+  const text=document.getElementById('roundInput').value;
+  const words=text.toLowerCase().replace(/[.,!?;:'"]/g,'').split(/\s+/).filter(Boolean);
+  const ids=words.map(w=>w in rtVocab?rtVocab[w]:1);
+  const decoded=ids.map(i=>rtId2tok[i]||'<unk>').filter(t=>t!=='<pad>').join(' ');
+  const hasUnk=ids.includes(1);
+  document.getElementById('roundEnc').textContent=words.map((w,i)=>`"${w}" → ${ids[i]}${ids[i]===1?' (<UNK>)':''}`).join('\n');
+  document.getElementById('roundDec').textContent=`"${decoded}"`;
+  document.getElementById('roundMatch').textContent=hasUnk?'⚠️ Roundtrip FAILED — unknown words became <unk>, losing information.':'✅ Perfect roundtrip! decode(encode(text)) = original text.';
+  document.getElementById('roundMatch').style.color=hasUnk?'var(--red)':'var(--green)';
+}
+roundTrip();
+
+// ── Quiz ──
+function ck(id,el,ok){
+  const card=document.getElementById(id);if(card.dataset.a)return;card.dataset.a='1';
+  card.querySelectorAll('.qo').forEach(o=>o.classList.add('d'));
+  const fb=document.getElementById(id+'-fb');
+  if(ok){el.classList.add('c');fb.className='qfb p show';fb.textContent='✅ Correct!';}
+  else{el.classList.add('w');card.querySelectorAll('.qo').forEach(o=>{if(o.onclick&&o.onclick.toString().includes('true'))o.classList.add('c')});
+    fb.className='qfb f show';
+    const ex={
+      q1:'Long sequences is a problem with character-level tokenization, not word-level. Word-level actually creates the shortest sequences — its problems are vocabulary size, OOV, and punctuation.',
+      q2:'Character-level\'s main advantage is a tiny vocabulary (~100 chars) and the ability to handle any input, including misspellings and made-up words. Its disadvantage is very long sequences.',
+      q3:'BPE learns from frequency in the training data. "the" appears so often it stays as one token. Less common words get split into pieces that the algorithm learned are common subunits.',
+      q4:'Encode and decode must be perfect inverses — you should get back exactly what you put in. If information is lost (e.g., by <UNK> replacement), the model can\'t learn from or generate that information.',
+      q5:'An English-centric tokenizer may not have Japanese characters as common merge targets, so each character gets encoded as multiple byte-level tokens. This wastes the context window — the same text takes 2-4× more tokens in Japanese vs. English.'
+    };
+    fb.textContent='❌ '+ex[id];
+  }
+}
+</script>
+</body>
+</html>
