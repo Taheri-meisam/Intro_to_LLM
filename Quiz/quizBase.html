@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base Project &middot; Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f8fa;--surface:#ffffff;--surface2:#eef0f4;--border:#d8dce4;--text:#334;--muted:#778;--heading:#111;--accent:#0d9488;--ac-dim:rgba(13,148,136,.10);--ac-glow:rgba(13,148,136,.25);--amber:#d97706;--am-dim:rgba(217,119,6,.08);--rose:#e11d48;--ro-dim:rgba(225,29,72,.08);--sky:#0284c7;--sk-dim:rgba(2,132,199,.08);--lime:#16a34a;--li-dim:rgba(22,163,74,.08);--mono:'Source Code Pro',monospace;--serif:'Fraunces',serif;--sans:'Public Sans',sans-serif;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.76;font-size:15.5px}
+.container{max-width:760px;margin:0 auto;padding:48px 24px 100px}
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--surface2);z-index:999}.pfill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--amber));box-shadow:0 0 8px var(--ac-glow);transition:width .3s}
+.hero{text-align:center;padding:32px 0 48px}.hero-tag{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}.hero h1{font-family:var(--serif);font-size:2.5rem;font-weight:700;color:var(--heading);margin:8px 0}.hero h1 em{color:var(--accent);font-style:italic}.hero p{color:var(--muted);font-size:1.05rem;max-width:560px;margin:0 auto}.hero-badge{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:.78rem;padding:6px 16px;background:var(--ac-dim);border:1px solid rgba(13,148,136,.25);border-radius:20px;color:var(--accent)}
+.section{margin-bottom:40px;opacity:0;transform:translateY(20px);transition:all .5s}.section.vis{opacity:1;transform:none}.stag{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}.section h2{font-family:var(--serif);font-size:1.55rem;color:var(--heading);margin-bottom:14px}.section p{margin-bottom:12px}.section p strong{color:var(--heading)}
+code.il{font-family:var(--mono);font-size:.86em;color:var(--accent);background:var(--ac-dim);padding:2px 6px;border-radius:4px}
+.callout{background:var(--ac-dim);border:1px solid rgba(13,148,136,.2);border-radius:var(--r);padding:16px 18px;margin:18px 0;font-size:.93rem}.callout.info{background:var(--sk-dim);border-color:rgba(2,132,199,.2)}.callout.green{background:var(--li-dim);border-color:rgba(22,163,74,.2)}.callout strong{color:var(--heading)}
+hr.div{border:none;border-top:1px solid var(--border);margin:40px 0}
+.stat-row{display:flex;gap:16px;margin:14px 0;flex-wrap:wrap}.stat-box{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}.stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent)}.stat-label{font-size:.78rem;color:var(--muted);margin-top:2px}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin:18px 0}.qq{font-family:var(--serif);font-size:1.05rem;color:var(--heading);margin-bottom:12px}.qtag{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}.qopts{display:flex;flex-direction:column;gap:7px}.qo{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .2s}.qo:hover{border-color:var(--accent)}.qo.c{border-color:var(--lime);background:var(--li-dim);color:var(--lime)}.qo.w{border-color:var(--rose);background:var(--ro-dim);color:var(--rose)}.qo.d{pointer-events:none;opacity:.85}
+.ql{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.75rem;font-weight:600;background:var(--surface2);color:var(--muted);flex-shrink:0}.qo.c .ql{background:var(--lime);color:#fff}.qo.w .ql{background:var(--rose);color:#fff}
+.qfb{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:.88rem;display:none;line-height:1.6}.qfb.show{display:block}.qfb.p{background:var(--li-dim);color:var(--lime);border-left:3px solid var(--lime)}.qfb.f{background:var(--ro-dim);color:var(--rose);border-left:3px solid var(--rose)}
+.score-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;margin:20px 0;position:sticky;top:6px;z-index:99}.score-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.score-label{font-family:var(--mono);font-size:.82rem;color:var(--muted)}.score-num{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--accent)}.score-track{flex:1;min-width:120px;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}.score-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--lime));border-radius:4px;transition:width .4s}
+.finish-banner{text-align:center;padding:36px 20px;background:linear-gradient(135deg,rgba(13,148,136,.07),rgba(22,163,74,.07));border:1px solid rgba(13,148,136,.2);border-radius:14px;margin:24px 0}.finish-banner h2{font-family:var(--serif);font-size:2rem;color:var(--heading);margin-bottom:8px}.finish-banner p{color:var(--muted);font-size:1.05rem}
+.grade{font-family:var(--mono);font-size:3rem;font-weight:700;margin:10px 0}
+@media(max-width:600px){.hero h1{font-size:1.8rem}.stat-row{flex-direction:column}.score-inner{flex-direction:column;text-align:center}}
+</style>
+</head>
+<body>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="container">
+
+<div class="hero">
+<div class="hero-tag">Base Project &middot; Assessment</div>
+<h1>Knowledge <em>Quiz</em></h1>
+<p>30 questions covering everything from both base projects &mdash; from-scratch MiniGPT and fine-tuned GPT-2. Test your understanding of tokenization, architecture, training, and generation.</p>
+<div class="hero-badge">30 QUESTIONS</div>
+</div>
+
+<div class="score-bar" id="scoreBar">
+<div class="score-inner">
+<span class="score-label">Score: <span class="score-num" id="scoreNum">0 / 30</span></span>
+<div class="score-track"><div class="score-fill" id="scoreFill"></div></div>
+<span class="score-label">Answered: <span class="score-num" id="answeredNum">0 / 30</span></span>
+</div>
+</div>
+
+<hr class="div">
+
+<!-- ========== SECTION A: TOKENIZATION ========== -->
+<div class="section" id="sA">
+<div class="stag">Part A &mdash; Tokenization</div>
+<h2>Tokenization &amp; Special Tokens</h2>
+
+<div class="qcard" id="q1">
+<div class="qtag">Question 1 &middot; From-Scratch</div>
+<div class="qq">What does the <code class="il">&lt;PAD&gt;</code> token do in our word-level tokenizer?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q1',this,0)"><span class="ql">A</span> Signals the model to stop generating text</div>
+<div class="qo" onclick="ck('q1',this,1)"><span class="ql">B</span> Fills unused positions so all sequences have the same fixed length</div>
+<div class="qo" onclick="ck('q1',this,0)"><span class="ql">C</span> Marks the beginning of the user's question</div>
+<div class="qo" onclick="ck('q1',this,0)"><span class="ql">D</span> Replaces words not found in the vocabulary</div>
+</div><div class="qfb" id="q1-fb"></div></div>
+
+<div class="qcard" id="q2">
+<div class="qtag">Question 2 &middot; From-Scratch</div>
+<div class="qq">Which special token tells the model to stop generating a response?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q2',this,0)"><span class="ql">A</span> <code class="il">&lt;PAD&gt;</code></div>
+<div class="qo" onclick="ck('q2',this,0)"><span class="ql">B</span> <code class="il">&lt;UNK&gt;</code></div>
+<div class="qo" onclick="ck('q2',this,0)"><span class="ql">C</span> <code class="il">&lt;ASST&gt;</code></div>
+<div class="qo" onclick="ck('q2',this,1)"><span class="ql">D</span> <code class="il">&lt;END&gt;</code></div>
+</div><div class="qfb" id="q2-fb"></div></div>
+
+<div class="qcard" id="q3">
+<div class="qtag">Question 3 &middot; GPT-2</div>
+<div class="qq">What type of tokenization does GPT-2 use?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q3',this,0)"><span class="ql">A</span> Character-level (one token per character)</div>
+<div class="qo" onclick="ck('q3',this,1)"><span class="ql">B</span> Byte-Pair Encoding (BPE), a subword algorithm</div>
+<div class="qo" onclick="ck('q3',this,0)"><span class="ql">C</span> Word-level (one token per word)</div>
+<div class="qo" onclick="ck('q3',this,0)"><span class="ql">D</span> Sentence-level (one token per sentence)</div>
+</div><div class="qfb" id="q3-fb"></div></div>
+
+<div class="qcard" id="q4">
+<div class="qtag">Question 4 &middot; GPT-2</div>
+<div class="qq">Why doesn't GPT-2's tokenizer need an <code class="il">&lt;UNK&gt;</code> token?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q4',this,0)"><span class="ql">A</span> It has seen every possible word during pretraining</div>
+<div class="qo" onclick="ck('q4',this,1)"><span class="ql">B</span> BPE can break any word into known subword pieces</div>
+<div class="qo" onclick="ck('q4',this,0)"><span class="ql">C</span> It simply ignores unknown words</div>
+<div class="qo" onclick="ck('q4',this,0)"><span class="ql">D</span> Its vocabulary contains every word in the English dictionary</div>
+</div><div class="qfb" id="q4-fb"></div></div>
+
+<div class="qcard" id="q5">
+<div class="qtag">Question 5 &middot; GPT-2</div>
+<div class="qq">What is the instruction format used for fine-tuning GPT-2 in our project?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q5',this,0)"><span class="ql">A</span> <code class="il">&lt;USER&gt; question &lt;ASST&gt; answer &lt;END&gt;</code></div>
+<div class="qo" onclick="ck('q5',this,1)"><span class="ql">B</span> <code class="il">User: question\nAssistant: answer&lt;|endoftext|&gt;</code></div>
+<div class="qo" onclick="ck('q5',this,0)"><span class="ql">C</span> <code class="il">Q: question A: answer</code></div>
+<div class="qo" onclick="ck('q5',this,0)"><span class="ql">D</span> <code class="il">[INST] question [/INST] answer</code></div>
+</div><div class="qfb" id="q5-fb"></div></div>
+
+<div class="qcard" id="q6">
+<div class="qtag">Question 6 &middot; Both</div>
+<div class="qq">How many tokens are in GPT-2's vocabulary compared to our from-scratch tokenizer?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q6',this,0)"><span class="ql">A</span> GPT-2: ~600 vs From-scratch: 50,257</div>
+<div class="qo" onclick="ck('q6',this,0)"><span class="ql">B</span> Both have approximately 600 tokens</div>
+<div class="qo" onclick="ck('q6',this,1)"><span class="ql">C</span> GPT-2: 50,257 vs From-scratch: ~600</div>
+<div class="qo" onclick="ck('q6',this,0)"><span class="ql">D</span> Both have approximately 50,000 tokens</div>
+</div><div class="qfb" id="q6-fb"></div></div>
+</div>
+
+<hr class="div">
+
+<!-- ========== SECTION B: LOSS MASKING ========== -->
+<div class="section" id="sB">
+<div class="stag">Part B &mdash; Loss Masking</div>
+<h2>Loss Masking &amp; Training Data</h2>
+
+<div class="qcard" id="q7">
+<div class="qtag">Question 7 &middot; Both</div>
+<div class="qq">What is loss masking in instruction tuning?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q7',this,0)"><span class="ql">A</span> Randomly hiding tokens during training, like BERT</div>
+<div class="qo" onclick="ck('q7',this,1)"><span class="ql">B</span> Setting prompt-token labels to -100 so loss is only computed on response tokens</div>
+<div class="qo" onclick="ck('q7',this,0)"><span class="ql">C</span> Removing all special tokens before computing loss</div>
+<div class="qo" onclick="ck('q7',this,0)"><span class="ql">D</span> Hiding the training data from the validation step</div>
+</div><div class="qfb" id="q7-fb"></div></div>
+
+<div class="qcard" id="q8">
+<div class="qtag">Question 8 &middot; Both</div>
+<div class="qq">Why does PyTorch ignore labels set to -100 in <code class="il">CrossEntropyLoss</code>?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q8',this,0)"><span class="ql">A</span> It is a random implementation detail with no purpose</div>
+<div class="qo" onclick="ck('q8',this,0)"><span class="ql">B</span> -100 is outside the valid range of class indices</div>
+<div class="qo" onclick="ck('q8',this,1)"><span class="ql">C</span> The <code class="il">ignore_index</code> parameter defaults to -100, skipping those positions</div>
+<div class="qo" onclick="ck('q8',this,0)"><span class="ql">D</span> PyTorch treats any negative number as a masked position</div>
+</div><div class="qfb" id="q8-fb"></div></div>
+
+<div class="qcard" id="q9">
+<div class="qtag">Question 9 &middot; Both</div>
+<div class="qq">Without loss masking, what would the model waste capacity learning?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q9',this,1)"><span class="ql">A</span> Predicting the user's prompt tokens, which is useless for a chatbot</div>
+<div class="qo" onclick="ck('q9',this,0)"><span class="ql">B</span> Generating random text with no pattern</div>
+<div class="qo" onclick="ck('q9',this,0)"><span class="ql">C</span> Memorizing only the padding tokens</div>
+<div class="qo" onclick="ck('q9',this,0)"><span class="ql">D</span> Learning to tokenize text more efficiently</div>
+</div><div class="qfb" id="q9-fb"></div></div>
+
+<div class="qcard" id="q10">
+<div class="qtag">Question 10 &middot; From-Scratch</div>
+<div class="qq">How many Q&amp;A pairs are in the from-scratch MiniGPT dataset?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q10',this,0)"><span class="ql">A</span> 60 pairs across 4 categories</div>
+<div class="qo" onclick="ck('q10',this,1)"><span class="ql">B</span> 80 pairs across 4 categories</div>
+<div class="qo" onclick="ck('q10',this,0)"><span class="ql">C</span> 135 pairs across 6 categories</div>
+<div class="qo" onclick="ck('q10',this,0)"><span class="ql">D</span> 100 pairs across 5 categories</div>
+</div><div class="qfb" id="q10-fb"></div></div>
+</div>
+
+<hr class="div">
+
+<!-- ========== SECTION C: ARCHITECTURE ========== -->
+<div class="section" id="sC">
+<div class="stag">Part C &mdash; Architecture</div>
+<h2>GPT Architecture</h2>
+
+<div class="qcard" id="q11">
+<div class="qtag">Question 11 &middot; From-Scratch</div>
+<div class="qq">What is weight tying in the MiniGPT model?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q11',this,0)"><span class="ql">A</span> Connecting the first and last layer with a skip connection</div>
+<div class="qo" onclick="ck('q11',this,1)"><span class="ql">B</span> Sharing the same weight matrix between the input embedding and output projection</div>
+<div class="qo" onclick="ck('q11',this,0)"><span class="ql">C</span> Tying the weights of all attention heads together</div>
+<div class="qo" onclick="ck('q11',this,0)"><span class="ql">D</span> Freezing the embedding weights during training</div>
+</div><div class="qfb" id="q11-fb"></div></div>
+
+<div class="qcard" id="q12">
+<div class="qtag">Question 12 &middot; From-Scratch</div>
+<div class="qq">What is the FFN expansion factor in each transformer block?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q12',this,0)"><span class="ql">A</span> 2x (d_model &rarr; 2*d_model &rarr; d_model)</div>
+<div class="qo" onclick="ck('q12',this,1)"><span class="ql">B</span> 4x (d_model &rarr; 4*d_model &rarr; d_model)</div>
+<div class="qo" onclick="ck('q12',this,0)"><span class="ql">C</span> 8x (d_model &rarr; 8*d_model &rarr; d_model)</div>
+<div class="qo" onclick="ck('q12',this,0)"><span class="ql">D</span> 1x (no expansion, same dimension throughout)</div>
+</div><div class="qfb" id="q12-fb"></div></div>
+
+<div class="qcard" id="q13">
+<div class="qtag">Question 13 &middot; From-Scratch</div>
+<div class="qq">Why does the model use a causal (lower-triangular) mask in attention?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q13',this,0)"><span class="ql">A</span> To speed up computation by skipping half the attention scores</div>
+<div class="qo" onclick="ck('q13',this,0)"><span class="ql">B</span> To handle variable-length sequences without padding</div>
+<div class="qo" onclick="ck('q13',this,1)"><span class="ql">C</span> To prevent each token from attending to future tokens during autoregressive generation</div>
+<div class="qo" onclick="ck('q13',this,0)"><span class="ql">D</span> To ensure each token only attends to itself</div>
+</div><div class="qfb" id="q13-fb"></div></div>
+
+<div class="qcard" id="q14">
+<div class="qtag">Question 14 &middot; Both</div>
+<div class="qq">How many parameters does our from-scratch MiniGPT have compared to GPT-2?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q14',this,0)"><span class="ql">A</span> MiniGPT: ~120M, GPT-2: ~124M (nearly equal)</div>
+<div class="qo" onclick="ck('q14',this,1)"><span class="ql">B</span> MiniGPT: ~120K, GPT-2: 124M (GPT-2 is ~1000x larger)</div>
+<div class="qo" onclick="ck('q14',this,0)"><span class="ql">C</span> MiniGPT: ~12K, GPT-2: 1.2M (GPT-2 is 100x larger)</div>
+<div class="qo" onclick="ck('q14',this,0)"><span class="ql">D</span> MiniGPT: ~1.2M, GPT-2: 175B</div>
+</div><div class="qfb" id="q14-fb"></div></div>
+
+<div class="qcard" id="q15">
+<div class="qtag">Question 15 &middot; From-Scratch</div>
+<div class="qq">What activation function is used in the feed-forward network?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q15',this,0)"><span class="ql">A</span> ReLU</div>
+<div class="qo" onclick="ck('q15',this,0)"><span class="ql">B</span> Sigmoid</div>
+<div class="qo" onclick="ck('q15',this,1)"><span class="ql">C</span> GELU</div>
+<div class="qo" onclick="ck('q15',this,0)"><span class="ql">D</span> Tanh</div>
+</div><div class="qfb" id="q15-fb"></div></div>
+
+<div class="qcard" id="q16">
+<div class="qtag">Question 16 &middot; GPT-2</div>
+<div class="qq">How many transformer layers and attention heads does GPT-2 (small) have?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q16',this,0)"><span class="ql">A</span> 3 layers, 4 heads</div>
+<div class="qo" onclick="ck('q16',this,0)"><span class="ql">B</span> 6 layers, 8 heads</div>
+<div class="qo" onclick="ck('q16',this,1)"><span class="ql">C</span> 12 layers, 12 heads</div>
+<div class="qo" onclick="ck('q16',this,0)"><span class="ql">D</span> 24 layers, 16 heads</div>
+</div><div class="qfb" id="q16-fb"></div></div>
+
+<div class="qcard" id="q17">
+<div class="qtag">Question 17 &middot; From-Scratch</div>
+<div class="qq">What do residual connections do in a transformer block?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q17',this,0)"><span class="ql">A</span> They compress the hidden dimension to save memory</div>
+<div class="qo" onclick="ck('q17',this,1)"><span class="ql">B</span> They add the input of a sublayer to its output, helping gradients flow and enabling deeper networks</div>
+<div class="qo" onclick="ck('q17',this,0)"><span class="ql">C</span> They remove residual errors from the attention scores</div>
+<div class="qo" onclick="ck('q17',this,0)"><span class="ql">D</span> They connect non-adjacent transformer blocks for faster processing</div>
+</div><div class="qfb" id="q17-fb"></div></div>
+</div>
+
+<hr class="div">
+
+<!-- ========== SECTION D: TRAINING ========== -->
+<div class="section" id="sD">
+<div class="stag">Part D &mdash; Training</div>
+<h2>Training &amp; Fine-Tuning</h2>
+
+<div class="qcard" id="q18">
+<div class="qtag">Question 18 &middot; From-Scratch</div>
+<div class="qq">What does gradient clipping (max_norm=1.0) prevent?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q18',this,0)"><span class="ql">A</span> The model from learning too slowly</div>
+<div class="qo" onclick="ck('q18',this,1)"><span class="ql">B</span> Exploding gradients that would destabilize training</div>
+<div class="qo" onclick="ck('q18',this,0)"><span class="ql">C</span> The dataset from being shuffled between epochs</div>
+<div class="qo" onclick="ck('q18',this,0)"><span class="ql">D</span> Overfitting on the validation set</div>
+</div><div class="qfb" id="q18-fb"></div></div>
+
+<div class="qcard" id="q19">
+<div class="qtag">Question 19 &middot; GPT-2</div>
+<div class="qq">Why is the fine-tuning learning rate (5e-5) much smaller than training from scratch (1e-3)?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q19',this,0)"><span class="ql">A</span> Because GPT-2 has more parameters so it trains faster</div>
+<div class="qo" onclick="ck('q19',this,1)"><span class="ql">B</span> To preserve pretrained knowledge and avoid catastrophic forgetting</div>
+<div class="qo" onclick="ck('q19',this,0)"><span class="ql">C</span> Because smaller learning rates always give better results</div>
+<div class="qo" onclick="ck('q19',this,0)"><span class="ql">D</span> To make training take longer for higher accuracy</div>
+</div><div class="qfb" id="q19-fb"></div></div>
+
+<div class="qcard" id="q20">
+<div class="qtag">Question 20 &middot; GPT-2</div>
+<div class="qq">What is catastrophic forgetting?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q20',this,0)"><span class="ql">A</span> When the model runs out of GPU memory during training</div>
+<div class="qo" onclick="ck('q20',this,0)"><span class="ql">B</span> When training data is accidentally deleted</div>
+<div class="qo" onclick="ck('q20',this,1)"><span class="ql">C</span> When large gradient updates overwrite pretrained weights, destroying prior knowledge</div>
+<div class="qo" onclick="ck('q20',this,0)"><span class="ql">D</span> When the model memorizes training data perfectly</div>
+</div><div class="qfb" id="q20-fb"></div></div>
+
+<div class="qcard" id="q21">
+<div class="qtag">Question 21 &middot; GPT-2</div>
+<div class="qq">Why does fine-tuning GPT-2 need only 3 epochs instead of 30+?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q21',this,0)"><span class="ql">A</span> Because 3 is always the optimal number of epochs</div>
+<div class="qo" onclick="ck('q21',this,0)"><span class="ql">B</span> Because the dataset is too small for more epochs</div>
+<div class="qo" onclick="ck('q21',this,1)"><span class="ql">C</span> Because the model already knows language and only needs to learn the Q&amp;A format</div>
+<div class="qo" onclick="ck('q21',this,0)"><span class="ql">D</span> Because GPT-2 uses a special fast optimizer</div>
+</div><div class="qfb" id="q21-fb"></div></div>
+
+<div class="qcard" id="q22">
+<div class="qtag">Question 22 &middot; Both</div>
+<div class="qq">What optimizer is used in both projects?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q22',this,0)"><span class="ql">A</span> SGD (Stochastic Gradient Descent)</div>
+<div class="qo" onclick="ck('q22',this,1)"><span class="ql">B</span> AdamW (Adam with decoupled weight decay)</div>
+<div class="qo" onclick="ck('q22',this,0)"><span class="ql">C</span> RMSProp</div>
+<div class="qo" onclick="ck('q22',this,0)"><span class="ql">D</span> Adagrad</div>
+</div><div class="qfb" id="q22-fb"></div></div>
+
+<div class="qcard" id="q23">
+<div class="qtag">Question 23 &middot; GPT-2</div>
+<div class="qq">What is transfer learning?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q23',this,0)"><span class="ql">A</span> Transferring data from one computer to another for training</div>
+<div class="qo" onclick="ck('q23',this,0)"><span class="ql">B</span> Copying the model architecture without the weights</div>
+<div class="qo" onclick="ck('q23',this,1)"><span class="ql">C</span> Reusing knowledge from a model trained on one task to help with a different task</div>
+<div class="qo" onclick="ck('q23',this,0)"><span class="ql">D</span> Training on multiple GPUs simultaneously</div>
+</div><div class="qfb" id="q23-fb"></div></div>
+
+<div class="qcard" id="q24">
+<div class="qtag">Question 24 &middot; From-Scratch</div>
+<div class="qq">What does a loss of ~7.0 at epoch 1 mean for a vocabulary of ~600 tokens?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q24',this,1)"><span class="ql">A</span> The model is roughly guessing randomly (ln(600) &asymp; 6.4)</div>
+<div class="qo" onclick="ck('q24',this,0)"><span class="ql">B</span> The model has already learned most patterns</div>
+<div class="qo" onclick="ck('q24',this,0)"><span class="ql">C</span> The training data is corrupted</div>
+<div class="qo" onclick="ck('q24',this,0)"><span class="ql">D</span> The learning rate is too high</div>
+</div><div class="qfb" id="q24-fb"></div></div>
+</div>
+
+<hr class="div">
+
+<!-- ========== SECTION E: GENERATION ========== -->
+<div class="section" id="sE">
+<div class="stag">Part E &mdash; Generation</div>
+<h2>Text Generation</h2>
+
+<div class="qcard" id="q25">
+<div class="qtag">Question 25 &middot; Both</div>
+<div class="qq">What does low temperature (e.g., 0.1) do during text generation?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q25',this,1)"><span class="ql">A</span> Makes output more focused and deterministic, nearly always picking the most likely token</div>
+<div class="qo" onclick="ck('q25',this,0)"><span class="ql">B</span> Makes output more random and creative</div>
+<div class="qo" onclick="ck('q25',this,0)"><span class="ql">C</span> Makes the model generate tokens faster</div>
+<div class="qo" onclick="ck('q25',this,0)"><span class="ql">D</span> Reduces the vocabulary size automatically</div>
+</div><div class="qfb" id="q25-fb"></div></div>
+
+<div class="qcard" id="q26">
+<div class="qtag">Question 26 &middot; GPT-2</div>
+<div class="qq">What does <code class="il">top_p=0.9</code> (nucleus sampling) mean?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q26',this,0)"><span class="ql">A</span> Only keep the top 90 tokens from the vocabulary</div>
+<div class="qo" onclick="ck('q26',this,1)"><span class="ql">B</span> Sample from the smallest set of tokens whose cumulative probability exceeds 90%</div>
+<div class="qo" onclick="ck('q26',this,0)"><span class="ql">C</span> Set the temperature to 0.9</div>
+<div class="qo" onclick="ck('q26',this,0)"><span class="ql">D</span> Use 90% of the model's layers for generation</div>
+</div><div class="qfb" id="q26-fb"></div></div>
+
+<div class="qcard" id="q27">
+<div class="qtag">Question 27 &middot; Both</div>
+<div class="qq">What is autoregressive generation?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q27',this,0)"><span class="ql">A</span> Generating all tokens simultaneously in one forward pass</div>
+<div class="qo" onclick="ck('q27',this,1)"><span class="ql">B</span> Generating one token at a time, feeding each new token back as input for the next step</div>
+<div class="qo" onclick="ck('q27',this,0)"><span class="ql">C</span> Using a separate decoder network to produce each token</div>
+<div class="qo" onclick="ck('q27',this,0)"><span class="ql">D</span> Generating text by looking up responses in a database</div>
+</div><div class="qfb" id="q27-fb"></div></div>
+
+<div class="qcard" id="q28">
+<div class="qtag">Question 28 &middot; GPT-2</div>
+<div class="qq">What role does <code class="il">&lt;|endoftext|&gt;</code> play during GPT-2 generation?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q28',this,0)"><span class="ql">A</span> It marks the beginning of a new conversation</div>
+<div class="qo" onclick="ck('q28',this,0)"><span class="ql">B</span> It separates the user question from the assistant answer</div>
+<div class="qo" onclick="ck('q28',this,1)"><span class="ql">C</span> It signals the end of a response so the model stops generating</div>
+<div class="qo" onclick="ck('q28',this,0)"><span class="ql">D</span> It is only used during training and has no role in generation</div>
+</div><div class="qfb" id="q28-fb"></div></div>
+</div>
+
+<hr class="div">
+
+<!-- ========== SECTION F: CONCEPTUAL ========== -->
+<div class="section" id="sF">
+<div class="stag">Part F &mdash; Concepts</div>
+<h2>Big-Picture Understanding</h2>
+
+<div class="qcard" id="q29">
+<div class="qtag">Question 29 &middot; GPT-2</div>
+<div class="qq">Before fine-tuning, GPT-2 responds to our questions with rambling, off-topic text. Why?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q29',this,0)"><span class="ql">A</span> GPT-2 is a broken model that cannot produce coherent text</div>
+<div class="qo" onclick="ck('q29',this,0)"><span class="ql">B</span> The model has never seen English text before</div>
+<div class="qo" onclick="ck('q29',this,1)"><span class="ql">C</span> It was trained to complete text generally, not to follow a Q&amp;A format</div>
+<div class="qo" onclick="ck('q29',this,0)"><span class="ql">D</span> Its weights are randomly initialized</div>
+</div><div class="qfb" id="q29-fb"></div></div>
+
+<div class="qcard" id="q30">
+<div class="qtag">Question 30 &middot; Both</div>
+<div class="qq">Which statement best describes the relationship between the two base projects?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q30',this,0)"><span class="ql">A</span> They are completely different approaches with nothing in common</div>
+<div class="qo" onclick="ck('q30',this,0)"><span class="ql">B</span> The from-scratch model is better because it has more training data</div>
+<div class="qo" onclick="ck('q30',this,1)"><span class="ql">C</span> Both use the same core concepts (attention, loss masking, generation) but the GPT-2 version leverages transfer learning for better results</div>
+<div class="qo" onclick="ck('q30',this,0)"><span class="ql">D</span> The GPT-2 project doesn't use loss masking or special tokens</div>
+</div><div class="qfb" id="q30-fb"></div></div>
+</div>
+
+<hr class="div">
+
+<!-- ========== RESULTS ========== -->
+<div class="section" id="sResult">
+<div class="stag">Results</div>
+<h2>Your Score</h2>
+<div id="resultArea" style="display:none;">
+<div class="finish-banner">
+<div class="grade" id="gradeText"></div>
+<h2 id="resultTitle"></h2>
+<p id="resultMsg"></p>
+</div>
+
+<div class="stat-row" id="resultStats">
+<div class="stat-box"><div class="stat-num" id="rCorrect">0</div><div class="stat-label">Correct</div></div>
+<div class="stat-box"><div class="stat-num" id="rWrong">0</div><div class="stat-label">Incorrect</div></div>
+<div class="stat-box"><div class="stat-num" id="rPercent">0%</div><div class="stat-label">Score</div></div>
+</div>
+
+<div id="resultBreakdown" style="margin:20px 0;"></div>
+</div>
+<p id="resultPlaceholder" style="text-align:center;color:var(--muted);padding:20px;">Answer all 30 questions to see your results.</p>
+</div>
+
+</div>
+
+<script>
+var secs=document.querySelectorAll('.section');
+function upd(){var st=window.scrollY,h=document.body.scrollHeight-innerHeight;document.getElementById('pf').style.width=Math.min(100,st/h*100)+'%';secs.forEach(function(s){if(s.getBoundingClientRect().top<innerHeight*.85)s.classList.add('vis')});}
+window.addEventListener('scroll',upd);upd();
+
+var total=30,score=0,answered=0;
+
+var explanations={
+q1:'<PAD> (ID 0) fills unused positions in sequences shorter than max_len (64 tokens). Since batched training requires all sequences to have the same length, shorter Q&A pairs are padded. The model learns to ignore these positions during attention and they are masked in the loss.',
+q2:'<END> (ID 4) is appended after every training response. During generation, when the model outputs <END>, the generate() function stops. Without it, the model would keep producing tokens until hitting max_new_tokens.',
+q3:'GPT-2 uses Byte-Pair Encoding (BPE), which iteratively merges the most frequent character pairs to build a vocabulary of 50,257 subword tokens. This handles any text by splitting rare words into known pieces.',
+q4:'BPE splits any unknown word into smaller subword pieces that are in its vocabulary. For example, "tokenization" becomes ["token","ization"]. Since every word can be decomposed this way, no <UNK> token is needed.',
+q5:'The GPT-2 fine-tuning project uses "User: question\\nAssistant: answer<|endoftext|>" as its format. The <|endoftext|> token (ID 50256) serves as the stop signal, unlike the from-scratch project which uses <USER>/<ASST>/<END> special tokens.',
+q6:'GPT-2 has a vocabulary of 50,257 BPE tokens (covering all of English and more), while our from-scratch tokenizer has ~600 word-level tokens built only from the training data.',
+q7:'Loss masking sets prompt-token labels to -100, which CrossEntropyLoss ignores. Only response tokens contribute to the loss. This teaches the model to generate answers, not repeat questions. It is the same concept used in ChatGPT\'s SFT stage.',
+q8:'PyTorch\'s CrossEntropyLoss has an ignore_index parameter that defaults to -100. Any position with this label value is excluded from the loss computation, meaning no gradient flows back for those tokens.',
+q9:'Without masking, the model would compute loss on the user\'s prompt tokens too. It would waste learning capacity trying to "predict" what the user typed, which is useless for a chatbot that only needs to generate responses.',
+q10:'The from-scratch base_gpt.py uses 80 Q&A pairs split evenly across 4 categories: Python (20), Machine Learning (20), Math (20), and General Chat (20). The GPT-2 version uses 60 pairs.',
+q11:'Weight tying sets lm_head.weight = tok_emb.weight, sharing the same matrix between the token embedding (words to vectors) and the output projection (vectors to words). This reduces parameters and creates a consistent semantic space.',
+q12:'The FFN in each transformer block expands the hidden dimension by 4x: Linear(d_model → 4*d_model), then GELU activation, then Linear(4*d_model → d_model). For d_model=80, this means 80 → 320 → 80. The expanded dimension acts as a memory bank.',
+q13:'The causal mask (lower-triangular matrix) sets future positions to -infinity before softmax. This prevents token at position t from attending to any token at position > t. This is essential for autoregressive generation, where the model must predict each token using only previous tokens.',
+q14:'Our MiniGPT has ~120K parameters (3 layers, d_model=80). GPT-2 small has 124M parameters (12 layers, d_model=768). That makes GPT-2 roughly 1,000 times larger, giving it vastly more capacity for storing knowledge.',
+q15:'Both the MiniGPT and GPT-2 use GELU (Gaussian Error Linear Unit) activation in their feed-forward networks. GELU is smoother than ReLU (no sharp kink at zero) and is the standard activation in GPT-2/3/4.',
+q16:'GPT-2 (small) has 12 transformer layers and 12 attention heads, with d_model=768. Each head has a dimension of 768/12 = 64. Our MiniGPT has 3 layers and 4 heads with d_model=80.',
+q17:'Residual connections add the sublayer\'s input to its output: output = input + sublayer(input). This helps gradients flow directly through the network during backpropagation, making it possible to train deeper models without vanishing gradients.',
+q18:'Gradient clipping caps the norm of gradients to max_norm=1.0. Without it, gradients can become extremely large (exploding gradients), causing massive weight updates that destabilize training. It is standard practice in transformer training.',
+q19:'A pretrained model like GPT-2 has carefully learned weight values from billions of tokens. A large learning rate (1e-3) would make huge updates that overwrite these valuable weights — this is called catastrophic forgetting. A small rate (5e-5) gently nudges the weights, preserving knowledge while learning the new format.',
+q20:'Catastrophic forgetting occurs when fine-tuning with too-high a learning rate. The large gradient updates overwrite the pretrained weights before the model can adapt, destroying its language understanding. The model "forgets" how to write English and produces gibberish.',
+q21:'GPT-2 was pretrained on 8 million web pages and already understands English grammar, vocabulary, and reasoning. Fine-tuning only teaches it the User/Assistant Q&A format — not language itself. Three passes through the data is enough for this format adaptation.',
+q22:'Both projects use AdamW (Adam with decoupled weight decay). It combines momentum (smooths updates) with adaptive learning rates (different rate per parameter) and proper weight decay regularization.',
+q23:'Transfer learning reuses knowledge from a model trained on one task (GPT-2 pretrained on web text) to help with a different task (our Q&A chatbot). The model\'s language understanding transfers, so fine-tuning requires much less data and training time.',
+q24:'Cross-entropy loss for random guessing over V classes is ln(V). For ~600 tokens, ln(600) ≈ 6.4. So a loss of ~7.0 at epoch 1 means the model is essentially guessing randomly, assigning roughly equal probability to all tokens. By epoch 30, loss drops to ~0.5, meaning highly confident correct predictions.',
+q25:'Low temperature divides logits by a small number before softmax, making the probability distribution very peaked. The highest-probability token gets nearly all the mass. Output becomes deterministic and repetitive — great for factual recall but lacking variety.',
+q26:'Nucleus sampling (top_p) sorts tokens by probability, includes them until cumulative probability reaches the threshold (90%), then samples only from that set. This dynamically adjusts the candidate pool — confident predictions use fewer tokens, uncertain predictions use more.',
+q27:'Autoregressive generation produces one token at a time. After generating token t, it feeds the entire sequence (including t) back into the model to predict token t+1. This continues until a stop condition is met (EOS token or max length).',
+q28:'<|endoftext|> (ID 50256) is GPT-2\'s end-of-sequence token. During training it is appended after every response. During generation, model.generate() is told eos_token_id=50256, so it stops producing tokens when this ID appears.',
+q29:'Raw GPT-2 was trained to complete any text, not to answer questions in a specific format. Given "User: What is a variable?\\nAssistant:", it has no concept of this Q&A structure. It treats the entire string as generic text to continue, producing rambling completions about unrelated topics.',
+q30:'Both projects use the same core concepts: transformer architecture, causal attention, loss masking, autoregressive generation, and the instruction-tuning paradigm. The key difference is that GPT-2 leverages transfer learning — its pretrained weights already encode English fluency — while the from-scratch model learns everything from just 80 pairs.'
+};
+
+function ck(id,el,correct){
+  var card=document.getElementById(id);
+  if(card.dataset.a)return;
+  card.dataset.a='1';
+  answered++;
+  card.querySelectorAll('.qo').forEach(function(o){o.classList.add('d');});
+  var fb=document.getElementById(id+'-fb');
+  if(correct){
+    score++;
+    el.classList.add('c');
+    fb.className='qfb p show';
+    fb.textContent='Correct! '+explanations[id];
+  }else{
+    el.classList.add('w');
+    card.querySelectorAll('.qo').forEach(function(o){
+      if(o.getAttribute('onclick')&&o.getAttribute('onclick').indexOf(',1)')>-1)o.classList.add('c');
+    });
+    fb.className='qfb f show';
+    fb.textContent='Not quite. '+explanations[id];
+  }
+  document.getElementById('scoreNum').textContent=score+' / '+total;
+  document.getElementById('answeredNum').textContent=answered+' / '+total;
+  document.getElementById('scoreFill').style.width=(score/total*100)+'%';
+  if(answered>=total)showResults();
+}
+
+function showResults(){
+  document.getElementById('resultPlaceholder').style.display='none';
+  var area=document.getElementById('resultArea');
+  area.style.display='block';
+  var pct=Math.round(score/total*100);
+  document.getElementById('rCorrect').textContent=score;
+  document.getElementById('rWrong').textContent=total-score;
+  document.getElementById('rPercent').textContent=pct+'%';
+  var grade,title,msg,color;
+  if(pct>=90){grade='A';title='Outstanding!';msg='You have an excellent understanding of both from-scratch and pretrained GPT concepts.';color='var(--lime)';}
+  else if(pct>=80){grade='B';title='Great Job!';msg='Strong understanding overall. Review the questions you missed to solidify your knowledge.';color='var(--accent)';}
+  else if(pct>=70){grade='C';title='Good Work!';msg='Solid foundation. Revisit the HTML interactive pages to strengthen weaker areas.';color='var(--amber)';}
+  else if(pct>=60){grade='D';title='Getting There!';msg='You understand the basics. Go through both interactive pages again and focus on the concepts you missed.';color='var(--amber)';}
+  else{grade='F';title='Keep Studying!';msg='Review both base_gpt.html and base_gpt_fineTuned.html carefully. The interactive widgets will help solidify these concepts.';color='var(--rose)';}
+  document.getElementById('gradeText').textContent=grade;
+  document.getElementById('gradeText').style.color=color;
+  document.getElementById('resultTitle').textContent=title;
+  document.getElementById('resultMsg').textContent=msg;
+
+  var breakdown='<div style="margin-top:16px;">';
+  var parts=[
+    {name:'Tokenization (Q1-Q6)',start:1,end:6},
+    {name:'Loss Masking (Q7-Q10)',start:7,end:10},
+    {name:'Architecture (Q11-Q17)',start:11,end:17},
+    {name:'Training (Q18-Q24)',start:18,end:24},
+    {name:'Generation (Q25-Q28)',start:25,end:28},
+    {name:'Concepts (Q29-Q30)',start:29,end:30}
+  ];
+  parts.forEach(function(p){
+    var partScore=0,partTotal=p.end-p.start+1;
+    for(var i=p.start;i<=p.end;i++){
+      var card=document.getElementById('q'+i);
+      var wasCorrect=card.querySelector('.qo.c')&&!card.querySelector('.qo.w');
+      if(wasCorrect)partScore++;
+    }
+    var partPct=Math.round(partScore/partTotal*100);
+    var barColor=partPct>=80?'var(--lime)':partPct>=60?'var(--amber)':'var(--rose)';
+    breakdown+='<div style="margin:8px 0;display:flex;align-items:center;gap:12px;">';
+    breakdown+='<span style="font-family:var(--mono);font-size:.82rem;color:var(--muted);min-width:200px;">'+p.name+'</span>';
+    breakdown+='<div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;">';
+    breakdown+='<div style="height:100%;width:'+partPct+'%;background:'+barColor+';border-radius:4px;transition:width .4s;"></div>';
+    breakdown+='</div>';
+    breakdown+='<span style="font-family:var(--mono);font-size:.82rem;color:var(--heading);min-width:48px;text-align:right;">'+partScore+'/'+partTotal+'</span>';
+    breakdown+='</div>';
+  });
+  breakdown+='</div>';
+  document.getElementById('resultBreakdown').innerHTML=breakdown;
+
+  setTimeout(function(){
+    document.getElementById('sResult').scrollIntoView({behavior:'smooth',block:'center'});
+  },300);
+}
+</script>
+</body>
+</html>
