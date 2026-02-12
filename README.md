@@ -137,3 +137,9 @@ python -c "import torch; print(torch.cuda.is_available())"
 ```bash
 rm -rf venv
 ```
+# more resources 
+## sample project 
+
+```bash
+https://github.com/MessiSensei/ChatBot-pt
+```
