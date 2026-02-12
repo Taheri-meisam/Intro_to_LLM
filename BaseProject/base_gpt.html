@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base Project &middot; Fine-Tune a MiniGPT &amp; Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f8fa;--surface:#ffffff;--surface2:#eef0f4;--border:#d8dce4;--text:#334;--muted:#778;--heading:#111;--accent:#e06020;--ac-dim:rgba(224,96,32,.10);--ac-glow:rgba(224,96,32,.25);--amber:#d97706;--am-dim:rgba(217,119,6,.08);--rose:#e11d48;--ro-dim:rgba(225,29,72,.08);--sky:#0284c7;--sk-dim:rgba(2,132,199,.08);--lime:#16a34a;--li-dim:rgba(22,163,74,.08);--mono:'Source Code Pro',monospace;--serif:'Fraunces',serif;--sans:'Public Sans',sans-serif;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.76;font-size:15.5px}
+.container{max-width:760px;margin:0 auto;padding:48px 24px 100px}
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--surface2);z-index:999}.pfill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--amber));box-shadow:0 0 8px var(--ac-glow);transition:width .3s}
+.hero{text-align:center;padding:32px 0 48px}.hero-tag{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}.hero h1{font-family:var(--serif);font-size:2.5rem;font-weight:700;color:var(--heading);margin:8px 0}.hero h1 em{color:var(--accent);font-style:italic}.hero p{color:var(--muted);font-size:1.05rem;max-width:560px;margin:0 auto}.hero-badge{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:.78rem;padding:6px 16px;background:var(--am-dim);border:1px solid rgba(217,119,6,.25);border-radius:20px;color:var(--amber)}
+.section{margin-bottom:56px;opacity:0;transform:translateY(20px);transition:all .5s}.section.vis{opacity:1;transform:none}.stag{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}.section h2{font-family:var(--serif);font-size:1.55rem;color:var(--heading);margin-bottom:14px}.section h3{font-family:var(--serif);font-size:1.2rem;color:var(--heading);margin:20px 0 10px}.section p{margin-bottom:12px}.section p strong{color:var(--heading)}
+pre{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:16px 18px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.6;color:var(--text)}
+code.il{font-family:var(--mono);font-size:.86em;color:var(--accent);background:var(--ac-dim);padding:2px 6px;border-radius:4px}
+.kw{color:#be123c}.fn{color:#0369a1}.num{color:#b45309}.str{color:#15803d}.cm{color:var(--muted);font-style:italic}
+.callout{background:var(--ac-dim);border:1px solid rgba(224,96,32,.2);border-radius:var(--r);padding:16px 18px;margin:18px 0;font-size:.93rem}.callout.warn{background:var(--am-dim);border-color:rgba(217,119,6,.2)}.callout.green{background:var(--li-dim);border-color:rgba(22,163,74,.2)}.callout.info{background:var(--sk-dim);border-color:rgba(2,132,199,.2)}.callout.gold{background:var(--am-dim);border-color:rgba(217,119,6,.25);color:var(--amber)}
+hr.div{border:none;border-top:1px solid var(--border);margin:52px 0}
+.cw{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:18px 0}.cw-title{font-family:var(--mono);font-size:.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.cbtn{font-family:var(--mono);font-size:.78rem;padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s}.cbtn:hover{border-color:var(--accent);color:var(--accent)}.cbtn.on{background:var(--ac-dim);border-color:var(--accent);color:var(--accent)}
+.out{background:#1a1a2e;border:1px solid #2a2a40;border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:.82rem;color:#a3e635;line-height:1.6;margin:10px 0;white-space:pre-wrap;min-height:36px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.sitem{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}.sitem code{font-family:var(--mono);font-size:.82rem;color:var(--accent)}.sitem .d{font-size:.86rem;color:var(--muted);margin-top:3px}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin:18px 0}.qq{font-family:var(--serif);font-size:1.05rem;color:var(--heading);margin-bottom:12px}.qopts{display:flex;flex-direction:column;gap:7px}.qo{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .2s}.qo:hover{border-color:var(--accent)}.qo.c{border-color:var(--lime);background:var(--li-dim);color:var(--lime)}.qo.w{border-color:var(--rose);background:var(--ro-dim);color:var(--rose)}.qo.d{pointer-events:none;opacity:.85}
+.ql{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.75rem;font-weight:600;background:var(--surface2);color:var(--muted);flex-shrink:0}.qo.c .ql{background:var(--lime);color:#fff}.qo.w .ql{background:var(--rose);color:#fff}
+.qfb{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:.88rem;display:none;line-height:1.6}.qfb.show{display:block}.qfb.p{background:var(--li-dim);color:var(--lime);border-left:3px solid var(--lime)}.qfb.f{background:var(--ro-dim);color:var(--rose);border-left:3px solid var(--rose)}
+.text-input{width:100%;padding:10px 14px;font-family:var(--sans);font-size:.95rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);margin:8px 0;outline:none}.text-input:focus{border-color:var(--accent)}
+.chat-window{background:#1a1a2e;border:1px solid #2a2a40;border-radius:var(--r);padding:16px;margin:10px 0;max-height:380px;overflow-y:auto}
+.chat-msg{margin:8px 0;display:flex;gap:8px;align-items:flex-start}.chat-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}.chat-bubble-inner{padding:8px 12px;border-radius:10px;font-size:.9rem;max-width:80%;line-height:1.5}
+.chat-user-av{background:rgba(224,96,32,.2);border:1px solid rgba(224,96,32,.3);color:var(--accent)}.chat-asst-av{background:rgba(163,230,53,.15);border:1px solid rgba(163,230,53,.25);color:#a3e635}
+.chat-user-bub{background:rgba(224,96,32,.12);border:1px solid rgba(224,96,32,.2);color:#fbbf24;margin-left:auto;border-bottom-right-radius:4px}
+.chat-asst-bub{background:rgba(40,40,70,.6);border:1px solid #2a2a40;color:#d0d8e8;border-bottom-left-radius:4px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:14px 0}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}.cat-card:hover{border-color:var(--accent);transform:translateY(-2px)}.cat-card.on{border-color:var(--accent);background:var(--ac-dim)}.cat-card .cat-count{font-family:var(--mono);font-size:1.3rem;color:var(--accent);font-weight:700}.cat-card .cat-label{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat-row{display:flex;gap:16px;margin:14px 0;flex-wrap:wrap}.stat-box{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}.stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent)}.stat-label{font-size:.78rem;color:var(--muted);margin-top:2px}
+canvas{display:block;margin:10px auto;border-radius:8px}
+.journey-step{display:flex;gap:14px;margin:12px 0;align-items:flex-start}.journey-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;font-weight:700;flex-shrink:0}.journey-content{flex:1}.journey-content strong{color:var(--heading)}.journey-content .jd{font-size:.88rem;color:var(--muted);margin-top:2px}
+.finish-banner{text-align:center;padding:36px 20px;background:linear-gradient(135deg,rgba(224,96,32,.07),rgba(217,119,6,.07));border:1px solid rgba(224,96,32,.2);border-radius:14px;margin:24px 0}.finish-banner h2{font-family:var(--serif);font-size:2rem;color:var(--heading);margin-bottom:8px}.finish-banner p{color:var(--muted);font-size:1.05rem}
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0}.slider-row input[type=range]{flex:1;accent-color:var(--accent)}.slider-val{font-family:var(--mono);font-size:.9rem;color:var(--accent);min-width:36px;text-align:center}
+@media(max-width:600px){.hero h1{font-size:1.8rem}.sgrid{grid-template-columns:1fr}.stat-row{flex-direction:column}.cat-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="container">
+
+<div class="hero">
+<div class="hero-tag">Base Project &middot; From Scratch</div>
+<h1>Fine-Tune a <em>MiniGPT</em> &amp; Chat</h1>
+<p>Build a word-level tokenizer, construct a small GPT from scratch (~120K parameters), fine-tune it on Q&amp;A data with loss masking, and drop into an interactive chat &mdash; all in one file.</p>
+<div class="hero-badge">ALL 7 WEEKS</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 1: DATASET EXPLORER -->
+<div class="section" id="s1">
+<div class="stag">Section 01</div>
+<h2>Dataset Explorer</h2>
+<p>Our MiniGPT is fine-tuned on <strong>80 Q&amp;A pairs</strong> across 4 categories. Each pair teaches the model a short, factual response. The diversity across topics helps the model generalize beyond any single domain.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Dataset Explorer</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:10px;">Click a category to see sample Q&amp;A pairs:</p>
+<div class="cat-grid" id="catGrid">
+<div class="cat-card on" onclick="showCat('python')"><div class="cat-count">20</div><div class="cat-label">Python</div></div>
+<div class="cat-card" onclick="showCat('ml')"><div class="cat-count">20</div><div class="cat-label">Machine Learning</div></div>
+<div class="cat-card" onclick="showCat('math')"><div class="cat-count">20</div><div class="cat-label">Math</div></div>
+<div class="cat-card" onclick="showCat('chat')"><div class="cat-count">20</div><div class="cat-label">General Chat</div></div>
+</div>
+<div class="out" id="catOut"></div>
+</div>
+
+<div class="stat-row">
+<div class="stat-box"><div class="stat-num">80</div><div class="stat-label">Q&amp;A Pairs</div></div>
+<div class="stat-box"><div class="stat-num">4</div><div class="stat-label">Categories</div></div>
+<div class="stat-box"><div class="stat-num">~600</div><div class="stat-label">Vocab Tokens</div></div>
+</div>
+
+<div class="callout info"><strong>Why Q&amp;A format?</strong> Instruction-response pairs teach the model a clear conversational pattern: given a user question, produce a helpful answer. This is the same format used by ChatGPT (SFT stage), just at a much smaller scale. Each pair explicitly separates <em>input</em> (what the user says) from <em>output</em> (what the model should generate).</div>
+
+<div class="callout"><strong>Balanced categories:</strong> Each of the 4 categories has exactly 20 pairs. This balance prevents the model from becoming biased toward any single topic. Without balance, a model trained on 50 Python pairs and 10 chat pairs would be great at Python definitions but awkward at casual conversation.</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 2: TOKENIZER & SPECIAL TOKENS -->
+<div class="section" id="s2">
+<div class="stag">Section 02</div>
+<h2>Tokenizer &amp; Special Tokens</h2>
+<p>Before the model can process text, we need to convert words into numbers. Our <strong>word-level tokenizer</strong> splits text on spaces and punctuation, then maps each unique word to an integer ID. Five special tokens provide structure to every conversation.</p>
+
+<div class="sgrid">
+<div class="sitem"><code>&lt;PAD&gt;</code> &nbsp;ID 0<div class="d">Fills unused positions so all sequences have the same length (64 tokens). Ignored during attention and loss.</div></div>
+<div class="sitem"><code>&lt;UNK&gt;</code> &nbsp;ID 1<div class="d">Replaces any word not found in the vocabulary. Keeps the model from crashing on unseen words.</div></div>
+<div class="sitem"><code>&lt;USER&gt;</code> &nbsp;ID 2<div class="d">Marks the start of the user's question. The model learns this boundary pattern from training.</div></div>
+<div class="sitem"><code>&lt;ASST&gt;</code> &nbsp;ID 3<div class="d">Marks the start of the assistant's response. During generation, tokens after this are what the model produces.</div></div>
+<div class="sitem"><code>&lt;END&gt;</code> &nbsp;ID 4<div class="d">Signals the model to stop generating. Without it, generation would run until max_new tokens are reached.</div></div>
+</div>
+
+<div class="callout green"><strong>Word-level vs. subword:</strong> Our tokenizer splits on whitespace and punctuation, producing whole words as tokens. Real LLMs (GPT-2, LLaMA) use <strong>BPE</strong> (byte-pair encoding) which breaks words into subword pieces, enabling a smaller vocabulary that handles any word. Our approach is simpler and works well for our small, controlled dataset.</div>
+
+<pre><span class="kw">class</span> <span class="fn">Tokenizer</span>:
+    SPECIAL = [<span class="str">'&lt;PAD&gt;'</span>, <span class="str">'&lt;UNK&gt;'</span>, <span class="str">'&lt;USER&gt;'</span>, <span class="str">'&lt;ASST&gt;'</span>, <span class="str">'&lt;END&gt;'</span>]
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pairs, max_vocab=<span class="num">600</span>):
+        self.word2id = {t: i <span class="kw">for</span> i, t <span class="kw">in</span> enumerate(self.SPECIAL)}
+        counts = Counter()
+        <span class="kw">for</span> q, a <span class="kw">in</span> pairs:
+            counts.update(self._split(q))
+            counts.update(self._split(a))
+        <span class="kw">for</span> word, _ <span class="kw">in</span> counts.most_common(max_vocab - <span class="num">5</span>):
+            self.word2id[word] = len(self.word2id)
+
+    <span class="kw">def</span> <span class="fn">encode</span>(self, question, answer=<span class="num">None</span>, max_len=<span class="num">64</span>):
+        <span class="cm"># Format: &lt;USER&gt; q_tokens &lt;ASST&gt; a_tokens &lt;END&gt; &lt;PAD&gt;...</span>
+        tokens = [<span class="str">'&lt;USER&gt;'</span>] + self._split(question) + [<span class="str">'&lt;ASST&gt;'</span>]
+        resp_start = len(tokens)
+        <span class="kw">if</span> answer:
+            tokens += self._split(answer) + [<span class="str">'&lt;END&gt;'</span>]
+        ids = [self.word2id.get(t, <span class="num">1</span>) <span class="kw">for</span> t <span class="kw">in</span> tokens]
+        <span class="kw">return</span> ids + [<span class="num">0</span>] * (max_len - len(ids)), resp_start</pre>
+
+<h3>Key Methods</h3>
+
+<div class="sgrid">
+<div class="sitem"><code>encode(q, a)</code><div class="d">Encodes a full Q&amp;A pair: &lt;USER&gt; q_words &lt;ASST&gt; a_words &lt;END&gt; &lt;PAD&gt;... Returns (ids, resp_start).</div></div>
+<div class="sitem"><code>encode_prompt(q)</code><div class="d">Encodes just the question: &lt;USER&gt; q_words &lt;ASST&gt;. Used during generation (no answer yet).</div></div>
+<div class="sitem"><code>decode(ids)</code><div class="d">Converts token IDs back to readable text. Stops at &lt;END&gt; and skips special tokens.</div></div>
+<div class="sitem"><code>_split(text)</code><div class="d">Lowercases text and separates punctuation: "Hello!" becomes ["hello", "!"].</div></div>
+</div>
+
+<div class="cw">
+<div class="cw-title">&#9656; Live Tokenizer</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Type a question and see how it gets tokenized:</p>
+<input class="text-input" id="tokInput" placeholder="What is a variable?" value="What is a variable?" oninput="runTokenizer()">
+<div class="out" id="tokOut"></div>
+</div>
+
+<div class="qcard" id="q1"><div class="qq">What does the <code class="il">&lt;PAD&gt;</code> token do in our tokenizer?</div><div class="qopts">
+<div class="qo" onclick="ck('q1',this,false)"><span class="ql">A</span> It signals the model to stop generating</div>
+<div class="qo" onclick="ck('q1',this,true)"><span class="ql">B</span> It fills unused positions so all sequences have the same fixed length</div>
+<div class="qo" onclick="ck('q1',this,false)"><span class="ql">C</span> It marks the start of the user's question</div>
+<div class="qo" onclick="ck('q1',this,false)"><span class="ql">D</span> It replaces unknown words not in the vocabulary</div>
+</div><div class="qfb" id="q1-fb"></div></div>
+</div>
+<hr class="div">
+
+<!-- SECTION 3: LOSS MASKING -->
+<div class="section" id="s3">
+<div class="stag">Section 03</div>
+<h2>Loss Masking</h2>
+<p>When we train the model on a Q&amp;A pair, we do <strong>not</strong> want it to waste capacity learning to predict the user's question. We only want it to learn how to generate the assistant's response. <strong>Loss masking</strong> achieves this by setting all prompt-token labels to <code class="il">-100</code>.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Loss Masking Visualizer</div>
+<div class="ctrls">
+<button class="cbtn on" onclick="showMask('tokens')">Show Tokens</button>
+<button class="cbtn" onclick="showMask('ids')">Show IDs</button>
+<button class="cbtn" onclick="showMask('labels')">Show Labels</button>
+</div>
+<div class="out" id="maskOut"></div>
+</div>
+
+<pre><span class="kw">class</span> <span class="fn">QADataset</span>(Dataset):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pairs, tokenizer, max_len=<span class="num">64</span>):
+        self.items = []
+        <span class="kw">for</span> q, a <span class="kw">in</span> pairs:
+            ids, resp_start = tokenizer.encode(q, a, max_len)
+            labels = [<span class="num">-100</span>] * resp_start + ids[resp_start:]
+            <span class="cm"># ^--- prompt tokens masked ---^  ^--- learn these! ---^</span>
+            labels = (labels + [<span class="num">-100</span>] * max_len)[:max_len]
+            self.items.append({
+                <span class="str">'input_ids'</span>: torch.tensor(ids),
+                <span class="str">'labels'</span>: torch.tensor(labels),
+            })</pre>
+
+<div class="callout"><strong>Why -100?</strong> PyTorch's <code class="il">CrossEntropyLoss</code> has an <code class="il">ignore_index</code> parameter that defaults to -100. Any label set to -100 is skipped during loss computation &mdash; no gradient flows back for those positions. This means the model focuses all its learning capacity on generating correct responses, not memorizing user prompts.</div>
+
+<div class="sgrid">
+<div class="sitem"><code>Without Masking</code><div class="d">Model wastes capacity predicting the user prompt too. It tries to "generate" what the user said, which is useless.</div></div>
+<div class="sitem"><code>With Masking</code><div class="d">All learning capacity goes toward generating correct responses. This is exactly how ChatGPT's SFT stage works.</div></div>
+</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 4: MINIGPT ARCHITECTURE -->
+<div class="section" id="s4">
+<div class="stag">Section 04</div>
+<h2>MiniGPT Architecture</h2>
+<p>Our MiniGPT is a <strong>complete GPT</strong> with all the components found in GPT-2 and GPT-3, just smaller: 3 transformer layers, 4 attention heads, d_model=80, and approximately <strong>120,000 parameters</strong>.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Architecture Inspector</div>
+<div class="ctrls">
+<button class="cbtn on" onclick="showArch('overview')">Overview</button>
+<button class="cbtn" onclick="showArch('attention')">Attention</button>
+<button class="cbtn" onclick="showArch('ffn')">Feed-Forward</button>
+<button class="cbtn" onclick="showArch('generation')">Generation</button>
+</div>
+<div class="out" id="archOut"></div>
+</div>
+
+<pre><span class="kw">class</span> <span class="fn">MiniGPT</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, vocab, d_model=<span class="num">80</span>, heads=<span class="num">4</span>, layers=<span class="num">3</span>, max_len=<span class="num">64</span>):
+        self.tok_emb = nn.Embedding(vocab, <span class="num">80</span>)   <span class="cm"># word &rarr; vector</span>
+        self.pos_emb = nn.Embedding(<span class="num">64</span>, <span class="num">80</span>)     <span class="cm"># position &rarr; vector</span>
+        self.blocks  = <span class="num">3</span> &times; TransformerBlock:
+            <span class="cm"># LayerNorm &rarr; Multi-Head Causal Attention (4 heads)</span>
+            <span class="cm"># LayerNorm &rarr; FFN (80 &rarr; 320 &rarr; 80, GELU)</span>
+            <span class="cm"># Residual connections on both sublayers</span>
+        self.ln_f    = LayerNorm(<span class="num">80</span>)
+        self.lm_head = Linear(<span class="num">80</span>, vocab, bias=<span class="num">False</span>)
+        self.lm_head.weight = self.tok_emb.weight  <span class="cm"># weight tying!</span></pre>
+
+<div class="stat-row">
+<div class="stat-box"><div class="stat-num">~120K</div><div class="stat-label">Parameters</div></div>
+<div class="stat-box"><div class="stat-num">3</div><div class="stat-label">Layers</div></div>
+<div class="stat-box"><div class="stat-num">4</div><div class="stat-label">Attention Heads</div></div>
+<div class="stat-box"><div class="stat-num">80</div><div class="stat-label">d_model</div></div>
+</div>
+
+<h3>Forward Pass</h3>
+<pre><span class="kw">def</span> <span class="fn">forward</span>(self, x, labels=<span class="num">None</span>):
+    B, T = x.shape
+    h = self.drop(self.tok_emb(x) + self.pos_emb(torch.arange(T)))
+    <span class="kw">for</span> block <span class="kw">in</span> self.blocks:
+        h = h + self._attn(block[<span class="str">'ln1'</span>](h), block)  <span class="cm"># attention + residual</span>
+        h = h + block[<span class="str">'ffn'</span>](block[<span class="str">'ln2'</span>](h))    <span class="cm"># FFN + residual</span>
+    logits = self.lm_head(self.ln_f(h))
+
+    loss = <span class="num">None</span>
+    <span class="kw">if</span> labels <span class="kw">is not</span> <span class="num">None</span>:
+        loss = F.cross_entropy(
+            logits[:, :-<span class="num">1</span>].reshape(-<span class="num">1</span>, logits.size(-<span class="num">1</span>)),
+            labels[:, <span class="num">1</span>:].reshape(-<span class="num">1</span>),
+            ignore_index=<span class="num">-100</span>,  <span class="cm"># loss masking!</span>
+        )
+    <span class="kw">return</span> logits, loss</pre>
+
+<div class="callout"><strong>Weight tying:</strong> <code class="il">lm_head.weight = tok_emb.weight</code> &mdash; the same matrix that maps words to vectors (embedding) is reused to map vectors back to words (output). This reduces parameters significantly and creates a consistent semantic space where input and output share the same representation of each word.</div>
+
+<div class="sgrid">
+<div class="sitem"><code>tok_emb</code><div class="d">Embedding(~600, 80) &mdash; maps each vocabulary word to an 80-dimensional vector.</div></div>
+<div class="sitem"><code>pos_emb</code><div class="d">Embedding(64, 80) &mdash; encodes position information so the model knows word order.</div></div>
+<div class="sitem"><code>blocks (x3)</code><div class="d">Each block: LayerNorm + Causal Attention + Residual + LayerNorm + FFN + Residual.</div></div>
+<div class="sitem"><code>lm_head</code><div class="d">Linear(80, ~600) &mdash; projects hidden states back to vocabulary logits. Weight-tied.</div></div>
+</div>
+
+<div class="callout warn"><strong>Size comparison:</strong> Our MiniGPT has ~120K parameters. GPT-2 (Small) has 124M &mdash; that is <strong>1,000x larger</strong>. GPT-3 has 175B (1.5 million times larger). Despite the tiny size, our model learns the same architectural patterns. The difference is capacity: GPT-3 can store encyclopedic knowledge; our model memorizes 80 Q&amp;A pairs.</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 5: TRAINING LOOP -->
+<div class="section" id="s5">
+<div class="stag">Section 05</div>
+<h2>Training Loop</h2>
+<p>The training pipeline uses a <strong>DataLoader</strong> to batch examples, <strong>AdamW</strong> as the optimizer, and <strong>gradient clipping</strong> for stability. Over 30 epochs, the model's loss drops from ~7 (random guessing over ~600 words) down to ~0.5 (strong, confident predictions).</p>
+
+<div class="callout green"><strong>What does the loss mean?</strong> At epoch 1, loss ~7.0 means the model is roughly guessing randomly across the entire vocabulary (ln(600) &asymp; 6.4). By epoch 30, loss ~0.5 means the model assigns high probability to the correct next token for most positions. In perplexity terms, this goes from ~1,100 (completely confused) to ~1.6 (very confident).</div>
+
+<pre><span class="kw">def</span> <span class="fn">train</span>(model, dataset, epochs=<span class="num">30</span>, lr=<span class="num">1e-3</span>, batch_size=<span class="num">8</span>):
+    loader = DataLoader(dataset, batch_size=<span class="num">8</span>, shuffle=<span class="num">True</span>)
+    optimizer = AdamW(model.parameters(), lr=<span class="num">1e-3</span>)
+
+    <span class="kw">for</span> epoch <span class="kw">in</span> range(<span class="num">1</span>, epochs + <span class="num">1</span>):
+        <span class="kw">for</span> batch <span class="kw">in</span> loader:
+            _, loss = model(batch[<span class="str">'input_ids'</span>], batch[<span class="str">'labels'</span>])
+            optimizer.zero_grad()
+            loss.backward()
+            clip_grad_norm_(model.parameters(), <span class="num">1.0</span>)  <span class="cm"># stability</span>
+            optimizer.step()</pre>
+
+<div class="cw">
+<div class="cw-title">&#9656; Training Simulation</div>
+<canvas id="lossCanvas" width="680" height="240"></canvas>
+<div class="ctrls">
+<button class="cbtn" onclick="runTraining()" id="trainBtn">Run Training</button>
+<button class="cbtn" onclick="resetTraining()">Reset</button>
+</div>
+<div class="out" id="trainOut">Click "Run Training" to simulate 30 epochs and watch the loss curve.</div>
+</div>
+
+<div class="sgrid">
+<div class="sitem"><code>DataLoader</code><div class="d">Batches 80 pairs into groups of 8, shuffled each epoch for better convergence.</div></div>
+<div class="sitem"><code>AdamW</code><div class="d">Optimizer with weight decay regularization. Learning rate: 0.001.</div></div>
+<div class="sitem"><code>Grad Clipping</code><div class="d">Clips gradients to max_norm=1.0 to prevent exploding gradients.</div></div>
+<div class="sitem"><code>30 Epochs</code><div class="d">Each epoch is a full pass through all 80 pairs. Loss drops from ~7 to ~0.5.</div></div>
+</div>
+
+<div class="qcard" id="q2"><div class="qq">What does gradient clipping prevent during training?</div><div class="qopts">
+<div class="qo" onclick="ck('q2',this,false)"><span class="ql">A</span> It prevents the model from learning too slowly</div>
+<div class="qo" onclick="ck('q2',this,true)"><span class="ql">B</span> It prevents exploding gradients that would destabilize training</div>
+<div class="qo" onclick="ck('q2',this,false)"><span class="ql">C</span> It prevents the dataset from being shuffled</div>
+<div class="qo" onclick="ck('q2',this,false)"><span class="ql">D</span> It prevents the model from overfitting to the validation set</div>
+</div><div class="qfb" id="q2-fb"></div></div>
+</div>
+<hr class="div">
+
+<!-- SECTION 6: GENERATION & TEMPERATURE -->
+<div class="section" id="s6">
+<div class="stag">Section 06</div>
+<h2>Generation &amp; Temperature</h2>
+<p>After training, the model generates text <strong>autoregressively</strong> &mdash; one token at a time. At each step, it predicts a probability distribution over the vocabulary and samples the next token. The <strong>temperature</strong> parameter controls how random vs. deterministic the sampling is.</p>
+
+<pre><span class="kw">def</span> <span class="fn">generate</span>(self, ids, max_new=<span class="num">50</span>, temperature=<span class="num">0.7</span>, end_id=<span class="num">None</span>):
+    <span class="kw">for</span> _ <span class="kw">in</span> range(max_new):
+        logits, _ = self(ids[:, -self.max_len:])
+        logits = logits[:, <span class="num">-1</span>] / temperature   <span class="cm"># scale by temp</span>
+        probs = F.softmax(logits, dim=<span class="num">-1</span>)
+        nxt = torch.multinomial(probs, <span class="num">1</span>)     <span class="cm"># sample</span>
+        ids = torch.cat([ids, nxt], dim=<span class="num">1</span>)
+        <span class="kw">if</span> end_id <span class="kw">and</span> nxt.item() == end_id:
+            <span class="kw">break</span>
+    <span class="kw">return</span> ids</pre>
+
+<div class="cw">
+<div class="cw-title">&#9656; Temperature Explorer</div>
+<div class="slider-row">
+<span style="font-size:.85rem;color:var(--muted);">Focused</span>
+<input type="range" id="tempSlider" min="1" max="15" value="7" oninput="setTemp(this.value)">
+<span style="font-size:.85rem;color:var(--muted);">Creative</span>
+<span class="slider-val" id="tempVal">0.7</span>
+</div>
+<div class="ctrls">
+<button class="cbtn" onclick="genSample()">Generate Response</button>
+</div>
+<div class="out" id="tempOut">Adjust the temperature slider and click "Generate Response" to see how temperature affects the output for the question "What is a variable?"</div>
+</div>
+
+<div class="callout info"><strong>Temperature effects:</strong> At <strong>low temperature</strong> (0.1-0.3), the model almost always picks the highest-probability token, producing focused, repetitive output. At <strong>medium temperature</strong> (0.5-0.8), you get a good balance of accuracy and variety. At <strong>high temperature</strong> (1.0+), the distribution flattens and the model becomes more creative but less coherent.</div>
+
+<div class="sgrid">
+<div class="sitem"><code>temp = 0.1</code><div class="d">Almost greedy decoding. Same output every time. Best for factual recall.</div></div>
+<div class="sitem"><code>temp = 0.5</code><div class="d">Used in the quick test phase. Focused but allows minor variation.</div></div>
+<div class="sitem"><code>temp = 0.7</code><div class="d">Default for interactive chat. Good balance of accuracy and natural variety.</div></div>
+<div class="sitem"><code>temp = 1.5</code><div class="d">Very creative. Words may not follow logical order. Fun to experiment with.</div></div>
+</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 7: CHAT DEMO SIMULATOR -->
+<div class="section" id="s7">
+<div class="stag">Section 07</div>
+<h2>Chat Demo Simulator</h2>
+<p>Experience what the fine-tuned MiniGPT chat feels like. This is a <strong>simulated demo</strong> using hardcoded responses that mirror what the actual trained model produces. The real model runs in the terminal via <code class="il">python base_gpt.py</code>.</p>
+
+<p>In the real script, the <code class="il">chat()</code> function wraps the model's <code class="il">generate()</code> method. It encodes your question as <code class="il">&lt;USER&gt; question &lt;ASST&gt;</code>, runs autoregressive generation until <code class="il">&lt;END&gt;</code>, and decodes the output back to readable text. The process takes about 50ms per response on a CPU.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; MiniGPT Chat</div>
+<div class="chat-window" id="chatWin"></div>
+<div style="display:flex;gap:8px;margin-top:8px;">
+<input class="text-input" id="chatIn" placeholder="Try: What is a variable? / What is attention? / Hello!" style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendChat()">
+<button class="cbtn" onclick="sendChat()" style="padding:10px 18px;">Send</button>
+</div>
+<div class="ctrls">
+<button class="cbtn" onclick="clearConvo()">Clear</button>
+</div>
+</div>
+
+<h3>How the Real Chat Works</h3>
+<pre><span class="kw">def</span> <span class="fn">chat</span>(model, tokenizer, temperature=<span class="num">0.7</span>):
+    <span class="kw">def</span> <span class="fn">ask</span>(question):
+        prompt_ids = tokenizer.encode_prompt(question)
+        ids = torch.tensor([prompt_ids])
+        out = model.generate(ids, max_new=<span class="num">50</span>,
+                             temperature=temperature,
+                             end_id=tokenizer.end_id)
+        <span class="kw">return</span> tokenizer.decode(out[<span class="num">0</span>, len(prompt_ids):].tolist())
+    <span class="kw">return</span> ask
+
+<span class="cm"># Interactive loop</span>
+ask = chat(model, tok, temperature=<span class="num">0.7</span>)
+<span class="kw">while</span> <span class="num">True</span>:
+    user_input = input(<span class="str">"  You: "</span>)
+    response = ask(user_input)
+    print(<span class="str">f"  Bot: {response}"</span>)</pre>
+
+<div class="callout warn"><strong>Simulated, not live.</strong> The chat widget above uses hardcoded keyword-matched responses to approximate the trained model's behavior. To interact with the real model, run <code class="il">python base_gpt.py</code> in your terminal &mdash; it trains and launches a live chat in about 30 seconds.</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 8: WEEK-BY-WEEK JOURNEY -->
+<div class="section" id="s8">
+<div class="stag">Section 08</div>
+<h2>Week-by-Week Journey</h2>
+<p>This base project brings together concepts from <strong>every single week</strong> of the course. Here is what each week contributes:</p>
+
+<div class="journey-step"><div class="journey-dot" style="background:var(--ro-dim);border:1px solid rgba(225,29,72,.25);color:var(--rose);">1</div><div class="journey-content"><strong>Week 1: Training Loop &amp; Optimizer</strong><div class="jd">Tensors, autograd, nn.Module, AdamW optimizer, loss.backward(), gradient clipping &mdash; the engine that powers learning.</div></div></div>
+<div class="journey-step"><div class="journey-dot" style="background:var(--am-dim);border:1px solid rgba(217,119,6,.25);color:var(--amber);">2</div><div class="journey-content"><strong>Week 2: Tokenizer &amp; Embeddings</strong><div class="jd">Word-level tokenization, word2id / id2word mappings, nn.Embedding to convert integer IDs into dense vectors, special tokens.</div></div></div>
+<div class="journey-step"><div class="journey-dot" style="background:var(--li-dim);border:1px solid rgba(22,163,74,.25);color:var(--lime);">3</div><div class="journey-content"><strong>Week 3: Multi-Head Causal Attention</strong><div class="jd">Q/K/V projections, scaled dot-product attention, causal mask (preventing future peeking), 4-head parallel attention.</div></div></div>
+<div class="journey-step"><div class="journey-dot" style="background:var(--sk-dim);border:1px solid rgba(2,132,199,.25);color:var(--sky);">4</div><div class="journey-content"><strong>Week 4: GPT Architecture &amp; Weight Tying</strong><div class="jd">Transformer blocks with residual connections, layer norm, positional embeddings, lm_head weight-tied to tok_emb.</div></div></div>
+<div class="journey-step"><div class="journey-dot" style="background:rgba(147,51,234,.1);border:1px solid rgba(147,51,234,.25);color:#9333ea;">5</div><div class="journey-content"><strong>Week 5: Generation &amp; Temperature Sampling</strong><div class="jd">Autoregressive decoding, temperature scaling, softmax probability distributions, torch.multinomial sampling, &lt;END&gt; stop condition.</div></div></div>
+<div class="journey-step"><div class="journey-dot" style="background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.25);color:#14b8a6;">6</div><div class="journey-content"><strong>Week 6: Fine-Tuning Concepts</strong><div class="jd">Training on task-specific data (our 80 Q&amp;A pairs), adapting the model's behavior through supervised fine-tuning.</div></div></div>
+<div class="journey-step"><div class="journey-dot" style="background:var(--ac-dim);border:1px solid rgba(224,96,32,.25);color:var(--accent);">7</div><div class="journey-content"><strong>Week 7: Instruction Format &amp; Loss Masking</strong><div class="jd">&lt;USER&gt; / &lt;ASST&gt; / &lt;END&gt; special tokens, loss masking with -100 on prompt tokens, interactive chat loop.</div></div></div>
+
+<div class="callout green"><strong>One file, all 7 weeks.</strong> The file <code class="il">base_gpt.py</code> is completely self-contained &mdash; no external dependencies beyond PyTorch. It builds, trains, and runs in under 60 seconds. This makes it the perfect reference for understanding how all the pieces fit together.</div>
+</div>
+<hr class="div">
+
+<!-- SECTION 9: QUIZ SECTION -->
+<div class="section" id="s9">
+<div class="stag">Section 09</div>
+<h2>Knowledge Check</h2>
+<p>Test your understanding of the key concepts from the base project.</p>
+
+<div class="qcard" id="q3"><div class="qq">What is loss masking in the context of instruction tuning?</div><div class="qopts">
+<div class="qo" onclick="ck('q3',this,false)"><span class="ql">A</span> Hiding the training data from the optimizer entirely</div>
+<div class="qo" onclick="ck('q3',this,false)"><span class="ql">B</span> Removing all special tokens before computing loss</div>
+<div class="qo" onclick="ck('q3',this,true)"><span class="ql">C</span> Setting prompt-token labels to -100 so loss is only computed on the response tokens</div>
+<div class="qo" onclick="ck('q3',this,false)"><span class="ql">D</span> Masking random tokens during pretraining like BERT</div>
+</div><div class="qfb" id="q3-fb"></div></div>
+
+<div class="qcard" id="q4"><div class="qq">Why do we use weight tying between <code class="il">tok_emb</code> and <code class="il">lm_head</code>?</div><div class="qopts">
+<div class="qo" onclick="ck('q4',this,false)"><span class="ql">A</span> It doubles the model's speed at inference time</div>
+<div class="qo" onclick="ck('q4',this,false)"><span class="ql">B</span> It allows the model to process images in addition to text</div>
+<div class="qo" onclick="ck('q4',this,true)"><span class="ql">C</span> It reduces parameter count and creates a consistent word-vector mapping in both directions</div>
+<div class="qo" onclick="ck('q4',this,false)"><span class="ql">D</span> It prevents gradient clipping from interfering with learning</div>
+</div><div class="qfb" id="q4-fb"></div></div>
+
+<div class="qcard" id="q5"><div class="qq">What happens when you use a very low temperature (e.g., 0.1) during generation?</div><div class="qopts">
+<div class="qo" onclick="ck('q5',this,true)"><span class="ql">A</span> Output becomes more focused and deterministic, always picking the most likely tokens</div>
+<div class="qo" onclick="ck('q5',this,false)"><span class="ql">B</span> Output becomes more random and creative</div>
+<div class="qo" onclick="ck('q5',this,false)"><span class="ql">C</span> The model generates tokens faster</div>
+<div class="qo" onclick="ck('q5',this,false)"><span class="ql">D</span> The vocabulary size shrinks automatically</div>
+</div><div class="qfb" id="q5-fb"></div></div>
+
+<div class="qcard" id="q6"><div class="qq">What is the purpose of the <code class="il">&lt;END&gt;</code> token?</div><div class="qopts">
+<div class="qo" onclick="ck('q6',this,false)"><span class="ql">A</span> It marks the beginning of the user's question</div>
+<div class="qo" onclick="ck('q6',this,false)"><span class="ql">B</span> It replaces unknown words in the vocabulary</div>
+<div class="qo" onclick="ck('q6',this,false)"><span class="ql">C</span> It pads the sequence to a fixed length</div>
+<div class="qo" onclick="ck('q6',this,true)"><span class="ql">D</span> It signals the model to stop generating and marks the end of a response</div>
+</div><div class="qfb" id="q6-fb"></div></div>
+</div>
+<hr class="div">
+
+<!-- FINISH BANNER -->
+<div class="section" id="s10">
+<div class="stag">Summary</div>
+<h2>What You Built</h2>
+
+<div class="sgrid">
+<div class="sitem"><code>Tokenizer</code><div class="d">Word-level tokenizer with 5 special tokens and ~600 vocabulary size.</div></div>
+<div class="sitem"><code>QADataset</code><div class="d">80 pairs with loss masking &mdash; only compute loss on assistant responses.</div></div>
+<div class="sitem"><code>MiniGPT</code><div class="d">3-layer transformer, 4-head attention, GELU FFN, weight tying (~120K params).</div></div>
+<div class="sitem"><code>Training</code><div class="d">AdamW optimizer, gradient clipping, 30 epochs on Q&amp;A data.</div></div>
+<div class="sitem"><code>Generation</code><div class="d">Autoregressive decoding with temperature sampling and &lt;END&gt; stop token.</div></div>
+<div class="sitem"><code>Chat Interface</code><div class="d">Interactive terminal chat with the fine-tuned model.</div></div>
+</div>
+
+<div class="finish-banner">
+<h2>Base Project Complete!</h2>
+<p>You built a GPT from scratch, fine-tuned it on Q&amp;A data, and chatted with it &mdash; all in a single Python file spanning every week of the course.</p>
+</div>
+
+<div class="stat-row">
+<div class="stat-box"><div class="stat-num">~120K</div><div class="stat-label">Parameters</div></div>
+<div class="stat-box"><div class="stat-num">80</div><div class="stat-label">Training Pairs</div></div>
+<div class="stat-box"><div class="stat-num">30</div><div class="stat-label">Epochs</div></div>
+<div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Weeks Combined</div></div>
+</div>
+
+<h3>Next Steps</h3>
+<div class="sgrid">
+<div class="sitem"><code>More Data</code><div class="d">Add hundreds more Q&amp;A pairs. More diverse data means better generalization to unseen questions.</div></div>
+<div class="sitem"><code>Bigger Model</code><div class="d">Scale to d_model=256, 6+ layers. More capacity allows the model to store richer knowledge.</div></div>
+<div class="sitem"><code>Real GPT-2</code><div class="d">Run <code>base_gpt_fineTuned.py</code> to fine-tune a real 124M-parameter GPT-2 from Hugging Face.</div></div>
+<div class="sitem"><code>RLHF</code><div class="d">Learn Reinforcement Learning from Human Feedback &mdash; the next step after supervised fine-tuning.</div></div>
+</div>
+
+<div class="callout gold"><strong>Well done!</strong> From tokenizing raw text to generating conversational responses, you now understand the full pipeline behind instruction-tuned language models. Run <code class="il">python base_gpt.py</code> to see it in action, or explore <code class="il">base_gpt_fineTuned.py</code> to fine-tune a real GPT-2 (124M parameters) using Hugging Face.</div>
+</div>
+
+</div>
+
+<script>
+/* ========== Scroll & Progress ========== */
+var secs=document.querySelectorAll('.section');
+function upd(){var st=window.scrollY,h=document.body.scrollHeight-innerHeight;document.getElementById('pf').style.width=Math.min(100,st/h*100)+'%';secs.forEach(function(s){if(s.getBoundingClientRect().top<innerHeight*.85)s.classList.add('vis')});}
+window.addEventListener('scroll',upd);upd();
+
+/* ========== Section 1: Dataset Explorer ========== */
+var catData={
+python:'PYTHON PROGRAMMING (20 pairs)\n\n  Q: "What is a variable?"\n  A: "A variable is a named container that stores a value.\n      You create one with an equals sign, like x equals five."\n\n  Q: "What is a function?"\n  A: "A function is a reusable block of code that performs\n      a task. Define it with def, then call it by name."\n\n  Q: "What is a loop?"\n  A: "A loop repeats code multiple times. A for loop\n      iterates over a sequence, a while loop runs until\n      a condition is false."\n\n  Q: "What is a class?"\n  A: "A class is a blueprint for creating objects. It\n      bundles data and behavior together."\n\n  ... plus 16 more: list, string, if statement, dictionary,\n  recursion, error, boolean, import, module, indentation,\n  parameter, return statement, debugging, comment, pip, tuple.',
+ml:'MACHINE LEARNING (20 pairs)\n\n  Q: "What is machine learning?"\n  A: "Machine learning is teaching computers to learn\n      patterns from data instead of writing explicit rules."\n\n  Q: "What is attention?"\n  A: "Attention lets the model focus on relevant parts of\n      the input. Each token decides how much to attend\n      to every other token."\n\n  Q: "What is a transformer?"\n  A: "A transformer is an architecture built on attention.\n      It processes all tokens in parallel and captures\n      long range dependencies."\n\n  Q: "What is weight tying?"\n  A: "Weight tying shares the embedding matrix with the\n      output layer. It reduces parameters and often\n      improves performance."\n\n  ... plus 16 more: neural network, tensor, gradient descent,\n  loss function, backpropagation, overfitting, embedding,\n  fine tuning, tokenization, learning rate, dropout,\n  cross entropy, batch, epoch, perplexity, temperature.',
+math:'MATH BASICS (20 pairs)\n\n  Q: "What is addition?"\n  A: "Addition combines numbers to get a total. Three\n      plus four equals seven."\n\n  Q: "What is a matrix?"\n  A: "A matrix is a grid of numbers in rows and columns.\n      Matrices are used in graphics, physics, and ML."\n\n  Q: "What is calculus?"\n  A: "Calculus studies how things change. Derivatives\n      measure rates of change, integrals measure\n      accumulated quantities."\n\n  Q: "What is probability?"\n  A: "Probability measures how likely something is to\n      happen. It ranges from zero (impossible) to one\n      (certain)."\n\n  ... plus 16 more: multiplication, division, fraction,\n  algebra, geometry, prime number, mean, pi, square root,\n  exponent, percentage, equation, logarithm, statistics,\n  ratio, subtraction.',
+chat:'GENERAL CHAT (20 pairs)\n\n  Q: "Hello!"\n  A: "Hello! I am your assistant. Ask me anything about\n      programming, machine learning, or math."\n\n  Q: "How are you?"\n  A: "I am doing great, thank you! I am ready to help\n      you learn. What topic interests you?"\n\n  Q: "Tell me a joke."\n  A: "Why do programmers prefer dark mode? Because\n      light attracts bugs!"\n\n  Q: "I feel stuck."\n  A: "That is completely normal! Take a break, then\n      approach the problem from a different angle."\n\n  ... plus 16 more: Hi there!, What can you do?, Who are\n  you?, Thank you!, Goodbye!, Tell me something interesting,\n  This is too hard, I need help, Can you explain simply?,\n  I made a mistake, I want to learn coding, What should\n  I learn first?, I am confused, Give me a tip, I love\n  learning!, Is AI hard to learn?'
+};
+function showCat(cat){
+  document.querySelectorAll('.cat-card').forEach(function(c){c.classList.remove('on')});
+  event.target.closest('.cat-card').classList.add('on');
+  document.getElementById('catOut').textContent=catData[cat];
+}
+showCat('python');
+
+/* ========== Section 2: Live Tokenizer ========== */
+function runTokenizer(){
+  var q=document.getElementById('tokInput').value.trim();
+  if(!q){document.getElementById('tokOut').textContent='Type a question above to see it tokenized.';return;}
+  var words=q.toLowerCase().replace(/([.,!?'])/g,' $1 ').split(/\s+/).filter(function(w){return w.length>0;});
+  var tokens=['<USER>'].concat(words).concat(['<ASST>']);
+  var ids=tokens.map(function(t,i){
+    if(t==='<USER>')return 2;if(t==='<ASST>')return 3;
+    return 5+Math.abs(t.split('').reduce(function(h,c){return((h<<5)-h)+c.charCodeAt(0)|0;},0))%590;
+  });
+  var out='Input:   "'+q+'"\n\n';
+  out+='Tokens:  '+tokens.join(' ')+'\n\n';
+  out+='IDs:     ['+ids.join(', ')+']\n\n';
+  out+='Format:  <USER> question_tokens <ASST>  (ready for generation)\n';
+  out+='Length:  '+tokens.length+' tokens (will be padded to 64 with <PAD>)';
+  document.getElementById('tokOut').textContent=out;
+}
+runTokenizer();
+
+/* ========== Section 3: Loss Masking Visualizer ========== */
+var maskInfo={
+tokens:'TOKEN VIEW\n'+'\u2501'.repeat(40)+'\n\nQ: "What is a loop?"   A: "A loop repeats code multiple times."\n\nEncoded sequence:\n  <USER>  what  is  a  loop  ?  <ASST>  a  loop  repeats  code  multiple  times  .  <END>  <PAD> ...\n  |_________________________________|    |______________________________________________|  |_____|\n           prompt tokens                            response tokens                       padding\n\nThe <USER> and <ASST> tokens create clear boundaries\nbetween the question and the answer.',
+ids:'ID VIEW\n'+'\u2501'.repeat(40)+'\n\nQ: "What is a loop?"   A: "A loop repeats code multiple times."\n\nToken:  <USER>  what  is   a  loop   ?  <ASST>   a  loop  repeats  code  multiple  times   .  <END>  <PAD>\nID:       2      42   18   6   87   12    3      6   87    124      39     98      156    10    4      0\n\nTotal sequence: 16 real tokens + 48 padding = 64 tokens\n\nEach word maps to a unique integer via word2id.\nSpecial tokens always have the same IDs:\n  <PAD>=0, <UNK>=1, <USER>=2, <ASST>=3, <END>=4',
+labels:'LABELS VIEW (Loss Masking)\n'+'\u2501'.repeat(40)+'\n\nToken:   <USER>  what  is   a  loop   ?  <ASST>   a   loop  repeats  code  multiple  times   .   <END>  <PAD>...\nLabel:   -100   -100  -100 -100 -100 -100 -100    6    87    124      39     98      156    10    4    -100...\nLoss:     --     --    --   --   --   --   --    0.8   1.2    2.1     0.9    1.5      0.7   0.3  0.2    --\n         |____________________________________|  |_______________________________________________|  |______|\n          prompt: masked with -100                 response: REAL loss computed here!                padding\n          (no gradient flows back)                 (model learns to predict these)                   (masked)\n\nThe -100 labels tell CrossEntropyLoss to SKIP these positions.\nAll learning is focused on generating correct responses.'
+};
+function showMask(mode){
+  document.querySelectorAll('#s3 .cw .cbtn').forEach(function(b){b.classList.remove('on')});event.target.classList.add('on');
+  document.getElementById('maskOut').textContent=maskInfo[mode];
+}
+showMask('tokens');
+
+/* ========== Section 4: Architecture Inspector ========== */
+var archInfo={
+overview:'MiniGPT Architecture Overview\n'+'\u2501'.repeat(32)+'\n\nInput tokens\n  \u2502\ntok_emb(vocab, 80) + pos_emb(64, 80) \u2192 Dropout(0.1)\n  \u2502\nBlock 1: LayerNorm \u2192 Attn(4 heads) + residual \u2192 LayerNorm \u2192 FFN + residual\nBlock 2: LayerNorm \u2192 Attn(4 heads) + residual \u2192 LayerNorm \u2192 FFN + residual\nBlock 3: LayerNorm \u2192 Attn(4 heads) + residual \u2192 LayerNorm \u2192 FFN + residual\n  \u2502\nLayerNorm \u2192 lm_head (weight-tied with tok_emb) \u2192 logits\n  \u2502\nSoftmax \u2192 next token probabilities\n\nConfig:\n  d_model = 80     (hidden dimension)\n  heads   = 4      (attention heads, 20 dim each)\n  layers  = 3      (transformer blocks)\n  max_len = 64     (maximum sequence length)\n  vocab   = ~600   (word-level vocabulary)\n  params  = ~120K  (total trainable parameters)',
+attention:'Multi-Head Causal Self-Attention\n'+'\u2501'.repeat(36)+'\n\n1. Project input x to Q, K, V via a single linear layer:\n   qkv = Linear(80 \u2192 240)   (3 \u00d7 80 = 240)\n\n2. Reshape to 4 heads \u00d7 20 dimensions each:\n   Q, K, V  each have shape [batch, 4, seq_len, 20]\n\n3. Compute attention scores:\n   scores = (Q @ K^T) / sqrt(20)\n\n4. Apply causal mask (lower triangular):\n   scores[future positions] = -infinity\n   This prevents each token from "seeing" future tokens!\n\n5. Softmax \u2192 attention weights (sum to 1 per position)\n\n6. Weighted sum of values:\n   output = weights @ V\n\n7. Concatenate heads and project:\n   output = Linear(80 \u2192 80)\n\nEach head can learn different patterns:\n  Head 1: grammar and syntax\n  Head 2: topic/category tracking\n  Head 3: positional relationships\n  Head 4: special token boundaries',
+ffn:'Feed-Forward Network (per block)\n'+'\u2501'.repeat(36)+'\n\nLinear(80 \u2192 320)     # expand 4\u00d7\nGELU activation       # smooth nonlinearity\nDropout(0.1)\nLinear(320 \u2192 80)     # project back\nDropout(0.1)\n\nWhy 4\u00d7 expansion?\n  The FFN acts as a "memory bank" where the model stores\n  factual associations. The larger intermediate dimension\n  (320) gives capacity to memorize patterns like:\n    "variable" \u2192 "named container that stores a value"\n    "attention" \u2192 "focus on relevant parts of input"\n\nParameter count per block:\n  Linear 1: 80 \u00d7 320 + 320 = 25,920\n  Linear 2: 320 \u00d7 80 + 80  = 25,680\n  Total FFN per block:       ~51,600\n  Across 3 blocks:          ~154,800\n\n  The FFN layers contain most of the model\'s parameters!\n\nGELU vs ReLU:\n  GELU is smoother (no sharp kink at 0) and is the\n  standard activation in GPT-2/3/4. It gently\n  suppresses small negative values instead of zeroing them.',
+generation:'Autoregressive Generation\n'+'\u2501'.repeat(28)+'\n\nmodel.generate(prompt_ids, max_new=50, temp=0.7)\n\nStep by step:\n  1. Start with: <USER> what is a variable ? <ASST>\n  2. Forward pass \u2192 logits for the position after <ASST>\n  3. Divide logits by temperature (0.7)\n  4. Softmax \u2192 probability distribution over vocabulary\n  5. Sample one token from the distribution\n  6. Append sampled token to the sequence\n  7. Repeat steps 2-6\n  8. Stop when <END> token is generated or max_new reached\n\nExample generation trace:\n  Step 1: <ASST> \u2192 P("a")=0.35, P("the")=0.20 \u2192 sample "a"\n  Step 2: a \u2192 P("variable")=0.62 \u2192 sample "variable"\n  Step 3: variable \u2192 P("is")=0.71 \u2192 sample "is"\n  Step 4: is \u2192 P("a")=0.44 \u2192 sample "a"\n  Step 5: a \u2192 P("named")=0.38 \u2192 sample "named"\n  ... continues until <END>\n\nThe model never sees the "correct" answer during generation.\nIt relies entirely on learned patterns from training!'
+};
+function showArch(mode){
+  document.querySelectorAll('#s4 .cw .cbtn').forEach(function(b){b.classList.remove('on')});event.target.classList.add('on');
+  document.getElementById('archOut').textContent=archInfo[mode];
+}
+showArch('overview');
+
+/* ========== Section 5: Training Simulation ========== */
+var trainRunning=false,trainFrame=null;
+function runTraining(){
+  if(trainRunning)return;
+  trainRunning=true;
+  document.getElementById('trainBtn').textContent='Training...';
+  var canvas=document.getElementById('lossCanvas');
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  var losses=[];
+  var epoch=0,maxEpoch=30;
+  function step(){
+    epoch++;
+    var base=6.5*Math.exp(-0.15*epoch)+0.4;
+    var noise=(Math.random()-0.5)*0.25*Math.exp(-0.06*epoch);
+    losses.push(Math.max(0.25,base+noise));
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,W,H);
+    /* grid */
+    ctx.strokeStyle='#2a2a40';ctx.lineWidth=1;
+    for(var g=0;g<=7;g+=1){var gy=H-40-(g/7.5)*(H-60);ctx.beginPath();ctx.moveTo(50,gy);ctx.lineTo(W-20,gy);ctx.stroke();ctx.fillStyle='#667';ctx.font='11px Source Code Pro';ctx.textAlign='right';ctx.fillText(g.toFixed(0),44,gy+4);}
+    for(var gx=0;gx<=30;gx+=5){var xx=50+gx/30*(W-70);ctx.beginPath();ctx.moveTo(xx,H-40);ctx.lineTo(xx,20);ctx.stroke();if(gx>0){ctx.fillStyle='#667';ctx.textAlign='center';ctx.fillText(gx,xx,H-24);}}
+    ctx.fillStyle='#667';ctx.font='11px Source Code Pro';ctx.textAlign='center';ctx.fillText('Epoch',W/2,H-6);
+    ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Loss',0,0);ctx.restore();
+    /* loss line */
+    if(losses.length>1){
+      ctx.beginPath();ctx.strokeStyle='#e06020';ctx.lineWidth=2.5;
+      ctx.shadowColor='rgba(224,96,32,0.4)';ctx.shadowBlur=6;
+      for(var i=0;i<losses.length;i++){var x=50+i/(maxEpoch-1)*(W-70);var y=H-40-(losses[i]/7.5)*(H-60);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+      ctx.stroke();ctx.shadowBlur=0;
+      var last=losses[losses.length-1];
+      var lx=50+(losses.length-1)/(maxEpoch-1)*(W-70);
+      var ly=H-40-(last/7.5)*(H-60);
+      ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='#e06020';ctx.fill();
+    }
+    document.getElementById('trainOut').textContent='Epoch '+epoch+'/'+maxEpoch+' | Loss: '+losses[losses.length-1].toFixed(4)+(epoch>=maxEpoch?'\n\nTraining complete! Final loss: '+losses[losses.length-1].toFixed(4)+'\nThe model went from random guessing (~7.0) to strong predictions (~0.5).':'');
+    if(epoch<maxEpoch){trainFrame=setTimeout(step,120);}
+    else{trainRunning=false;document.getElementById('trainBtn').textContent='Run Training';}
+  }
+  step();
+}
+function resetTraining(){
+  if(trainFrame)clearTimeout(trainFrame);
+  trainRunning=false;
+  document.getElementById('trainBtn').textContent='Run Training';
+  document.getElementById('trainOut').textContent='Click "Run Training" to simulate 30 epochs and watch the loss curve.';
+  var canvas=document.getElementById('lossCanvas');var ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#556';ctx.font='13px Source Code Pro';ctx.textAlign='center';
+  ctx.fillText('Training loss curve will appear here',canvas.width/2,canvas.height/2);
+}
+resetTraining();
+
+/* ========== Section 6: Temperature Explorer ========== */
+var tempSamples={
+low:[
+  'a variable is a named container that stores a value . you create one with an equals sign , like x equals five .',
+  'a variable is a named container that stores a value . you create one with an equals sign , like x equals five .',
+  'a variable is a named container that stores a value . you create one with an equals sign , like x equals five .'
+],
+mid:[
+  'a variable is a named container that stores a value . you create one with an equals sign , like x equals five .',
+  'a variable is a named container that holds a value in memory . you define it with an equals sign .',
+  'a variable stores a value . you create one with an equals sign . it can hold numbers , strings , and more .'
+],
+high:[
+  'a variable stores containers named data . you create values with code and equals definitions .',
+  'a value is stored in a variable container . programming uses named boxes for data across the code .',
+  'containers for data , a variable is a named value that you assign with equals . code runs with these boxes everywhere .'
+],
+vhigh:[
+  'named value boxes in code stores containers across programming . equals signs create everything the data needs .',
+  'data containers . code values named boxes stores programming equals . a definitions sign uses runs .',
+  'a value programming stores named . you boxes data code across equals containers definitions the runs everything .'
+]
+};
+function setTemp(v){
+  var t=(v/10).toFixed(1);
+  document.getElementById('tempVal').textContent=t;
+}
+function genSample(){
+  var v=parseInt(document.getElementById('tempSlider').value);
+  var t=(v/10).toFixed(1);
+  var bucket;
+  if(v<=3)bucket='low';
+  else if(v<=8)bucket='mid';
+  else if(v<=12)bucket='high';
+  else bucket='vhigh';
+  var samples=tempSamples[bucket];
+  var pick=samples[Math.floor(Math.random()*samples.length)];
+  var label;
+  if(bucket==='low')label='FOCUSED (temp='+t+'): Nearly identical every time.';
+  else if(bucket==='mid')label='BALANCED (temp='+t+'): Accurate with some variety.';
+  else if(bucket==='high')label='CREATIVE (temp='+t+'): More varied, sometimes less coherent.';
+  else label='VERY HIGH (temp='+t+'): Highly random, often incoherent.';
+  document.getElementById('tempOut').textContent='Question: "What is a variable?"\nTemperature: '+t+'\n\n'+label+'\n\nGenerated response:\n  '+pick;
+}
+
+/* ========== Section 7: Chat Simulator ========== */
+var chatResponses={
+  'what is a variable':'A variable is a named container that stores a value. You create one with an equals sign, like x equals five.',
+  'what is a function':'A function is a reusable block of code that performs a task. Define it with def, then call it by name.',
+  'what is a loop':'A loop repeats code multiple times. A for loop iterates over a sequence, a while loop runs until a condition is false.',
+  'what is a list':'A list is an ordered collection of items. You can add, remove, and access items by their index starting from zero.',
+  'what is a string':'A string is a sequence of characters like text. You can slice, concatenate, and search within strings.',
+  'what is a class':'A class is a blueprint for creating objects. It bundles data and behavior together into a single reusable structure.',
+  'what is a dictionary':'A dictionary stores key value pairs. You look up values by their key, like a real dictionary maps words to definitions.',
+  'what is recursion':'Recursion is when a function calls itself. It needs a base case to stop and a recursive step that breaks the problem down.',
+  'what is machine learning':'Machine learning is teaching computers to learn patterns from data instead of writing explicit rules for every case.',
+  'what is a neural network':'A neural network is layers of connected nodes that learn to transform inputs into useful outputs through training.',
+  'what is a tensor':'A tensor is a multi dimensional array used in deep learning. Scalars, vectors, and matrices are all types of tensors.',
+  'what is gradient descent':'Gradient descent adjusts model weights to reduce the loss. It moves in the direction that decreases the error most.',
+  'what is a loss function':'A loss function measures how wrong the model predictions are. Training tries to make this number as small as possible.',
+  'what is attention':'Attention lets the model focus on relevant parts of the input. Each token decides how much to attend to every other token.',
+  'what is a transformer':'A transformer is an architecture built on attention. It processes all tokens in parallel and captures long range dependencies.',
+  'what is fine tuning':'Fine tuning takes a pretrained model and trains it further on a specific task. It adapts general knowledge to your needs.',
+  'what is tokenization':'Tokenization splits text into small units called tokens. These can be words, subwords, or characters that the model processes.',
+  'what is temperature':'Temperature controls randomness in text generation. Low temperature gives focused text, high temperature gives creative text.',
+  'what is weight tying':'Weight tying shares the embedding matrix with the output layer. It reduces parameters and often improves performance.',
+  'what is an embedding':'An embedding maps discrete items like words to continuous vectors. Similar items end up with similar vector representations.',
+  'what is overfitting':'Overfitting is when a model memorizes training data but fails on new data. Use dropout and early stopping to prevent it.',
+  'what is cross entropy':'Cross entropy measures how different two probability distributions are. It is the standard loss for classification tasks.',
+  'what is dropout':'Dropout randomly turns off neurons during training. This prevents the model from relying too much on any single neuron.',
+  'what is perplexity':'Perplexity measures how surprised the model is by the data. Lower perplexity means the model predicts text better.',
+  'what is addition':'Addition combines numbers to get a total. Three plus four equals seven. It is the most fundamental math operation.',
+  'what is multiplication':'Multiplication is repeated addition. Three times four means adding three four times, which gives twelve.',
+  'what is a matrix':'A matrix is a grid of numbers in rows and columns. Matrices are used in graphics, physics, and machine learning.',
+  'what is calculus':'Calculus studies how things change. Derivatives measure rates of change, integrals measure accumulated quantities.',
+  'what is probability':'Probability measures how likely something is to happen. It ranges from zero meaning impossible to one meaning certain.',
+  'what is algebra':'Algebra uses letters to represent unknown numbers. You solve equations to find what value the letter stands for.',
+  'hello':'Hello! I am your assistant. Ask me anything about programming, machine learning, or math.',
+  'hi':'Hi! Welcome. What would you like to learn about today?',
+  'hi there':'Hi! Welcome. What would you like to learn about today?',
+  'how are you':'I am doing great, thank you! I am ready to help you learn. What topic interests you?',
+  'what can you do':'I can answer questions about Python programming, machine learning, and math. Just ask me anything!',
+  'who are you':'I am an AI assistant fine tuned to help with programming, machine learning, and math concepts.',
+  'thank you':'You are welcome! Happy to help. Keep asking questions, that is the best way to learn.',
+  'thanks':'You are welcome! Happy to help. Keep asking questions, that is the best way to learn.',
+  'goodbye':'Goodbye! Keep learning and stay curious. Come back anytime you have questions.',
+  'bye':'Goodbye! Keep learning and stay curious. Come back anytime you have questions.',
+  'tell me a joke':'Why do programmers prefer dark mode? Because light attracts bugs!',
+  'tell me something interesting':'Here is a fun fact. The first computer bug was an actual moth found inside a computer in nineteen forty seven!',
+  'i feel stuck':'That is completely normal! Take a break, then approach the problem from a different angle. You will get through it.',
+  'this is too hard':'Hard means you are learning. Break the problem into smaller steps and tackle them one at a time.',
+  'i need help':'Of course! Tell me what topic or problem you are working on and I will do my best to explain it clearly.',
+  'i want to learn coding':'Great choice! Start with Python. Practice every day, build small projects, and do not be afraid of errors.'
+};
+function getChatReply(msg){
+  var key=msg.toLowerCase().replace(/[!?.,'"]/g,'').trim();
+  if(chatResponses[key])return chatResponses[key];
+  for(var k in chatResponses){if(key.indexOf(k)>-1||k.indexOf(key)>-1)return chatResponses[k];}
+  if(key.indexOf('variable')>-1)return chatResponses['what is a variable'];
+  if(key.indexOf('function')>-1)return chatResponses['what is a function'];
+  if(key.indexOf('loop')>-1)return chatResponses['what is a loop'];
+  if(key.indexOf('attention')>-1)return chatResponses['what is attention'];
+  if(key.indexOf('transformer')>-1)return chatResponses['what is a transformer'];
+  if(key.indexOf('machine learning')>-1||key.indexOf('ml')>-1)return chatResponses['what is machine learning'];
+  if(key.indexOf('neural')>-1||key.indexOf('network')>-1)return chatResponses['what is a neural network'];
+  if(key.indexOf('tensor')>-1)return chatResponses['what is a tensor'];
+  if(key.indexOf('gradient')>-1)return chatResponses['what is gradient descent'];
+  if(key.indexOf('loss')>-1)return chatResponses['what is a loss function'];
+  if(key.indexOf('embedding')>-1)return chatResponses['what is an embedding'];
+  if(key.indexOf('overfit')>-1)return chatResponses['what is overfitting'];
+  if(key.indexOf('dropout')>-1)return chatResponses['what is dropout'];
+  if(key.indexOf('temperature')>-1)return chatResponses['what is temperature'];
+  if(key.indexOf('token')>-1)return chatResponses['what is tokenization'];
+  if(key.indexOf('fine tun')>-1)return chatResponses['what is fine tuning'];
+  if(key.indexOf('weight')>-1&&key.indexOf('ty')>-1)return chatResponses['what is weight tying'];
+  if(key.indexOf('matrix')>-1||key.indexOf('matrices')>-1)return chatResponses['what is a matrix'];
+  if(key.indexOf('calculus')>-1)return chatResponses['what is calculus'];
+  if(key.indexOf('probability')>-1)return chatResponses['what is probability'];
+  if(key.indexOf('algebra')>-1)return chatResponses['what is algebra'];
+  if(key.indexOf('hello')>-1||key.indexOf('hi')>-1||key.indexOf('hey')>-1)return chatResponses['hello'];
+  if(key.indexOf('thank')>-1)return chatResponses['thank you'];
+  if(key.indexOf('bye')>-1||key.indexOf('goodbye')>-1)return chatResponses['goodbye'];
+  if(key.indexOf('help')>-1)return chatResponses['i need help'];
+  if(key.indexOf('stuck')>-1||key.indexOf('hard')>-1||key.indexOf('difficult')>-1)return chatResponses['i feel stuck'];
+  if(key.indexOf('joke')>-1)return chatResponses['tell me a joke'];
+  if(key.indexOf('learn')>-1||key.indexOf('coding')>-1||key.indexOf('code')>-1)return chatResponses['i want to learn coding'];
+  var fallbacks=['That is an interesting question! I would need more training data to answer it well.','I am not sure about that. Try asking about Python, machine learning, or math!','Could you rephrase that? I work best with questions from my training data.','Hmm, that is beyond my 80 training pairs. Try: What is a variable? or What is attention?'];
+  return fallbacks[Math.floor(Math.random()*fallbacks.length)];
+}
+function addChatMsg(who,text){
+  var w=document.getElementById('chatWin');var isU=who==='user';
+  w.innerHTML+='<div class="chat-msg" style="flex-direction:'+(isU?'row-reverse':'row')+'"><div class="chat-avatar '+(isU?'chat-user-av':'chat-asst-av')+'">'+(isU?'U':'A')+'</div><div class="chat-bubble-inner '+(isU?'chat-user-bub':'chat-asst-bub')+'">'+text.replace(/\n/g,'<br>')+'</div></div>';
+  w.scrollTop=w.scrollHeight;
+}
+function sendChat(){
+  var inp=document.getElementById('chatIn');
+  var msg=inp.value.trim();if(!msg)return;
+  addChatMsg('user',msg);inp.value='';
+  var reply=getChatReply(msg);
+  setTimeout(function(){addChatMsg('assistant',reply);},200+Math.random()*300);
+}
+function clearConvo(){
+  document.getElementById('chatWin').innerHTML='';
+  addChatMsg('assistant','Hello! I am MiniGPT, fine-tuned on 80 Q&A pairs. Ask me about Python, ML, or math!');
+}
+clearConvo();
+
+/* ========== Quiz Function ========== */
+function ck(id,el,ok){
+  var card=document.getElementById(id);
+  if(card.dataset.a)return;
+  card.dataset.a='1';
+  card.querySelectorAll('.qo').forEach(function(o){o.classList.add('d')});
+  var fb=document.getElementById(id+'-fb');
+  if(ok){
+    el.classList.add('c');
+    fb.className='qfb p show';
+    fb.textContent='Correct!';
+  }else{
+    el.classList.add('w');
+    card.querySelectorAll('.qo').forEach(function(o){
+      if(o.onclick&&o.onclick.toString().indexOf('true')>-1)o.classList.add('c');
+    });
+    fb.className='qfb f show';
+    var ex={
+      q1:'<PAD> (ID 0) is the padding token. Since our model requires fixed-length sequences of 64 tokens, shorter sequences are filled with <PAD> tokens at the end. The model learns to ignore these positions.',
+      q2:'Gradient clipping (max_norm=1.0) caps the magnitude of gradients during backpropagation. Without it, gradients can become extremely large (exploding gradients), causing weights to update wildly and training to diverge. It is a standard stability technique in transformer training.',
+      q3:'Loss masking sets all prompt-token labels to -100, which PyTorch\'s CrossEntropyLoss ignores by default. This means gradients only flow back from the assistant response tokens, focusing all learning capacity on generating good answers rather than memorizing user prompts.',
+      q4:'Weight tying shares one matrix between tok_emb (words to vectors) and lm_head (vectors to words). This reduces the parameter count by eliminating a redundant large matrix, and forces the model to use a consistent semantic space for both reading and writing words.',
+      q5:'At low temperature (e.g., 0.1), the logits are divided by a small number, making the probability distribution very peaked. The highest-probability token gets almost all the probability mass, so the model nearly always picks the same (most likely) token, producing deterministic, focused output.',
+      q6:'The <END> token (ID 4) is appended at the end of every training response. During generation, when the model outputs <END>, the generate() function stops producing more tokens. Without it, the model would continue generating indefinitely until hitting the max_new limit.'
+    };
+    fb.textContent='Not quite. '+ex[id];
+  }
+}
+</script>
+</body>
+</html>

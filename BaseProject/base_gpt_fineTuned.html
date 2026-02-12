@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fine-Tune GPT-2 &middot; From Pretrained to Chatbot</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f8fa;--surface:#ffffff;--surface2:#eef0f4;--border:#d8dce4;--text:#334;--muted:#778;--heading:#111;--accent:#5b5fc7;--ac-dim:rgba(91,95,199,.10);--ac-glow:rgba(91,95,199,.25);--amber:#d97706;--am-dim:rgba(217,119,6,.08);--rose:#e11d48;--ro-dim:rgba(225,29,72,.08);--sky:#0284c7;--sk-dim:rgba(2,132,199,.08);--lime:#16a34a;--li-dim:rgba(22,163,74,.08);--mono:'Source Code Pro',monospace;--serif:'Fraunces',serif;--sans:'Public Sans',sans-serif;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.76;font-size:15.5px}
+.container{max-width:760px;margin:0 auto;padding:48px 24px 100px}
+.pbar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--surface2);z-index:999}.pfill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--amber));box-shadow:0 0 8px var(--ac-glow);transition:width .3s}
+.hero{text-align:center;padding:32px 0 48px}.hero-tag{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.14em;text-transform:uppercase}.hero h1{font-family:var(--serif);font-size:2.5rem;font-weight:700;color:var(--heading);margin:8px 0}.hero h1 em{color:var(--accent);font-style:italic}.hero p{color:var(--muted);font-size:1.05rem;max-width:560px;margin:0 auto}.hero-badge{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:.78rem;padding:6px 16px;background:var(--ac-dim);border:1px solid rgba(91,95,199,.25);border-radius:20px;color:var(--accent)}
+.section{margin-bottom:56px;opacity:0;transform:translateY(20px);transition:all .5s}.section.vis{opacity:1;transform:none}.stag{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}.section h2{font-family:var(--serif);font-size:1.55rem;color:var(--heading);margin-bottom:14px}.section h3{font-family:var(--serif);font-size:1.2rem;color:var(--heading);margin:20px 0 10px}.section p{margin-bottom:12px}.section p strong{color:var(--heading)}
+pre{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:16px 18px;margin:14px 0;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.6;color:var(--text)}
+code.il{font-family:var(--mono);font-size:.86em;color:var(--accent);background:var(--ac-dim);padding:2px 6px;border-radius:4px}
+.kw{color:#be3455}.fn{color:#2563eb}.num{color:#d97706}.str{color:#16a34a}.cm{color:var(--muted);font-style:italic}
+.callout{background:var(--ac-dim);border:1px solid rgba(91,95,199,.2);border-radius:var(--r);padding:16px 18px;margin:18px 0;font-size:.93rem}.callout.warn{background:var(--am-dim);border-color:rgba(217,119,6,.2)}.callout.green{background:var(--li-dim);border-color:rgba(22,163,74,.2)}.callout.info{background:var(--sk-dim);border-color:rgba(2,132,199,.2)}.callout strong{color:var(--heading)}
+hr.div{border:none;border-top:1px solid var(--border);margin:52px 0}
+.cw{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:18px 0}.cw-title{font-family:var(--mono);font-size:.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.ctrls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.cbtn{font-family:var(--mono);font-size:.78rem;padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s}.cbtn:hover{border-color:var(--accent);color:var(--accent)}.cbtn.on{background:var(--ac-dim);border-color:var(--accent);color:var(--accent)}
+.out{background:#1a1a2e;border:1px solid var(--border);border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:.82rem;color:#a3e635;line-height:1.6;margin:10px 0;white-space:pre-wrap;min-height:36px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.sitem{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px}.sitem code{font-family:var(--mono);font-size:.82rem;color:var(--accent)}.sitem .d{font-size:.86rem;color:var(--muted);margin-top:3px}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin:18px 0}.qq{font-family:var(--serif);font-size:1.05rem;color:var(--heading);margin-bottom:12px}.qopts{display:flex;flex-direction:column;gap:7px}.qo{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:.9rem;transition:all .2s}.qo:hover{border-color:var(--accent)}.qo.c{border-color:var(--lime);background:var(--li-dim);color:var(--lime)}.qo.w{border-color:var(--rose);background:var(--ro-dim);color:var(--rose)}.qo.d{pointer-events:none;opacity:.85}
+.ql{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.75rem;font-weight:600;background:var(--surface2);color:var(--muted);flex-shrink:0}.qo.c .ql{background:var(--lime);color:#fff}.qo.w .ql{background:var(--rose);color:#fff}
+.qfb{margin-top:10px;padding:10px 12px;border-radius:6px;font-size:.88rem;display:none;line-height:1.6}.qfb.show{display:block}.qfb.p{background:var(--li-dim);color:var(--lime);border-left:3px solid var(--lime)}.qfb.f{background:var(--ro-dim);color:var(--rose);border-left:3px solid var(--rose)}
+.text-input{width:100%;padding:10px 14px;font-family:var(--sans);font-size:.95rem;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);margin:8px 0;outline:none}.text-input:focus{border-color:var(--accent)}
+.chat-window{background:#1a1a2e;border:1px solid var(--border);border-radius:var(--r);padding:16px;margin:10px 0;max-height:380px;overflow-y:auto}
+.chat-msg{margin:8px 0;display:flex;gap:8px;align-items:flex-start}.chat-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;font-weight:600}.chat-bubble-inner{padding:8px 12px;border-radius:10px;font-size:.9rem;max-width:80%;line-height:1.5}
+.chat-user-av{background:var(--ac-dim);border:1px solid rgba(91,95,199,.25);color:var(--accent)}.chat-asst-av{background:var(--li-dim);border:1px solid rgba(22,163,74,.25);color:var(--lime)}
+.chat-user-bub{background:rgba(91,95,199,.15);border:1px solid rgba(91,95,199,.2);color:#d0d0f0;margin-left:auto;border-bottom-right-radius:4px}
+.chat-asst-bub{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);color:#d0d8e0;border-bottom-left-radius:4px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:14px 0}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s}.cat-card:hover{border-color:var(--accent);transform:translateY(-2px)}.cat-card.on{border-color:var(--accent);background:var(--ac-dim)}.cat-card .cat-count{font-family:var(--mono);font-size:1.3rem;color:var(--accent);font-weight:700}.cat-card .cat-label{font-size:.78rem;color:var(--muted);margin-top:2px}
+.stat-row{display:flex;gap:16px;margin:14px 0;flex-wrap:wrap}.stat-box{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}.stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--accent)}.stat-label{font-size:.78rem;color:var(--muted);margin-top:2px}
+canvas{display:block;margin:10px auto;border-radius:8px}
+.finish-banner{text-align:center;padding:36px 20px;background:linear-gradient(135deg,rgba(91,95,199,.08),rgba(217,119,6,.08));border:1px solid rgba(91,95,199,.2);border-radius:14px;margin:24px 0}.finish-banner h2{font-family:var(--serif);font-size:2rem;color:var(--heading);margin-bottom:8px}.finish-banner p{color:var(--muted);font-size:1.05rem}
+.compare-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}.compare-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px}.compare-panel h4{font-family:var(--mono);font-size:.85rem;color:var(--accent);margin-bottom:10px}.compare-panel .cp-item{font-size:.88rem;margin:6px 0;color:var(--text)}.compare-panel .cp-item strong{color:var(--heading)}
+.slider-row{display:flex;align-items:center;gap:12px;margin:10px 0}.slider-row label{font-family:var(--mono);font-size:.82rem;color:var(--muted);min-width:90px}.slider-row input[type="range"]{flex:1;accent-color:var(--accent)}.slider-val{font-family:var(--mono);font-size:.82rem;color:var(--accent);min-width:56px;text-align:right}
+.mask-vis{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0}.mask-tok{font-family:var(--mono);font-size:.78rem;padding:4px 8px;border-radius:4px;display:inline-block}
+@media(max-width:600px){.hero h1{font-size:1.8rem}.sgrid{grid-template-columns:1fr}.stat-row{flex-direction:column}.cat-grid{grid-template-columns:repeat(2,1fr)}.compare-panels{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+<div class="container">
+
+<div class="hero">
+<div class="hero-tag">Base Project &middot; Fine-Tuning</div>
+<h1>Fine-Tune <em>GPT-2</em> &amp; Chat</h1>
+<p>Download a pretrained 124M-parameter GPT-2, fine-tune it on 60 Q&amp;A pairs, and build an interactive chatbot &mdash; all in one script.</p>
+<div class="hero-badge">base_gpt_fineTuned.py</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 1: What is GPT-2? -->
+<!-- ============================================================ -->
+<div class="section" id="s1">
+<div class="stag">Section 01</div>
+<h2>What Is GPT-2?</h2>
+<p>GPT-2 is a <strong>124-million-parameter language model</strong> created by OpenAI in 2019. It was trained on WebText, a dataset of ~8 million web pages, learning to predict the next token in a sequence. The result: a model that already understands English grammar, common facts, reasoning patterns, and writing style.</p>
+
+<div class="stat-row">
+<div class="stat-box"><div class="stat-num">124M</div><div class="stat-label">Parameters</div></div>
+<div class="stat-box"><div class="stat-num">12</div><div class="stat-label">Layers</div></div>
+<div class="stat-box"><div class="stat-num">768</div><div class="stat-label">d_model</div></div>
+<div class="stat-box"><div class="stat-num">12</div><div class="stat-label">Attn Heads</div></div>
+<div class="stat-box"><div class="stat-num">50,257</div><div class="stat-label">Vocab Size</div></div>
+</div>
+
+<p>Because GPT-2 was pretrained on such a massive corpus, it already <strong>&ldquo;knows&rdquo; English</strong>. It can complete sentences, answer trivia, summarize text, and even write code snippets. The key insight: we do not need to teach it language from scratch. We only need to teach it <em>our specific format</em>.</p>
+
+<div class="callout info"><strong>Fun fact:</strong> GPT-2 was once considered too dangerous to release &mdash; OpenAI initially withheld the full model, fearing misuse. Now it is freely available on Hugging Face and anyone can download it in seconds!</div>
+
+<p><strong>Key concept:</strong> Pretrained = already smart. We just need to teach it our Q&amp;A conversation format through fine-tuning.</p>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 2: From Scratch vs Pretrained -->
+<!-- ============================================================ -->
+<div class="section" id="s2">
+<div class="stag">Section 02</div>
+<h2>From Scratch vs. Pretrained</h2>
+<p>In this course you have seen two approaches to building a GPT chatbot. The first script (<code class="il">base_gpt.py</code>) builds a tiny model from scratch. The second (<code class="il">base_gpt_fineTuned.py</code>) downloads a real pretrained GPT-2 and fine-tunes it. The differences are dramatic.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Side-by-Side Comparison</div>
+<div class="ctrls">
+<button class="cbtn on" onclick="showComparison('scratch')">From Scratch</button>
+<button class="cbtn" onclick="showComparison('pretrained')">Pretrained GPT-2</button>
+<button class="cbtn" onclick="showComparison('both')">Compare Both</button>
+</div>
+<div class="out" id="compOut"></div>
+</div>
+
+<div class="callout green"><strong>Transfer Learning:</strong> When you fine-tune a pretrained model, you are reusing billions of computations worth of language understanding. The model already knows grammar, vocabulary, and world knowledge. Fine-tuning only teaches it the new format &mdash; that is why 3 epochs is enough instead of 30+.</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 3: BPE Tokenization -->
+<!-- ============================================================ -->
+<div class="section" id="s3">
+<div class="stag">Section 03</div>
+<h2>BPE Tokenization</h2>
+<p>GPT-2 uses <strong>Byte-Pair Encoding (BPE)</strong>, a subword tokenization algorithm. Unlike word-level tokenization (which needs an <code class="il">&lt;UNK&gt;</code> token for unknown words), BPE can represent <em>any</em> text by breaking words into frequent subword pieces.</p>
+
+<p>The GPT-2 tokenizer has a vocabulary of <strong>50,257 tokens</strong>. Common words like &ldquo;the&rdquo; stay whole. Rarer words get split: &ldquo;understanding&rdquo; might become <code class="il">["under", "standing"]</code>, &ldquo;tokenization&rdquo; might become <code class="il">["token", "ization"]</code>. This means zero unknown tokens &mdash; the tokenizer can handle any input.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; BPE Tokenizer Simulator</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Type any text to see how BPE breaks it into subword tokens:</p>
+<input class="text-input" id="bpeInput" placeholder="Try: understanding neural networks is fascinating" value="understanding neural networks is fascinating" oninput="runBPE()">
+<div class="out" id="bpeOut"></div>
+</div>
+
+<h3>Our Instruction Format</h3>
+<p>Each Q&amp;A pair is formatted as a conversation with a special end token:</p>
+<pre><span class="str">User: What is a variable?</span>
+<span class="str">Assistant: A variable is a name that refers to a value...</span><span class="kw">&lt;|endoftext|&gt;</span></pre>
+
+<p>The <code class="il">&lt;|endoftext|&gt;</code> token (ID 50256) tells the model where the response ends. During generation, we stop producing tokens when this ID appears.</p>
+
+<pre><span class="kw">def</span> <span class="fn">format_conversation</span>(question, answer):
+    <span class="cm">"""Format a Q&A pair into the instruction-tuning template."""</span>
+    <span class="kw">return</span> <span class="str">f"User: {question}\nAssistant: {answer}{tokenizer.eos_token}"</span></pre>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 4: Dataset & Instruction Format -->
+<!-- ============================================================ -->
+<div class="section" id="s4">
+<div class="stag">Section 04</div>
+<h2>Dataset &amp; Instruction Format</h2>
+<p>The fine-tuning dataset consists of <strong>60 Q&amp;A pairs</strong> across four categories. Each pair teaches the model how to respond in our instruction format.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Dataset Explorer</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:10px;">Click a category to browse the Q&amp;A pairs:</p>
+<div class="cat-grid" id="catGrid">
+<div class="cat-card on" onclick="showCat('python',this)"><div class="cat-count">10</div><div class="cat-label">Python</div></div>
+<div class="cat-card" onclick="showCat('ml',this)"><div class="cat-count">10</div><div class="cat-label">Machine Learning</div></div>
+<div class="cat-card" onclick="showCat('math',this)"><div class="cat-count">10</div><div class="cat-label">Math</div></div>
+<div class="cat-card" onclick="showCat('chat',this)"><div class="cat-count">30</div><div class="cat-label">Chat &amp; Deeper</div></div>
+</div>
+<div class="out" id="catOut"></div>
+</div>
+
+<div class="stat-row">
+<div class="stat-box"><div class="stat-num">60</div><div class="stat-label">Q&amp;A Pairs</div></div>
+<div class="stat-box"><div class="stat-num">4</div><div class="stat-label">Categories</div></div>
+<div class="stat-box"><div class="stat-num">256</div><div class="stat-label">max_len tokens</div></div>
+</div>
+
+<div class="cw">
+<div class="cw-title">&#9656; Format Preview</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Select a pair to see the raw Q&amp;A and the formatted training text:</p>
+<div class="ctrls">
+<button class="cbtn on" onclick="showFormatPair(0,this)">Variable</button>
+<button class="cbtn" onclick="showFormatPair(1,this)">Function</button>
+<button class="cbtn" onclick="showFormatPair(2,this)">Neural Net</button>
+<button class="cbtn" onclick="showFormatPair(3,this)">Gradient</button>
+<button class="cbtn" onclick="showFormatPair(4,this)">Hello</button>
+</div>
+<div class="out" id="fmtOut"></div>
+</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 5: Loss Masking -->
+<!-- ============================================================ -->
+<div class="section" id="s5">
+<div class="stag">Section 05</div>
+<h2>Loss Masking for Real Models</h2>
+<p>The model should learn to <strong>generate responses</strong>, not memorize questions. Loss masking ensures that only the <strong>assistant&rsquo;s response tokens</strong> contribute to the training loss. The prompt tokens (<code class="il">User: ... Assistant:</code>) get label <code class="il">-100</code>, which PyTorch&rsquo;s cross-entropy loss ignores.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Loss Masking Visualizer</div>
+<div class="ctrls">
+<button class="cbtn on" onclick="showMasking('full',this)">Full Sequence</button>
+<button class="cbtn" onclick="showMasking('prompt',this)">Show Prompt</button>
+<button class="cbtn" onclick="showMasking('response',this)">Show Response</button>
+<button class="cbtn" onclick="showMasking('labels',this)">Show Labels</button>
+</div>
+<div class="out" id="maskOut"></div>
+<div id="maskVis" class="mask-vis"></div>
+</div>
+
+<pre><span class="kw">class</span> <span class="fn">FineTuneDataset</span>(Dataset):
+    <span class="cm">"""Tokenizes Q&A pairs and masks prompt tokens in labels."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pairs, tokenizer, max_len=<span class="num">256</span>):
+        self.items = []
+        <span class="kw">for</span> question, answer <span class="kw">in</span> pairs:
+            prompt_text = <span class="str">f"User: {question}\nAssistant:"</span>
+            full_text   = <span class="str">f"{prompt_text} {answer}{tokenizer.eos_token}"</span>
+
+            prompt_ids = tokenizer.encode(prompt_text)
+            full_ids   = tokenizer.encode(full_text)[:<span class="num">256</span>]
+            prompt_len = <span class="fn">min</span>(<span class="fn">len</span>(prompt_ids), <span class="fn">len</span>(full_ids))
+
+            <span class="cm"># -100 on prompt, real ids on response</span>
+            labels = [<span class="num">-100</span>] * prompt_len + full_ids[prompt_len:]
+
+            <span class="cm"># Pad to max_len</span>
+            pad_len   = max_len - <span class="fn">len</span>(full_ids)
+            input_ids = full_ids + [tokenizer.eos_token_id] * pad_len
+            labels    = labels   + [<span class="num">-100</span>] * pad_len</pre>
+
+<div class="callout"><strong>The model already knows English.</strong> Loss masking ensures it only learns our Q&amp;A FORMAT, not the language itself. This is critical: without masking, the model would waste capacity re-learning how to spell &ldquo;What is a variable&rdquo; instead of focusing on generating good answers.</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 6: Fine-Tuning Hyperparameters -->
+<!-- ============================================================ -->
+<div class="section" id="s6">
+<div class="stag">Section 06</div>
+<h2>Fine-Tuning Hyperparameters</h2>
+<p>Fine-tuning a pretrained model requires <strong>careful hyperparameter choices</strong>. The most critical is the learning rate &mdash; too high and the model &ldquo;forgets&rdquo; everything it learned during pretraining (catastrophic forgetting), too low and it barely adapts.</p>
+
+<div class="sgrid">
+<div class="sitem"><code>lr = 5e-5</code><div class="d">Much smaller than training from scratch (1e-3). Preserves pretrained knowledge.</div></div>
+<div class="sitem"><code>epochs = 3</code><div class="d">Few epochs is enough &mdash; the model already knows language, just needs to learn the format.</div></div>
+<div class="sitem"><code>batch_size = 2</code><div class="d">Small batches fit on any GPU. Larger batches smooth gradients but need more memory.</div></div>
+<div class="sitem"><code>weight_decay = 0.01</code><div class="d">Light regularization to prevent overfitting on our small 60-pair dataset.</div></div>
+</div>
+
+<div class="cw">
+<div class="cw-title">&#9656; Learning Rate Explorer</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Drag the slider to see what happens at different learning rates:</p>
+<div class="slider-row">
+<label>Learning Rate</label>
+<input type="range" id="lrSlider" min="0" max="100" value="50" oninput="updateLR()">
+<span class="slider-val" id="lrVal">5e-5</span>
+</div>
+<div class="out" id="lrOut"></div>
+</div>
+
+<pre><span class="kw">def</span> <span class="fn">train</span>(model, dataset, epochs=<span class="num">3</span>, lr=<span class="num">5e-5</span>, batch_size=<span class="num">2</span>):
+    loader    = DataLoader(dataset, batch_size=batch_size, shuffle=<span class="num">True</span>)
+    optimizer = torch.optim.<span class="fn">AdamW</span>(model.parameters(), lr=lr, weight_decay=<span class="num">0.01</span>)
+
+    <span class="kw">for</span> epoch <span class="kw">in</span> range(<span class="num">1</span>, epochs + <span class="num">1</span>):
+        <span class="kw">for</span> batch <span class="kw">in</span> loader:
+            outputs = model(input_ids=batch[<span class="str">'input_ids'</span>],
+                            attention_mask=batch[<span class="str">'attention_mask'</span>],
+                            labels=batch[<span class="str">'labels'</span>])
+            loss = outputs.loss
+            optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.<span class="fn">clip_grad_norm_</span>(model.parameters(), <span class="num">1.0</span>)
+            optimizer.step()</pre>
+
+<div class="callout warn"><strong>Catastrophic Forgetting:</strong> If the learning rate is too high (e.g. 1e-3), the large gradient updates overwrite the pretrained weights. The model &ldquo;forgets&rdquo; how to write English and produces gibberish. A learning rate of 5e-5 nudges the weights gently, preserving existing knowledge while adapting to the new task.</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 7: Before vs After Fine-Tuning -->
+<!-- ============================================================ -->
+<div class="section" id="s7">
+<div class="stag">Section 07</div>
+<h2>Before vs. After Fine-Tuning</h2>
+<p>This is the dramatic payoff. Before fine-tuning, GPT-2 is a general text completer &mdash; it has no idea about our Q&amp;A format. After just 3 epochs of fine-tuning on 60 pairs, it produces <strong>clean, structured responses</strong>.</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Before &amp; After Comparison</div>
+<div class="ctrls">
+<button class="cbtn on" onclick="showBA('before',this)">Before Fine-Tuning</button>
+<button class="cbtn" onclick="showBA('after',this)">After Fine-Tuning</button>
+</div>
+<div class="out" id="baOut"></div>
+</div>
+
+<div class="cw">
+<div class="cw-title">&#9656; Training Loss Curve</div>
+<canvas id="lossCanvas" width="680" height="240"></canvas>
+<div class="ctrls">
+<button class="cbtn" onclick="runLossAnim()" id="lossBtn">Animate Loss</button>
+<button class="cbtn" onclick="resetLoss()">Reset</button>
+</div>
+<div class="out" id="lossInfo">Click "Animate Loss" to watch the loss drop over 3 epochs (90 training steps).</div>
+</div>
+
+<div class="callout green"><strong>Just 60 pairs and 3 epochs!</strong> The pretrained model already knows how to form sentences. Fine-tuning only teaches it the User/Assistant format and our specific domain knowledge. This is the power of transfer learning.</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 8: Generation Settings -->
+<!-- ============================================================ -->
+<div class="section" id="s8">
+<div class="stag">Section 08</div>
+<h2>Generation Settings</h2>
+<p>When GPT-2 generates text, several parameters control the output quality and creativity. Understanding these gives you fine-grained control over the chatbot's behavior.</p>
+
+<div class="sgrid">
+<div class="sitem"><code>temperature</code><div class="d">Scales logits before softmax. Low = focused/deterministic. High = creative/random. Default: 0.7</div></div>
+<div class="sitem"><code>top_p</code><div class="d">Nucleus sampling: only consider the smallest set of tokens whose cumulative probability exceeds p. Default: 0.9</div></div>
+<div class="sitem"><code>do_sample</code><div class="d">If True, sample from the distribution. If False, always pick the highest-probability token (greedy).</div></div>
+<div class="sitem"><code>max_new_tokens</code><div class="d">Maximum number of new tokens to generate. Our default is 150.</div></div>
+</div>
+
+<div class="cw">
+<div class="cw-title">&#9656; Generation Playground</div>
+<p style="font-size:.88rem;color:var(--muted);margin-bottom:8px;">Adjust temperature and top_p, then generate a response:</p>
+<div class="slider-row">
+<label>Temperature</label>
+<input type="range" id="tempSlider" min="1" max="15" value="7" oninput="updateTemp()">
+<span class="slider-val" id="tempVal">0.7</span>
+</div>
+<div class="slider-row">
+<label>top_p</label>
+<input type="range" id="topPSlider" min="1" max="10" value="9" oninput="updateTopP()">
+<span class="slider-val" id="topPVal">0.9</span>
+</div>
+<div class="ctrls">
+<button class="cbtn on" onclick="genSample('variable',this)">What is a variable?</button>
+<button class="cbtn" onclick="genSample('neural',this)">What is a neural network?</button>
+<button class="cbtn" onclick="genSample('hello',this)">Hello!</button>
+</div>
+<div class="out" id="genOut"></div>
+</div>
+
+<pre><span class="kw">@</span>torch.no_grad()
+<span class="kw">def</span> <span class="fn">generate_response</span>(model, tokenizer, question,
+                      max_new_tokens=<span class="num">150</span>, temperature=<span class="num">0.7</span>):
+    prompt   = <span class="str">f"User: {question}\nAssistant:"</span>
+    input_ids = tokenizer.encode(prompt, return_tensors=<span class="str">'pt'</span>)
+
+    output_ids = model.<span class="fn">generate</span>(
+        input_ids,
+        max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        do_sample=<span class="num">True</span>,
+        top_p=<span class="num">0.9</span>,
+        pad_token_id=tokenizer.eos_token_id,
+        eos_token_id=tokenizer.eos_token_id,
+    )
+
+    <span class="cm"># Decode only the new tokens (skip the prompt)</span>
+    new_tokens = output_ids[<span class="num">0</span>, input_ids.shape[<span class="num">1</span>]:]
+    response = tokenizer.decode(new_tokens, skip_special_tokens=<span class="num">True</span>)</pre>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 9: Interactive Chat Simulator -->
+<!-- ============================================================ -->
+<div class="section" id="s9">
+<div class="stag">Section 09</div>
+<h2>Interactive Chat Simulator</h2>
+<p>Experience what the fine-tuned GPT-2 chatbot feels like. This is a simulated version using hardcoded responses that mirror the real model&rsquo;s behavior after fine-tuning. Try questions about Python, ML, math, or just say hello!</p>
+
+<div class="cw">
+<div class="cw-title">&#9656; Fine-Tuned GPT-2 Chat</div>
+<div class="ctrls">
+<span style="font-family:var(--mono);font-size:.78rem;color:var(--muted);padding:7px 0;">Temperature:</span>
+<button class="cbtn on" onclick="setChatTemp('low',this)">0.3 (Focused)</button>
+<button class="cbtn" onclick="setChatTemp('med',this)">0.7 (Balanced)</button>
+<button class="cbtn" onclick="setChatTemp('high',this)">1.2 (Creative)</button>
+</div>
+<div class="chat-window" id="chatWin"></div>
+<div style="display:flex;gap:8px;margin-top:8px;">
+<input class="text-input" id="chatIn" placeholder="Ask about Python, ML, math, or just say hello..." style="flex:1;margin:0;" onkeydown="if(event.key==='Enter')sendChat()">
+<button class="cbtn" onclick="sendChat()" style="padding:10px 18px;">Send</button>
+</div>
+<div class="ctrls">
+<button class="cbtn" onclick="clearChat()">Clear Chat</button>
+</div>
+</div>
+
+<div class="callout info"><strong>Note:</strong> This is a simulation with hardcoded responses matched by keyword. The real fine-tuned GPT-2 produces similar outputs but uses actual neural network inference. Run <code class="il">python base_gpt_fineTuned.py</code> to try the real model!</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- SECTION 10: Knowledge Check -->
+<!-- ============================================================ -->
+<div class="section" id="s10">
+<div class="stag">Section 10</div>
+<h2>Knowledge Check</h2>
+<p>Test your understanding of the key concepts from this project.</p>
+
+<div class="qcard" id="q1">
+<div class="qq">Why is GPT-2's fine-tuning learning rate (5e-5) much smaller than training from scratch (1e-3)?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q1',this,false)"><span class="ql">A</span> Because GPT-2 has more parameters, so it trains faster</div>
+<div class="qo" onclick="ck('q1',this,true)"><span class="ql">B</span> To preserve pretrained knowledge and avoid catastrophic forgetting</div>
+<div class="qo" onclick="ck('q1',this,false)"><span class="ql">C</span> Because smaller learning rates always give better results</div>
+<div class="qo" onclick="ck('q1',this,false)"><span class="ql">D</span> To make training take longer for better accuracy</div>
+</div>
+<div class="qfb" id="q1-fb"></div>
+</div>
+
+<div class="qcard" id="q2">
+<div class="qq">What is BPE (Byte-Pair Encoding) tokenization?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q2',this,false)"><span class="ql">A</span> A method that assigns one token per character</div>
+<div class="qo" onclick="ck('q2',this,false)"><span class="ql">B</span> A method that only works with English text</div>
+<div class="qo" onclick="ck('q2',this,true)"><span class="ql">C</span> A subword algorithm that splits words into frequent pieces and handles any text without &lt;UNK&gt;</div>
+<div class="qo" onclick="ck('q2',this,false)"><span class="ql">D</span> A method that converts text to binary bytes</div>
+</div>
+<div class="qfb" id="q2-fb"></div>
+</div>
+
+<div class="qcard" id="q3">
+<div class="qq">Why does fine-tuning GPT-2 need only 3 epochs instead of 30+?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q3',this,false)"><span class="ql">A</span> Because the dataset is too small for more epochs</div>
+<div class="qo" onclick="ck('q3',this,false)"><span class="ql">B</span> Because 3 is always the optimal number of epochs</div>
+<div class="qo" onclick="ck('q3',this,true)"><span class="ql">C</span> Because the model already knows language and only needs to learn the new Q&amp;A format</div>
+<div class="qo" onclick="ck('q3',this,false)"><span class="ql">D</span> Because GPT-2 uses a special optimizer that converges in 3 steps</div>
+</div>
+<div class="qfb" id="q3-fb"></div>
+</div>
+
+<div class="qcard" id="q4">
+<div class="qq">What does <code class="il">top_p=0.9</code> mean in text generation?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q4',this,false)"><span class="ql">A</span> Only keep the top 90 tokens from the vocabulary</div>
+<div class="qo" onclick="ck('q4',this,true)"><span class="ql">B</span> Sample from the smallest set of tokens whose cumulative probability exceeds 90%</div>
+<div class="qo" onclick="ck('q4',this,false)"><span class="ql">C</span> Set the temperature to 0.9</div>
+<div class="qo" onclick="ck('q4',this,false)"><span class="ql">D</span> Use 90% of the model's layers for generation</div>
+</div>
+<div class="qfb" id="q4-fb"></div>
+</div>
+
+<div class="qcard" id="q5">
+<div class="qq">What is the purpose of the <code class="il">&lt;|endoftext|&gt;</code> token?</div>
+<div class="qopts">
+<div class="qo" onclick="ck('q5',this,false)"><span class="ql">A</span> It marks the beginning of a new conversation</div>
+<div class="qo" onclick="ck('q5',this,false)"><span class="ql">B</span> It separates the user's question from the assistant's answer</div>
+<div class="qo" onclick="ck('q5',this,true)"><span class="ql">C</span> It signals the end of a response so the model knows when to stop generating</div>
+<div class="qo" onclick="ck('q5',this,false)"><span class="ql">D</span> It is used only during training, not during generation</div>
+</div>
+<div class="qfb" id="q5-fb"></div>
+</div>
+</div>
+<hr class="div">
+
+<!-- ============================================================ -->
+<!-- FINISH BANNER -->
+<!-- ============================================================ -->
+<div class="section" id="s11">
+<div class="finish-banner">
+<h2>GPT-2 Fine-Tuning Complete!</h2>
+<p>124M parameters &middot; 3 epochs &middot; 60 Q&amp;A pairs &rarr; a working chatbot</p>
+</div>
+
+<div class="stat-row">
+<div class="stat-box"><div class="stat-num">124M</div><div class="stat-label">Pretrained Params</div></div>
+<div class="stat-box"><div class="stat-num">3</div><div class="stat-label">Epochs</div></div>
+<div class="stat-box"><div class="stat-num">60</div><div class="stat-label">Training Pairs</div></div>
+<div class="stat-box"><div class="stat-num">5e-5</div><div class="stat-label">Learning Rate</div></div>
+</div>
+
+<div class="sgrid">
+<div class="sitem"><code>Pretrained Model</code><div class="d">Downloaded GPT-2 124M from Hugging Face with BPE tokenizer (50,257 tokens).</div></div>
+<div class="sitem"><code>Instruction Format</code><div class="d">User: ... Assistant: ...&lt;|endoftext|&gt; template for structured Q&amp;A.</div></div>
+<div class="sitem"><code>Loss Masking</code><div class="d">Only train on response tokens. Prompt tokens get label -100.</div></div>
+<div class="sitem"><code>Generation</code><div class="d">Temperature sampling with top_p nucleus sampling. Clean stop at &lt;|endoftext|&gt;.</div></div>
+</div>
+
+<div class="callout"><strong>Next step:</strong> Run <code class="il">python base_gpt_fineTuned.py</code> to fine-tune and chat with the real model. You will see the same concepts from this page come alive with actual neural network inference.</div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+/* ================================================================
+   GLOBAL SETUP
+   ================================================================ */
+var secs=document.querySelectorAll('.section');
+function updScroll(){var st=window.scrollY,h=document.body.scrollHeight-innerHeight;document.getElementById('pf').style.width=Math.min(100,st/h*100)+'%';secs.forEach(function(s){if(s.getBoundingClientRect().top<innerHeight*.85)s.classList.add('vis')});}
+window.addEventListener('scroll',updScroll);updScroll();
+
+/* ================================================================
+   SECTION 2: From Scratch vs Pretrained Comparison
+   ================================================================ */
+var compInfo={
+scratch:'FROM SCRATCH  (base_gpt.py)\n'+
+'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'  Architecture:     Custom MiniGPT built from scratch\n'+
+'  Parameters:       ~120K (tiny)\n'+
+'  Tokenizer:        Word-level, hand-built vocabulary\n'+
+'  Vocabulary:       ~500 tokens (training data only)\n'+
+'  Unknown words:    Mapped to <UNK>\n'+
+'  Pretrained:       No — random initial weights\n'+
+'  Training epochs:  30+ epochs needed\n'+
+'  Learning rate:    1e-3 (aggressive, learning from zero)\n'+
+'  Training time:    Minutes (tiny model)\n'+
+'  English ability:  Learned ONLY from 90 training pairs\n'+
+'  Generalization:   Limited to seen patterns\n\n'+
+'  Best for: Understanding HOW transformers work internally.',
+
+pretrained:'PRETRAINED GPT-2  (base_gpt_fineTuned.py)\n'+
+'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'  Architecture:     Real GPT-2 from Hugging Face\n'+
+'  Parameters:       124,000,000 (124M — 1000x larger)\n'+
+'  Tokenizer:        BPE (Byte-Pair Encoding)\n'+
+'  Vocabulary:       50,257 tokens (handles ANY text)\n'+
+'  Unknown words:    None! BPE splits into subwords\n'+
+'  Pretrained:       Yes — trained on 8M web pages\n'+
+'  Training epochs:  3 epochs is enough\n'+
+'  Learning rate:    5e-5 (gentle, preserving knowledge)\n'+
+'  Training time:    ~5 min on GPU, ~20 min on CPU\n'+
+'  English ability:  Already fluent from pretraining\n'+
+'  Generalization:   Much better, knows language deeply\n\n'+
+'  Best for: Building a REAL chatbot with quality outputs.',
+
+both:'SIDE-BY-SIDE COMPARISON\n'+
+'━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'                    From Scratch        Pretrained GPT-2\n'+
+'  ─────────────────────────────────────────────────────\n'+
+'  Parameters        ~120K               124M (1000x)\n'+
+'  Tokenizer         Word-level          BPE subword\n'+
+'  Vocab size         ~500               50,257\n'+
+'  Epochs needed     30+                 3\n'+
+'  Learning rate     1e-3                5e-5 (20x smaller)\n'+
+'  Knows English?    No (learns from 0)  Yes (pretrained)\n'+
+'  Handles typos?    No (<UNK>)          Yes (BPE subwords)\n'+
+'  Response quality  Pattern matching    Fluent & coherent\n\n'+
+'  The pretrained approach leverages TRANSFER LEARNING:\n'+
+'  billions of computations already done during pretraining\n'+
+'  are reused. We only teach the Q&A format, not English.'
+};
+function showComparison(mode){
+  document.querySelectorAll('#s2 .cw .cbtn').forEach(function(b){b.classList.remove('on')});
+  event.target.classList.add('on');
+  document.getElementById('compOut').textContent=compInfo[mode];
+}
+showComparison('scratch');
+
+/* ================================================================
+   SECTION 3: BPE Tokenizer Simulator
+   ================================================================ */
+var bpeMap={
+  'the':['the'],'a':['a'],'is':['is'],'in':['in'],'to':['to'],'and':['and'],'of':['of'],'it':['it'],'for':['for'],'on':['on'],'that':['that'],'this':['this'],'with':['with'],'are':['are'],'was':['was'],'not':['not'],'but':['but'],'have':['have'],'from':['from'],'or':['or'],'an':['an'],'be':['be'],'as':['as'],'at':['at'],'by':['by'],'which':['which'],
+  'what':['what'],'how':['how'],'can':['can'],'do':['do'],'you':['you'],'we':['we'],'they':['they'],'i':['i'],
+  'python':['py','thon'],'neural':['neur','al'],'network':['net','work'],'networks':['net','works'],
+  'understanding':['under','standing'],'tokenization':['token','ization'],'tokenizer':['token','izer'],
+  'learning':['learn','ing'],'machine':['mach','ine'],'training':['train','ing'],'pretrained':['pre','trained'],
+  'transformer':['transform','er'],'transformers':['transform','ers'],
+  'embedding':['embed','ding'],'embeddings':['embed','dings'],
+  'attention':['att','ention'],'generation':['gener','ation'],'classification':['class','ific','ation'],
+  'fascinating':['fasc','inating'],'programming':['programm','ing'],'parameters':['param','eters'],
+  'backpropagation':['back','propag','ation'],'optimization':['optim','ization'],
+  'variable':['variable'],'function':['function'],'gradient':['gradient'],'model':['model'],
+  'language':['language'],'hello':['hello'],'world':['world'],'fine-tuning':['fine','-','tun','ing'],
+  'chatbot':['chat','bot'],'dataset':['data','set'],'subword':['sub','word'],
+  'vocabulary':['voc','abul','ary'],'probability':['prob','ability'],'distribution':['distribut','ion'],
+  'architecture':['archit','ecture'],'regularization':['regular','ization'],
+  'intelligence':['intell','igence'],'artificial':['artific','ial'],
+  'deep':['deep'],'text':['text'],'data':['data'],'code':['code'],'loss':['loss'],
+  'weights':['weights'],'weight':['weight'],'batch':['batch'],'epoch':['epoch'],
+  'user':['user'],'assistant':['assistant'],'response':['response'],'question':['question']
+};
+function bpeSplit(word){
+  var low=word.toLowerCase();
+  if(bpeMap[low])return bpeMap[low];
+  if(word.length<=3)return [word];
+  if(word.length<=6)return [word];
+  var mid=Math.ceil(word.length*0.55);
+  return [word.slice(0,mid),word.slice(mid)];
+}
+function runBPE(){
+  var text=document.getElementById('bpeInput').value.trim();
+  if(!text){document.getElementById('bpeOut').textContent='Type something above...';return;}
+  var words=text.split(/\s+/);
+  var allTokens=[];
+  var lines=[];
+  words.forEach(function(w){
+    var toks=bpeSplit(w);
+    allTokens=allTokens.concat(toks);
+    lines.push('  "'+w+'" -> [ '+toks.map(function(t){return '"'+t+'"';}).join(' , ')+' ]');
+  });
+  var out='BPE Tokenization Result\n';
+  out+='━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  out+='Input:   "'+text+'"\n';
+  out+='Tokens:  '+allTokens.length+' subword pieces\n\n';
+  out+=lines.join('\n');
+  out+='\n\nFull token list: [ '+allTokens.map(function(t){return '"'+t+'"';}).join(', ')+' ]';
+  document.getElementById('bpeOut').textContent=out;
+}
+runBPE();
+
+/* ================================================================
+   SECTION 4: Dataset Explorer
+   ================================================================ */
+var catData={
+python:'PYTHON PROGRAMMING (10 pairs)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'  Q: "What is a variable in Python?"\n  A: "A variable is a name that refers to a value stored in memory.\n     You create one with the assignment operator, like x = 5."\n\n'+
+'  Q: "What is a function in Python?"\n  A: "A function is a reusable block of code defined with the def keyword.\n     It takes parameters, does some work, and can return a result."\n\n'+
+'  Q: "What is a list in Python?"\n  A: "A list is an ordered, mutable collection created with square brackets."\n\n'+
+'  Q: "What is a dictionary in Python?"\n  A: "A dictionary maps keys to values using curly braces."\n\n'+
+'  Q: "What is a class in Python?"\n  A: "A class is a blueprint for creating objects."\n\n'+
+'  + 5 more: error handling, decorators, list comprehensions, tuples vs lists, pip',
+
+ml:'MACHINE LEARNING (10 pairs)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'  Q: "What is machine learning?"\n  A: "ML is a field where computers learn patterns from data instead of\n     following hand-written rules."\n\n'+
+'  Q: "What is a neural network?"\n  A: "A neural network is a model made of layers of interconnected nodes.\n     Each layer transforms its input."\n\n'+
+'  Q: "What is gradient descent?"\n  A: "Gradient descent adjusts model weights to reduce the loss by taking\n     steps in the downhill direction."\n\n'+
+'  Q: "What is a transformer?"\n  A: "A transformer is a neural network architecture built on self-attention.\n     It processes all tokens in parallel."\n\n'+
+'  Q: "What is fine-tuning?"\n  A: "Fine-tuning takes a pretrained model and trains it further on a\n     smaller, task-specific dataset."\n\n'+
+'  + 5 more: overfitting, attention, transfer learning, tokenization, GPT vs BERT',
+
+math:'MATH (10 pairs)\n━━━━━━━━━━━━━━━━\n\n'+
+'  Q: "What is a derivative?"\n  A: "A derivative measures how fast a function changes at a given point.\n     It is the slope of the tangent line."\n\n'+
+'  Q: "What is a matrix?"\n  A: "A matrix is a rectangular grid of numbers. Matrix multiplication\n     is the core operation in neural networks."\n\n'+
+'  Q: "What is the chain rule in calculus?"\n  A: "The chain rule lets you differentiate composite functions.\n     Backpropagation is just the chain rule applied through the network."\n\n'+
+'  Q: "What is cross-entropy?"\n  A: "Cross-entropy measures how different two probability distributions are.\n     Lower cross-entropy means better predictions."\n\n'+
+'  Q: "What is softmax?"\n  A: "Softmax converts a vector of raw scores (logits) into a probability\n     distribution that sums to 1."\n\n'+
+'  + 5 more: linear algebra, probability, logarithms, dot product, backpropagation',
+
+chat:'CHAT & DEEPER ML (30 pairs)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'  Greetings & Personality:\n    "Hello!" -> "Hello! I\'m your AI assistant..."\n    "Who are you?" -> "I\'m a GPT-2 model fine-tuned on educational Q&A data."\n    "Thank you!" -> "You\'re welcome! Don\'t hesitate to ask more questions."\n    "Goodbye!" -> "Keep learning and building things!"\n\n'+
+'  Advice & Guidance:\n    "How do I get started with AI?" -> "Start by learning Python basics..."\n    "Best way to learn programming?" -> "Write code every day, even 15 min..."\n    "I\'m stuck on a problem." -> "Try breaking it into smaller pieces..."\n\n'+
+'  Deeper ML Topics:\n    "What is a loss function?" -> "Measures how wrong predictions are..."\n    "What is dropout?" -> "Randomly deactivates neurons to prevent overfitting."\n    "What is an embedding?" -> "Maps discrete items to dense continuous vectors."\n    "What is perplexity?" -> "Measures how well a language model predicts text."\n    "What is temperature in text generation?" -> "Scales logits before softmax..."\n\n'+
+'  + 16 more pairs covering GPT, PyTorch, GPUs, tensors, weight tying,\n    layer norm, training vs inference, regularization, epochs, etc.'
+};
+function showCat(cat,el){
+  document.querySelectorAll('#catGrid .cat-card').forEach(function(c){c.classList.remove('on')});
+  if(el)el.classList.add('on');
+  document.getElementById('catOut').textContent=catData[cat];
+}
+showCat('python',document.querySelector('#catGrid .cat-card'));
+
+/* Format Preview */
+var fmtPairs=[
+  {q:'What is a variable in Python?',a:'A variable is a name that refers to a value stored in memory. You create one with the assignment operator, like x = 5. Python figures out the type automatically.'},
+  {q:'What is a function in Python?',a:'A function is a reusable block of code defined with the def keyword. It takes parameters, does some work, and can return a result. Functions help you organize code and avoid repetition.'},
+  {q:'What is a neural network?',a:'A neural network is a model made of layers of interconnected nodes. Each layer transforms its input, and the network learns by adjusting the connection weights to minimize prediction errors.'},
+  {q:'What is gradient descent?',a:'Gradient descent is the optimization algorithm that adjusts model weights to reduce the loss. It computes the gradient of the loss with respect to each weight and takes a step in the downhill direction.'},
+  {q:'Hello!',a:"Hello! I'm your AI assistant, fine-tuned to help with Python, machine learning, and math. What would you like to learn about?"}
+];
+function showFormatPair(idx,el){
+  document.querySelectorAll('#s4 .cw:last-of-type .cbtn').forEach(function(b){b.classList.remove('on')});
+  if(el)el.classList.add('on');
+  var p=fmtPairs[idx];
+  var out='RAW Q&A PAIR\n━━━━━━━━━━━━\n\n';
+  out+='  Question:  "'+p.q+'"\n';
+  out+='  Answer:    "'+p.a+'"\n\n';
+  out+='FORMATTED FOR TRAINING\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  out+='  User: '+p.q+'\n';
+  out+='  Assistant: '+p.a+'<|endoftext|>\n\n';
+  out+='The tokenizer converts this entire string into BPE token IDs.\n';
+  out+='Prompt tokens (User: ... Assistant:) get label = -100.\n';
+  out+='Response tokens get their real token IDs as labels.';
+  document.getElementById('fmtOut').textContent=out;
+}
+showFormatPair(0,document.querySelector('#s4 .cw:last-of-type .cbtn'));
+
+/* ================================================================
+   SECTION 5: Loss Masking Visualizer
+   ================================================================ */
+var maskPrompt='User: What is Python?\nAssistant:';
+var maskResponse=' A high-level programming language.<|endoftext|>';
+var maskFull=maskPrompt+maskResponse;
+function showMasking(mode,el){
+  document.querySelectorAll('#s5 .cw .cbtn').forEach(function(b){b.classList.remove('on')});
+  if(el)el.classList.add('on');
+  var vis=document.getElementById('maskVis');
+  vis.innerHTML='';
+  var out='';
+  if(mode==='full'){
+    out='FULL TRAINING SEQUENCE\n━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  '+maskFull+'\n\n';
+    out+='Prompt part:   "User: What is Python?\\nAssistant:"\n';
+    out+='Response part: " A high-level programming language.<|endoftext|>"\n\n';
+    out+='The model sees the FULL sequence as input.\nBut the loss is computed ONLY on the response tokens.';
+    renderMaskTokens(vis,'full');
+  }else if(mode==='prompt'){
+    out='PROMPT TOKENS (MASKED, label = -100)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Tokens:  [User][:] [What] [is] [Python] [?] [\\n] [Assistant][:]\n';
+    out+='  Labels:  [-100] [-100] [-100] [-100] [-100] [-100] [-100] [-100] [-100]\n\n';
+    out+='These tokens do NOT contribute to the loss.\n';
+    out+='The model reads them as context but is not penalized for them.\n';
+    out+='Why? Because we don\'t want the model to learn to GENERATE questions.';
+    renderMaskTokens(vis,'prompt');
+  }else if(mode==='response'){
+    out='RESPONSE TOKENS (TRAINED, real labels)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Tokens:  [A] [high] [-] [level] [programming] [language] [.] [<|endoftext|>]\n';
+    out+='  Labels:  [317] [8929] [12] [5715] [8300] [3303] [13] [50256]\n\n';
+    out+='These tokens DO contribute to the loss.\n';
+    out+='The model is trained to predict each of these tokens correctly.\n';
+    out+='This is what teaches it to generate good responses.';
+    renderMaskTokens(vis,'response');
+  }else{
+    out='LABEL ARRAY (combined view)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Token:  [User] [:]  [What] [is] [Py] [thon] [?] [\\n] [Ass] [ist] [ant] [:]  [A]   [high] [level] [prog] [lang] [.]   [EOS]\n';
+    out+='  Label:  -100   -100 -100   -100 -100 -100   -100 -100 -100  -100  -100  -100 317   8929   5715   8300   3303   13    50256\n\n';
+    out+='  Gray = masked (label -100, ignored by loss)\n';
+    out+='  Green = trained (real token IDs as labels)\n\n';
+    out+='  Padding tokens also get label -100 (not shown here).';
+    renderMaskTokens(vis,'labels');
+  }
+  document.getElementById('maskOut').textContent=out;
+}
+function renderMaskTokens(container,mode){
+  var promptToks=['User',':','What','is','Py','thon','?','\\n','Ass','ist','ant',':'];
+  var respToks=['A','high','-','level','program','ming','lang','uage','.','<EOS>'];
+  var html='';
+  promptToks.forEach(function(t){
+    var bg=mode==='response'?'rgba(255,255,255,.04)':'rgba(225,29,72,.12)';
+    var col=mode==='response'?'#555':'#e11d48';
+    if(mode==='full'||mode==='labels'){bg='rgba(225,29,72,.12)';col='#e11d48';}
+    html+='<span class="mask-tok" style="background:'+bg+';color:'+col+';border:1px solid '+col+'33">'+t+'</span>';
+  });
+  respToks.forEach(function(t){
+    var bg=mode==='prompt'?'rgba(255,255,255,.04)':'rgba(22,163,74,.12)';
+    var col=mode==='prompt'?'#555':'#16a34a';
+    if(mode==='full'||mode==='labels'){bg='rgba(22,163,74,.12)';col='#16a34a';}
+    html+='<span class="mask-tok" style="background:'+bg+';color:'+col+';border:1px solid '+col+'33">'+t+'</span>';
+  });
+  container.innerHTML=html;
+}
+showMasking('full',document.querySelector('#s5 .cw .cbtn'));
+
+/* ================================================================
+   SECTION 6: Learning Rate Explorer
+   ================================================================ */
+function updateLR(){
+  var v=parseInt(document.getElementById('lrSlider').value);
+  var logMin=Math.log10(1e-6),logMax=Math.log10(1e-3);
+  var lr=Math.pow(10,logMin+(logMax-logMin)*v/100);
+  var lrStr;
+  if(lr<1e-5)lrStr=lr.toExponential(1);
+  else if(lr<1e-4)lrStr=lr.toExponential(1);
+  else lrStr=lr.toExponential(1);
+  document.getElementById('lrVal').textContent=lrStr;
+  var out='';
+  if(lr<5e-6){
+    out='LEARNING RATE: '+lrStr+' (TOO LOW)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Effect: The model barely updates its weights.\n';
+    out+='  Loss:   Decreases extremely slowly.\n';
+    out+='  Result: After 3 epochs, the model has barely changed from base GPT-2.\n';
+    out+='          Responses are still rambling and off-format.\n\n';
+    out+='  Epoch 1: loss = 3.21  (barely moved from initial)\n';
+    out+='  Epoch 2: loss = 3.18\n';
+    out+='  Epoch 3: loss = 3.15  (still high!)\n\n';
+    out+='  Problem: Would need 100+ epochs to converge.';
+  }else if(lr<2e-5){
+    out+='LEARNING RATE: '+lrStr+' (CONSERVATIVE)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Effect: Very gentle weight updates, maximum preservation.\n';
+    out+='  Loss:   Decreases slowly but steadily.\n';
+    out+='  Result: Needs more epochs (5-10) to converge fully.\n';
+    out+='          Very safe — zero risk of catastrophic forgetting.\n\n';
+    out+='  Epoch 1: loss = 2.85\n';
+    out+='  Epoch 2: loss = 2.10\n';
+    out+='  Epoch 3: loss = 1.55  (improving but not done)\n\n';
+    out+='  Good for: Sensitive domains where you must not lose any knowledge.';
+  }else if(lr<1e-4){
+    out+='LEARNING RATE: '+lrStr+' (SWEET SPOT)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Effect: Balanced updates — learns the format without forgetting.\n';
+    out+='  Loss:   Drops quickly and converges in 3 epochs.\n';
+    out+='  Result: Clean Q&A responses while retaining GPT-2\'s fluency.\n\n';
+    out+='  Epoch 1: loss = 1.82  (rapid improvement)\n';
+    out+='  Epoch 2: loss = 0.45\n';
+    out+='  Epoch 3: loss = 0.18  (converged!)\n\n';
+    out+='  5e-5 is the standard fine-tuning rate for GPT-2.\n';
+    out+='  This is what our script uses!';
+  }else if(lr<5e-4){
+    out+='LEARNING RATE: '+lrStr+' (AGGRESSIVE)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Effect: Large weight updates — fast learning but risky.\n';
+    out+='  Loss:   Drops very fast but may oscillate.\n';
+    out+='  Result: The model learns the format quickly but starts to\n';
+    out+='          lose some pretrained knowledge. Responses may have\n';
+    out+='          grammatical errors or factual mistakes.\n\n';
+    out+='  Epoch 1: loss = 0.65  (very fast!)\n';
+    out+='  Epoch 2: loss = 0.12  (but quality is shaky)\n';
+    out+='  Epoch 3: loss = 0.08  (overfit + some forgetting)\n\n';
+    out+='  Risk: Beginning of catastrophic forgetting.';
+  }else{
+    out+='LEARNING RATE: '+lrStr+' (TOO HIGH — CATASTROPHIC FORGETTING)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+    out+='  Effect: Massive weight updates DESTROY pretrained knowledge.\n';
+    out+='  Loss:   May spike or oscillate wildly.\n';
+    out+='  Result: The model "forgets" how to write English!\n';
+    out+='          Outputs become gibberish or repetitive loops.\n\n';
+    out+='  Epoch 1: loss = 0.30 → 2.10 (spiking!)\n';
+    out+='  Epoch 2: loss = 1.85 → 0.50 (unstable)\n';
+    out+='  Epoch 3: loss = 0.40  (low loss but broken outputs)\n\n';
+    out+='  Example output: "A variable variable is is is the the a..."\n\n';
+    out+='  This is CATASTROPHIC FORGETTING — the pretrained weights\n';
+    out+='  are overwritten before the model can adapt properly.';
+  }
+  document.getElementById('lrOut').textContent=out;
+}
+updateLR();
+
+/* ================================================================
+   SECTION 7: Before/After & Loss Curve
+   ================================================================ */
+var baData={
+before:'BEFORE FINE-TUNING (Raw GPT-2)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'GPT-2 is a general text completer. It has never seen our Q&A format.\n\n'+
+'  You:  "What is a variable in Python?"\n'+
+'  Bot:  "The following is a list of all the variables that\n'+
+'         can be used in the Python documentation. The\n'+
+'         variable is used to represent the value of the..."\n\n'+
+'  You:  "Hello!"\n'+
+'  Bot:  "The new version of the game is now available\n'+
+'         for download. The game is available for PC,\n'+
+'         Mac, Linux, and..."\n\n'+
+'  You:  "What is a neural network?"\n'+
+'  Bot:  "The network has been in the news recently\n'+
+'         for its role in the development of a number\n'+
+'         of new technologies, including the..."\n\n'+
+'  You:  "What is gradient descent?"\n'+
+'  Bot:  "In the case of the United States, the descent\n'+
+'         of the American economy has been a major\n'+
+'         factor in the recent..."\n\n'+
+'  You:  "How does text generation work?"\n'+
+'  Bot:  "This is a very simple example of how to\n'+
+'         use the Google Translate API to generate\n'+
+'         text from a given URL..."\n\n'+
+'Notice: No Q&A format. Rambling. Off-topic. Continues indefinitely.\n'+
+'The model does not know when to stop or what format to use.',
+
+after:'AFTER FINE-TUNING (3 epochs on 60 pairs)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n'+
+'The same GPT-2, now fine-tuned. Clean, structured, accurate.\n\n'+
+'  You:  "What is a variable in Python?"\n'+
+'  Bot:  "A variable is a name that refers to a value stored in memory.\n'+
+'         You create one with the assignment operator, like x = 5.\n'+
+'         Python figures out the type automatically."\n\n'+
+'  You:  "Hello!"\n'+
+'  Bot:  "Hello! I\'m your AI assistant, fine-tuned to help with Python,\n'+
+'         machine learning, and math. What would you like to learn about?"\n\n'+
+'  You:  "What is a neural network?"\n'+
+'  Bot:  "A neural network is a model made of layers of interconnected\n'+
+'         nodes. Each layer transforms its input, and the network learns\n'+
+'         by adjusting the connection weights to minimize prediction errors."\n\n'+
+'  You:  "What is gradient descent?"\n'+
+'  Bot:  "Gradient descent is the optimization algorithm that adjusts model\n'+
+'         weights to reduce the loss. It computes the gradient of the loss\n'+
+'         with respect to each weight and takes a step in the downhill direction."\n\n'+
+'  You:  "How does text generation work?"\n'+
+'  Bot:  "The model predicts one token at a time. Given the tokens so far,\n'+
+'         it outputs a probability distribution over the vocabulary, samples\n'+
+'         the next token, appends it, and repeats."\n\n'+
+'Clean format. Accurate content. Stops at <|endoftext|>.\n'+
+'This is the power of fine-tuning a pretrained model!'
+};
+function showBA(mode,el){
+  document.querySelectorAll('#s7 .cw:first-of-type .cbtn').forEach(function(b){b.classList.remove('on')});
+  if(el)el.classList.add('on');
+  document.getElementById('baOut').textContent=baData[mode];
+}
+showBA('before',document.querySelector('#s7 .cw:first-of-type .cbtn'));
+
+/* Loss curve animation */
+var lossRunning=false,lossFrame=null;
+function runLossAnim(){
+  if(lossRunning)return;
+  lossRunning=true;
+  document.getElementById('lossBtn').textContent='Training...';
+  var canvas=document.getElementById('lossCanvas');
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  var losses=[];
+  var step=0,maxSteps=90;
+  function tick(){
+    step++;
+    var base=3.4*Math.exp(-0.06*step)+0.12;
+    var noise=(Math.random()-0.5)*0.12*Math.exp(-0.03*step);
+    losses.push(Math.max(0.05,base+noise));
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#2a2a4e';ctx.lineWidth=1;
+    for(var g=0;g<=3.5;g+=0.5){var gy=H-40-(g/4)*(H-60);ctx.beginPath();ctx.moveTo(50,gy);ctx.lineTo(W-20,gy);ctx.stroke();ctx.fillStyle='#778';ctx.font='11px Source Code Pro';ctx.textAlign='right';ctx.fillText(g.toFixed(1),44,gy+4);}
+    var epochLabels=[1,2,3];
+    epochLabels.forEach(function(e){var xx=50+((e*30)/maxSteps)*(W-70);ctx.beginPath();ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(91,95,199,.3)';ctx.moveTo(xx,H-40);ctx.lineTo(xx,20);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='var(--accent)';ctx.font='11px Source Code Pro';ctx.textAlign='center';ctx.fillStyle='#8888bb';ctx.fillText('Epoch '+e,xx,H-24);});
+    ctx.fillStyle='#778';ctx.font='11px Source Code Pro';ctx.textAlign='center';ctx.fillText('Training Step',W/2,H-6);
+    ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('Loss',0,0);ctx.restore();
+    if(losses.length>1){
+      ctx.beginPath();ctx.strokeStyle='#5b5fc7';ctx.lineWidth=2.5;
+      ctx.shadowColor='rgba(91,95,199,0.5)';ctx.shadowBlur=6;
+      for(var i=0;i<losses.length;i++){var x=50+i/(maxSteps-1)*(W-70);var y=H-40-(losses[i]/4)*(H-60);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+      ctx.stroke();ctx.shadowBlur=0;
+      var last=losses[losses.length-1];var lx=50+(losses.length-1)/(maxSteps-1)*(W-70);var ly=H-40-(last/4)*(H-60);
+      ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle='#5b5fc7';ctx.fill();
+    }
+    var ep=Math.ceil(step/30);
+    document.getElementById('lossInfo').textContent='Epoch '+ep+'/3  |  Step '+step+'/'+maxSteps+'  |  Loss: '+losses[losses.length-1].toFixed(4)+(step>=maxSteps?'\n\nTraining complete! Final loss: '+losses[losses.length-1].toFixed(4)+'\nThe model has learned the Q&A format.':'');
+    if(step<maxSteps){lossFrame=setTimeout(tick,80);}else{lossRunning=false;document.getElementById('lossBtn').textContent='Animate Loss';}
+  }
+  tick();
+}
+function resetLoss(){
+  if(lossFrame)clearTimeout(lossFrame);
+  lossRunning=false;
+  document.getElementById('lossBtn').textContent='Animate Loss';
+  document.getElementById('lossInfo').textContent='Click "Animate Loss" to watch the loss drop over 3 epochs (90 training steps).';
+  var canvas=document.getElementById('lossCanvas');var ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#2a2a4e';ctx.font='13px Source Code Pro';ctx.textAlign='center';
+  ctx.fillText('Training loss curve will appear here',canvas.width/2,canvas.height/2);
+}
+resetLoss();
+
+/* ================================================================
+   SECTION 8: Generation Settings
+   ================================================================ */
+var curTemp=0.7,curTopP=0.9;
+function updateTemp(){
+  curTemp=parseInt(document.getElementById('tempSlider').value)/10;
+  document.getElementById('tempVal').textContent=curTemp.toFixed(1);
+}
+function updateTopP(){
+  curTopP=parseInt(document.getElementById('topPSlider').value)/10;
+  document.getElementById('topPVal').textContent=curTopP.toFixed(1);
+}
+var genResponses={
+  variable:{
+    low:'A variable is a name that refers to a value stored in memory. You create one with the assignment operator, like x = 5. Python figures out the type automatically.',
+    med:'A variable is a name that stores a value in memory. You create one with =, like x = 5. Python determines the type for you, so you don\'t need to declare it explicitly.',
+    high:'A variable? Think of it like a labeled box — you give it a name, toss in a value, and Python figures out what kind of thing it is. x = 5 makes x point to the number 5. Pretty neat, right?'
+  },
+  neural:{
+    low:'A neural network is a model made of layers of interconnected nodes. Each layer transforms its input, and the network learns by adjusting the connection weights to minimize prediction errors.',
+    med:'A neural network is layers of connected nodes that transform input data. It learns by adjusting connection weights during training to minimize its errors on the task.',
+    high:'Imagine a web of tiny decision-makers, each one nudging the signal forward, learning from mistakes — that\'s a neural network! Layers of nodes, weights being tweaked, patterns emerging from chaos. It\'s beautiful, really.'
+  },
+  hello:{
+    low:'Hello! I\'m your AI assistant. I can help with Python, machine learning, and math. What would you like to learn about?',
+    med:'Hello! I\'m your AI assistant, fine-tuned to help with Python, machine learning, and math. What would you like to learn about today?',
+    high:'Hey there! Welcome! I\'m an AI buddy ready to dive into Python, neural networks, math wizardry — you name it! What sparks your curiosity today?'
+  }
+};
+function genSample(topic,el){
+  document.querySelectorAll('#s8 .cw .ctrls:last-of-type .cbtn').forEach(function(b){b.classList.remove('on')});
+  if(el)el.classList.add('on');
+  var tempLevel=curTemp<=0.4?'low':curTemp<=1.0?'med':'high';
+  var resp=genResponses[topic][tempLevel];
+  var qMap={variable:'What is a variable in Python?',neural:'What is a neural network?',hello:'Hello!'};
+  var out='Generation Settings\n━━━━━━━━━━━━━━━━━━━\n';
+  out+='  temperature = '+curTemp.toFixed(1)+'  |  top_p = '+curTopP.toFixed(1)+'\n\n';
+  out+='Question: "'+qMap[topic]+'"\n\n';
+  out+='Response:\n  '+resp+'\n\n';
+  if(curTemp<=0.4){
+    out+='Temperature '+curTemp.toFixed(1)+': Very focused and deterministic.\n';
+    out+='The model consistently picks the highest-probability tokens.\n';
+    out+='Responses are reliable but may feel a bit "robotic".';
+  }else if(curTemp<=1.0){
+    out+='Temperature '+curTemp.toFixed(1)+': Balanced creativity and coherence.\n';
+    out+='The model samples from a reasonable range of tokens.\n';
+    out+='This is the sweet spot for most conversational use.';
+  }else{
+    out+='Temperature '+curTemp.toFixed(1)+': High creativity, lower reliability.\n';
+    out+='The model explores unlikely tokens more often.\n';
+    out+='Responses are more varied but may drift off-topic or sound unusual.';
+  }
+  if(curTopP<=0.5){
+    out+='\n\ntop_p '+curTopP.toFixed(1)+': Very narrow token selection.\nOnly the most probable tokens are considered.';
+  }else if(curTopP<=0.8){
+    out+='\n\ntop_p '+curTopP.toFixed(1)+': Moderately filtered token selection.';
+  }else{
+    out+='\n\ntop_p '+curTopP.toFixed(1)+': Wide token selection (default).\nMost of the probability mass is available for sampling.';
+  }
+  document.getElementById('genOut').textContent=out;
+}
+genSample('variable',document.querySelector('#s8 .cw .ctrls:last-of-type .cbtn'));
+
+/* ================================================================
+   SECTION 9: Chat Simulator
+   ================================================================ */
+var chatTemp='med';
+var chatResponses_low={
+  'variable':'A variable is a name that refers to a value stored in memory. You create one with the assignment operator, like x = 5.',
+  'function':'A function is a reusable block of code defined with the def keyword. It takes parameters, does some work, and can return a result.',
+  'list':'A list is an ordered, mutable collection created with square brackets. You can store any mix of types and access items by index.',
+  'dictionary':'A dictionary maps keys to values using curly braces. Keys must be immutable. Lookups by key are very fast.',
+  'class':'A class is a blueprint for creating objects. It bundles data and behavior together. You define it with the class keyword.',
+  'neural network':'A neural network is a model made of layers of interconnected nodes. Each layer transforms its input.',
+  'machine learning':'Machine learning is a field where computers learn patterns from data instead of following hand-written rules.',
+  'gradient descent':'Gradient descent adjusts model weights to reduce the loss by computing gradients and taking steps downhill.',
+  'transformer':'A transformer is a neural network architecture built on self-attention. It processes all tokens in parallel.',
+  'attention':'Attention lets a model weigh the importance of different input tokens when producing each output.',
+  'fine-tuning':'Fine-tuning takes a pretrained model and trains it further on a smaller, task-specific dataset.',
+  'overfitting':'Overfitting happens when a model memorizes training data instead of learning general patterns.',
+  'derivative':'A derivative measures how fast a function changes at a given point. It is the slope of the tangent line.',
+  'matrix':'A matrix is a rectangular grid of numbers. Matrix multiplication is the core operation in neural networks.',
+  'softmax':'Softmax converts raw scores into a probability distribution where all values sum to 1.',
+  'cross-entropy':'Cross-entropy measures how different two probability distributions are. Lower is better.',
+  'backpropagation':'Backpropagation computes gradients by applying the chain rule backward through the network.',
+  'tokenization':'Tokenization splits text into smaller units called tokens. GPT-2 uses byte-pair encoding.',
+  'embedding':'An embedding maps discrete items like words to dense continuous vectors.',
+  'loss function':'A loss function measures how wrong the model\'s predictions are. The optimizer minimizes this value.',
+  'learning rate':'The learning rate controls how big each weight update step is. Too high and training is unstable.',
+  'dropout':'Dropout randomly deactivates neurons during training to prevent overfitting.',
+  'tensor':'A tensor is a multi-dimensional array. Scalars, vectors, and matrices are all tensors.',
+  'temperature':'Temperature scales the logits before softmax. Low = focused. High = random. Default is 0.7.',
+  'gpt':'GPT stands for Generative Pre-trained Transformer. It predicts the next token in a sequence.',
+  'pytorch':'PyTorch is an open-source deep learning framework by Meta with GPU support and automatic differentiation.',
+  'epoch':'An epoch is one full pass through the entire training dataset.',
+  'perplexity':'Perplexity measures how well a language model predicts text. Lower means better predictions.',
+  'hello':'Hello! I\'m your AI assistant. I can help with Python, machine learning, and math.',
+  'hi':'Hi there! What would you like to learn about?',
+  'who are you':'I\'m a GPT-2 model fine-tuned on educational Q&A data.',
+  'thank':'You\'re welcome! Don\'t hesitate to ask more questions.',
+  'bye':'Goodbye! Keep learning and building things.',
+  'help':'I can explain programming concepts, machine learning fundamentals, and math topics.',
+  'stuck':'Try breaking the problem into smaller pieces. Take a short break and come back with fresh eyes.',
+  'started':'Start with Python basics, then study linear algebra and calculus, then try building neural networks with PyTorch.',
+  'python':'Python is a high-level, interpreted programming language known for its readable syntax and large ecosystem.'
+};
+var chatResponses_med={
+  'variable':'A variable is a name that refers to a value stored in memory. You create one with = like x = 5. Python figures out the type automatically.',
+  'function':'A function is a reusable block of code defined with def. It takes parameters, does work, and can return a result. Functions help organize code and avoid repetition.',
+  'list':'A list is an ordered, mutable collection created with square brackets. You can store any types, access by index, and use methods like append, pop, and sort.',
+  'dictionary':'A dictionary maps keys to values using curly braces. Keys must be immutable (strings, numbers, tuples). Lookups are very fast, making dicts ideal for structured data.',
+  'class':'A class is a blueprint for creating objects. It bundles data (attributes) and behavior (methods) together. You define it with class and create instances by calling it.',
+  'neural network':'A neural network is a model made of layers of interconnected nodes. Each layer transforms its input, and the network learns by adjusting weights to minimize prediction errors.',
+  'machine learning':'Machine learning is a field where computers learn patterns from data instead of following hand-written rules. The model improves its predictions as it sees more examples.',
+  'gradient descent':'Gradient descent is the optimization algorithm that adjusts model weights to reduce the loss. It computes gradients and takes a step in the downhill direction.',
+  'transformer':'A transformer is a neural network architecture built on self-attention. It processes all tokens in parallel and captures long-range dependencies. GPT and BERT are both transformers.',
+  'attention':'Attention lets a model weigh the importance of different input tokens when producing each output. Self-attention computes relevance scores between all pairs of tokens.',
+  'fine-tuning':'Fine-tuning takes a pretrained model and trains it further on a smaller, task-specific dataset. The model already knows language, so it just needs to learn the new task.',
+  'overfitting':'Overfitting happens when a model memorizes training data instead of learning general patterns. It performs well on training data but poorly on new data. Regularization helps.',
+  'derivative':'A derivative measures how fast a function changes at a given point. In deep learning, derivatives tell us how to adjust weights to reduce the loss.',
+  'matrix':'A matrix is a rectangular grid of numbers in rows and columns. Matrix multiplication is the core operation in neural networks, transforming inputs through layers of weights.',
+  'softmax':'Softmax converts a vector of raw scores (logits) into a probability distribution. Each output is between 0 and 1, and they all sum to 1.',
+  'cross-entropy':'Cross-entropy measures how different two probability distributions are. In classification, it compares predicted probabilities to true labels. Lower is better.',
+  'backpropagation':'Backpropagation computes gradients by applying the chain rule backward through the network. It tells each weight how much it contributed to the total error.',
+  'tokenization':'Tokenization splits text into smaller units called tokens. GPT-2 uses byte-pair encoding, which breaks words into subword pieces based on frequency.',
+  'embedding':'An embedding maps discrete items (like words) to dense continuous vectors. Similar items end up close together in the vector space.',
+  'loss function':'A loss function measures how wrong the model\'s predictions are. During training, the optimizer adjusts weights to minimize this value. Common losses include cross-entropy and MSE.',
+  'learning rate':'The learning rate controls how big each weight update step is. Too high and training becomes unstable. Too low and it takes forever. A good starting point is 1e-4 to 1e-3.',
+  'dropout':'Dropout randomly deactivates neurons during training with some probability. This prevents relying too much on any single neuron and acts as regularization.',
+  'tensor':'A tensor is a multi-dimensional array — the fundamental data structure in deep learning. Scalars, vectors, and matrices are all tensors. PyTorch operates on tensors.',
+  'temperature':'Temperature scales the logits before softmax. Low temperature (0.3) makes output focused and deterministic. High temperature (1.5) makes it more random and creative.',
+  'gpt':'GPT stands for Generative Pre-trained Transformer. It is a language model trained to predict the next token. By pre-training on massive text data, it learns grammar, facts, and reasoning.',
+  'pytorch':'PyTorch is an open-source deep learning framework by Meta. It provides tensors with GPU support, automatic differentiation, and neural network building blocks.',
+  'epoch':'An epoch is one full pass through the entire training dataset. Models train for multiple epochs. More epochs means more learning, but too many can lead to overfitting.',
+  'perplexity':'Perplexity measures how well a language model predicts text. It is 2 raised to the cross-entropy loss. Lower perplexity means the model predicts better.',
+  'hello':'Hello! I\'m your AI assistant, fine-tuned to help with Python, machine learning, and math. What would you like to learn about?',
+  'hi':'Hi there! What can I do for you today?',
+  'who are you':'I\'m a GPT-2 model that has been fine-tuned on educational Q&A data. I can help explain concepts in programming, machine learning, and math.',
+  'thank':'You\'re welcome! I\'m glad I could help. Don\'t hesitate to ask more questions.',
+  'bye':'Goodbye! Keep learning and building things. Every expert was once a beginner.',
+  'help':'I can explain programming concepts, machine learning fundamentals, and math topics. I\'m especially good at Python, neural networks, and the math behind deep learning.',
+  'stuck':'That\'s normal and it\'s actually a sign of learning! Try breaking the problem into smaller pieces. Explain it out loud (rubber duck debugging). Take a short break.',
+  'started':'Start by learning Python basics — variables, functions, loops. Then study the math essentials: linear algebra and calculus. After that, try building simple neural networks with PyTorch.',
+  'python':'Python is a high-level programming language known for its clean, readable syntax. It has a massive ecosystem of libraries for data science, web development, and machine learning.'
+};
+var chatResponses_high={
+  'variable':'Oh, a variable! Think of it as a little name tag you slap on a value. x = 5 means "hey x, you\'re 5 now." Python doesn\'t even make you say what type it is — it just figures it out!',
+  'function':'A function is like a recipe in a cookbook — you define it once with def, give it ingredients (parameters), and call it whenever you need that dish. Keeps your code DRY and delicious!',
+  'list':'Lists are Python\'s Swiss Army knife! Ordered, mutable, can hold anything. Square brackets, indexes, append, pop, slice — they do it all. Probably the data structure you\'ll use most.',
+  'neural network':'Picture a massive web of tiny math neurons, each one doing a simple calculation and passing results forward. Stack enough layers and suddenly — magic! Well, matrix multiplication magic.',
+  'machine learning':'Imagine teaching a computer by showing it thousands of examples instead of writing rules. "Here\'s 10,000 cat photos — figure it out!" And somehow... it does. That\'s ML in a nutshell!',
+  'gradient descent':'It\'s like being blindfolded on a hill and trying to find the lowest point. You feel which way is downhill, take a step, feel again, step again. Eventually you reach the bottom — or at least a valley!',
+  'transformer':'The transformer revolutionized everything! Self-attention lets every token look at every other token simultaneously. No more sequential processing. GPT, BERT, T5 — all transformers. It\'s transformers all the way down!',
+  'hello':'Hey there! Welcome to the party! I\'m your friendly neighborhood GPT-2, freshly fine-tuned and ready to chat about Python, ML, math, or whatever catches your fancy!',
+  'hi':'Hi! Great to see you here! Ready to explore some fascinating topics? Fire away with any question!',
+  'who are you':'I\'m GPT-2 — 124 million parameters of language knowledge, fine-tuned on 60 Q&A pairs to become your personal learning companion! Not too shabby for a few minutes of training, right?',
+  'thank':'Aw, you\'re so welcome! Helping curious minds is literally what I was fine-tuned for. Come back anytime!',
+  'bye':'See you later! Remember — every line of code you write, every concept you learn, you\'re building something amazing. Keep at it!',
+  'help':'I\'m your go-to for Python, machine learning, math, and AI concepts! Try asking about transformers, gradient descent, or even what makes a good programmer. Let\'s explore!',
+  'stuck':'Been there! Well, metaphorically. Here\'s a trick: explain the problem to a rubber duck. Seriously! And if that fails, break it into the tiniest possible pieces. You\'ve got this!',
+  'started':'The adventure begins with Python! Variables, loops, functions. Then add some math spice — matrices, derivatives. Then build your first neural network and watch it learn. It\'s an incredible journey!',
+  'python':'Python! The language that reads almost like English. Clean syntax, huge ecosystem, and it powers everything from web apps to AI research. There\'s a reason it\'s the most popular language for data science.',
+  'attention':'Attention is the secret sauce! Instead of treating every input token equally, the model learns which tokens matter most for each position. It\'s like having a spotlight that highlights the important parts.',
+  'fine-tuning':'The ultimate shortcut! Take a model that already speaks English (from reading the internet), then teach it YOUR specific task with just a little data. Like hiring a fluent speaker and teaching them your company jargon.',
+  'gpt':'Generative Pre-trained Transformer — every word matters! Generative (creates text), Pre-trained (learned from massive data), Transformer (the architecture that changed everything). Put them together: magic.',
+  'softmax':'Softmax is the great normalizer! Takes any vector of numbers and squishes them into probabilities that sum to 1. Big numbers get big probabilities, small numbers get tiny ones. Elegant!',
+  'backpropagation':'The chain rule on steroids! Start at the output, ask "how wrong were we?", then trace backward through every layer asking "how much did YOU contribute to this mess?" Then fix it. Repeat.',
+  'tokenization':'Chopping text into bite-sized pieces! GPT-2\'s BPE tokenizer is clever — common words stay whole, rare words get split into subword chunks. No word is truly unknown!',
+  'embedding':'Turning words into math! Each token gets a dense vector of numbers. Similar words end up near each other in this vector space. "King" and "queen" are close, "king" and "potato" are far apart.',
+  'temperature':'The creativity dial! Turn it down (0.3) and the model plays it safe — always picks the most likely word. Crank it up (1.5) and it gets wild and creative. 0.7 is the sweet spot for most conversations.',
+  'epoch':'One lap around the training track! Each epoch, the model sees every single training example once. Three epochs on 60 pairs means 180 learning opportunities. For a pretrained model, that\'s plenty!',
+  'loss function':'The model\'s report card! Lower loss = better predictions. The optimizer\'s entire job is to make this number go down. Cross-entropy for classification, MSE for regression.',
+  'dropout':'Randomly disconnecting neurons during training — sounds destructive, but it\'s actually genius! Forces the network to be robust. No single neuron can be a diva. Teamwork makes the dream work.',
+  'matrix':'Rows and columns of numbers — the backbone of all deep learning! Every layer in a neural network is basically a matrix multiplication. Linear algebra is the language of AI.',
+  'derivative':'How fast is something changing RIGHT NOW? That\'s a derivative. In deep learning, derivatives tell each weight "move this way to reduce the error." Simple idea, profound consequences.',
+  'perplexity':'How "surprised" is the model by your text? Low perplexity = "yeah, I expected that." High perplexity = "whoa, didn\'t see that coming!" It\'s 2^(cross-entropy), for the math fans.',
+  'learning rate':'The step size dial! Too big and you overshoot the optimal weights. Too small and you\'re there till next century. 5e-5 for fine-tuning, 1e-3 for training from scratch. It\'s an art!',
+  'tensor':'The data container of deep learning! A scalar is a 0D tensor, a vector is 1D, a matrix is 2D, and it keeps going. PyTorch tensors are like NumPy arrays with superpowers (GPU go brrrr).',
+  'cross-entropy':'Measuring the gap between what you predicted and what actually happened. Perfect predictions = zero cross-entropy. Random guessing = high cross-entropy. The loss function of choice for classification.',
+  'dictionary':'Key-value pairs in curly braces! Super fast lookups. Think of it like a real dictionary — you look up the word (key) to find the definition (value). Python\'s most versatile data structure.',
+  'class':'The object-oriented blueprint! Define a class, stuff in some attributes and methods, then stamp out as many instances as you need. Dog class, make 100 dogs. Each one unique, same blueprint.',
+  'overfitting':'The model became a parrot! It memorized every training example perfectly but can\'t handle anything new. Like a student who memorized all test answers but doesn\'t understand the subject. More data and regularization are the cure.'
+};
+function setChatTemp(t,el){
+  chatTemp=t;
+  document.querySelectorAll('#s9 .cw .ctrls .cbtn').forEach(function(b){b.classList.remove('on')});
+  if(el)el.classList.add('on');
+}
+function getChatReply(msg){
+  var key=msg.toLowerCase().replace(/[!?.,'"]/g,'').trim();
+  var pool=chatTemp==='low'?chatResponses_low:chatTemp==='high'?chatResponses_high:chatResponses_med;
+  if(pool[key])return pool[key];
+  for(var k in pool){
+    if(key.indexOf(k)>-1)return pool[k];
+  }
+  for(var k in pool){
+    if(k.length>3&&key.indexOf(k)>-1)return pool[k];
+  }
+  var words=key.split(/\s+/);
+  for(var i=0;i<words.length;i++){
+    if(pool[words[i]])return pool[words[i]];
+    for(var k in pool){if(k.indexOf(words[i])>-1&&words[i].length>3)return pool[k];}
+  }
+  var fallbacks=[
+    'That\'s an interesting question! My training data doesn\'t cover that topic specifically, but I\'m great with Python, ML, and math.',
+    'Hmm, I\'m not sure about that one. Try asking about variables, neural networks, transformers, or other ML concepts!',
+    'I\'d need more training data to answer that well. I work best with questions about programming, machine learning, and math.',
+    'Could you rephrase that? I\'m tuned for Python, ML, and math topics. Try asking "What is a neural network?" or "What is gradient descent?"'
+  ];
+  return fallbacks[Math.floor(Math.random()*fallbacks.length)];
+}
+function addChatMsg(who,text){
+  var w=document.getElementById('chatWin');
+  var isU=who==='user';
+  w.innerHTML+='<div class="chat-msg" style="flex-direction:'+(isU?'row-reverse':'row')+'"><div class="chat-avatar '+(isU?'chat-user-av':'chat-asst-av')+'">'+(isU?'U':'G')+'</div><div class="chat-bubble-inner '+(isU?'chat-user-bub':'chat-asst-bub')+'">'+text.replace(/\n/g,'<br>')+'</div></div>';
+  w.scrollTop=w.scrollHeight;
+}
+function sendChat(){
+  var inp=document.getElementById('chatIn');
+  var msg=inp.value.trim();if(!msg)return;
+  addChatMsg('user',msg);inp.value='';
+  var reply=getChatReply(msg);
+  setTimeout(function(){addChatMsg('assistant',reply);},200+Math.random()*300);
+}
+function clearChat(){
+  document.getElementById('chatWin').innerHTML='';
+  addChatMsg('assistant','Hello! I\'m GPT-2, fine-tuned on 60 Q&A pairs. Ask me about Python, ML, math, or just say hi!');
+}
+clearChat();
+
+/* ================================================================
+   SECTION 10: Quiz
+   ================================================================ */
+var quizExplanations={
+  q1:'A pretrained model has already learned useful weight values from massive data. A large learning rate (like 1e-3) would overwrite these carefully learned weights with random updates, causing "catastrophic forgetting." A small rate (5e-5) nudges the weights gently, preserving existing knowledge while adapting to the new task.',
+  q2:'BPE (Byte-Pair Encoding) iteratively merges the most frequent pairs of characters/subwords to build a vocabulary. Because it operates at the subword level, it can represent ANY word by breaking it into known pieces. "understanding" becomes ["under","standing"]. No word is truly unknown, so no <UNK> token is needed.',
+  q3:'GPT-2 was pretrained on 8 million web pages and already understands English grammar, vocabulary, facts, and reasoning patterns. Fine-tuning only needs to teach it the specific User/Assistant Q&A format — not the entire language. Three passes through 60 examples is enough for format adaptation.',
+  q4:'Nucleus sampling (top_p) sorts tokens by probability, then includes tokens from the top until their cumulative probability reaches the threshold (90%). This dynamically adjusts the candidate set size — when the model is confident, fewer tokens are considered; when uncertain, more tokens are available.',
+  q5:'The <|endoftext|> token (ID 50256) is appended after every response during training. The model learns to produce this token when it has finished answering. During generation, we set eos_token_id to this value so model.generate() knows to stop producing tokens when it appears.'
+};
+function ck(id,el,ok){
+  var card=document.getElementById(id);
+  if(card.dataset.a)return;
+  card.dataset.a='1';
+  card.querySelectorAll('.qo').forEach(function(o){o.classList.add('d');});
+  var fb=document.getElementById(id+'-fb');
+  if(ok){
+    el.classList.add('c');
+    fb.className='qfb p show';
+    fb.textContent='Correct! '+quizExplanations[id];
+  }else{
+    el.classList.add('w');
+    card.querySelectorAll('.qo').forEach(function(o){
+      if(o.getAttribute('onclick')&&o.getAttribute('onclick').indexOf('true')>-1)o.classList.add('c');
+    });
+    fb.className='qfb f show';
+    fb.textContent='Not quite. '+quizExplanations[id];
+  }
+}
+</script>
+</body>
+</html>
